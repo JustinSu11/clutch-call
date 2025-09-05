@@ -6,6 +6,7 @@ export default function WelcomeHero() {
 
 
     return (
+        //classNames are tailwindcss utility classes, see https://tailwindcss.com/docs/styling-with-utility-classes for reference
         <section className="relative min-h-[60vh] isolate flex items-center justify-center overflow-hidden" aria-labelledby="hero-heading">
             {/* Background image start */}
             <div className="absolute inset-0 -z-10 bg-cover bg-center" style={{ backgroundImage: `url(${heroImageUrl})`}}/>
