@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button"
 import * as React from "react"
 
 export default function WelcomeHero() {
-    const heroImageUrl =   "https://lh3.googleusercontent.com/aida-public/AB6AXuDF9gNLdLbOBcWbtzRdA4OMoJAPM2XPueV49MT-VN3xhnbe-FVNY-SwwQa0qkvTUFVyLBrTsD_aCGb8YnS2MkTZQEZ9ssgTE0tal2kSdBsDoyGj4HATU-rcQs6s1Xzxy325smaSO7cHI4nN1JkCtwy4WzvBBjk2WZMz6SM3TH5wIMzL5gkC24mPZvMVfKlCEKeocV6FFzgueA8C711c0c0zshvOMs7EPjy0dcxSq16ZyY6qQZzzJJVt9uM-fgzuUYoSkYv1OIHepvp_";
+    const heroImageUrl = "https://lh3.googleusercontent.com/aida-public/AB6AXuDF9gNLdLbOBcWbtzRdA4OMoJAPM2XPueV49MT-VN3xhnbe-FVNY-SwwQa0qkvTUFVyLBrTsD_aCGb8YnS2MkTZQEZ9ssgTE0tal2kSdBsDoyGj4HATU-rcQs6s1Xzxy325smaSO7cHI4nN1JkCtwy4WzvBBjk2WZMz6SM3TH5wIMzL5gkC24mPZvMVfKlCEKeocV6FFzgueA8C711c0c0zshvOMs7EPjy0dcxSq16ZyY6qQZzzJJVt9uM-fgzuUYoSkYv1OIHepvp_";
 
 
     return (
