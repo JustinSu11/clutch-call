@@ -1,14 +1,17 @@
 import * as React from 'react'
-import { Button } from '@/components/ui/button'
-import {Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle} from "@/components/ui/card";
-import { Shield, TrendingUp, Clock, Square } from "lucide-react"
 import WelcomeHero from "@/components/WelcomeHero"
+import WhyChooseSection from '@/components/WhyChooseSection'
+import CallToActionSection from '@/components/CallToActionSection'
+
+//Landing page for ClutchCall, explaining what it is and its features
 
 export default function Home() {
   return (
     <div className="min-h-screen flex flex-col bg-zinc-50 text-zinc-900">
         <main className="flex-1">
             <WelcomeHero />
+            <WhyChooseSection />
+            <CallToActionSection />
         </main>
     </div>
   );
