@@ -1,0 +1,11 @@
+nba_api
+numpy
+pandas
+pytorch
+scikit-learn
+Flask
+Flask-Cors
+gunicorn
+requests
+SQLAlchemy
+sqlite3
