@@ -1,7 +1,11 @@
+/*
+Author: Justin Nguyen
+Last updated: 09/08/2025
+Purpose: This section highlights key features of ClutchCall, each feature is shown on a FeatureCard component
+*/
+
 import FeatureCard from "./FeatureCard"
 import { TrendingUp, Clock, Shield } from "lucide-react"
-
-//This section highlights key features of ClutchCall, each feature is shown on a FeatureCard component
 
 export default function WhyChooseSection() {
     return (

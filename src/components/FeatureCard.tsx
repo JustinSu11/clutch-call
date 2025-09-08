@@ -1,7 +1,11 @@
+/*
+Author: Justin Nguyen
+Last updated: 09/08/2025
+Purpose: A card component to display a feature of the app, used in the WhyChooseSection component 
+*/
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import * as React from "react"
-
-//A card component to display a feature of the app, used in the WhyChooseSection component
 
 export default function FeatureCard({
     icon,
