@@ -1,9 +1,13 @@
+/* 
+Author: Justin Nguyen
+Last Updated: 09/08/2025
+Purpose: Landing page for ClutchCall, explaining what it is and its features
+*/
+
 import * as React from 'react'
 import WelcomeHero from "@/components/WelcomeHero"
 import WhyChooseSection from '@/components/WhyChooseSection'
 import CallToActionSection from '@/components/CallToActionSection'
-
-//Landing page for ClutchCall, explaining what it is and its features
 
 export default function Home() {
   return (
