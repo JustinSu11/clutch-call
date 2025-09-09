@@ -4,7 +4,7 @@ Last updated: 09/08/2025
 Purpose: This section highlights key features of ClutchCall, each feature is shown on a FeatureCard component
 */
 
-import FeatureCard from "./FeatureCard"
+import FeatureCard from "./ui/FeatureCard"
 import { TrendingUp, Clock, Shield } from "lucide-react"
 
 export default function WhyChooseSection() {
