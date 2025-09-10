@@ -19,7 +19,7 @@ export default function SiteHeader() {
                     <a className="text-sm font-medium text-zin-800 hover:text-red-600 transition-colors" href="#predictions">Predictions</a>
                     <a className="text-sm font-medium text-zin-800 hover:text-red-600 transition-colors" href="#how-it-works">How it works</a>
                 </nav>
-                <div flex-items-center gap-3>
+                <div className="flex items-center gap-3">
                     <Button className="h-10 px-5 bg-red-500 hover:bg-red-600 text-white">Try Now</Button>
                 </div>
             </div>

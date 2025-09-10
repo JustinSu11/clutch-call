@@ -1,13 +1,13 @@
 import "@/styles/globals.css";
-import { Inter } from "next/font/google"
+import { Inter } from "next/font/google";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
 
 const inter = Inter({
-    subsets: ["latin"],
-    variable: "--font-inter",
-    display: "swap",
-})
+  subsets: ["latin"],
+  variable: "--font-inter",
+  display: "swap",
+});
 
 export default function RootLayout({
   children,
@@ -16,11 +16,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <body className={inter.variable}>
         <SiteHeader />
-        <body className={inter.variable}>
-            {children}
-        </body>
-        <SiteFooter />
+        {children}
+        <SiteFooter /> 
+      </body>
     </html>
   );
 }
