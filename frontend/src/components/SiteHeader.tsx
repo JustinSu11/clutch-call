@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button"
 
 export default function SiteHeader() {
     return (
-                <header className="sticky top-0 z-40 w-full border-b bg-white/90 backdrop-blur supports-[backdrop-filter]:bg-white/60">
+        <header className="sticky top-0 z-40 w-full bg-white/90 backdrop-blur supports-[backdrop-filter]:bg-white/60">
             <div className="container mx-auto flex items-center justify-between gap-6 px-6 py-4">
                 <a className="inline-flex items-center gap-2" href="#" aria-label="ClutchCall home">
                     {/*<Square className="h-8 w-8 text-red-500" fill="currentColor" />*/} {/*Logo will replace this*/}
