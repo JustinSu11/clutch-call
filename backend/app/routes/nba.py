@@ -37,14 +37,14 @@ def nba_games():
     return data
 
 
-@bp.get("/game/<int:game_id>")
-def nba_game_by_id(game_id: int):
+@bp.get("/game/<game_id>")
+def nba_game_by_id(game_id: str):
     """Fetch a single game by its balldontlie game ID."""
     return get_game_by_id(game_id)
 
 
-@bp.get("/game/<int:game_id>/boxscore")
-def nba_box_score(game_id: int):
+@bp.get("/game/<game_id>/boxscore")
+def nba_box_score(game_id: str):
     """Fetch basic per-player stats for the specified game."""
     return get_box_score(game_id)
 
