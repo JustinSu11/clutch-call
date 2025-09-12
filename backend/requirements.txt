@@ -1,10 +1,13 @@
-nba_api
-numpy
-pandas
-torch
-scikit-learn
-Flask
-Flask-Cors
-gunicorn
-requests
-SQLAlchemy
+
+nba_api           ; Optional, helpful for NBA-related data work (not required by endpoints directly)
+numpy             ; Optional scientific stack dependency (retained from project context)
+pandas            ; Optional data manipulation (retained from project context)
+torch             ; Optional ML dependency (retained from project context)
+scikit-learn      ; Optional ML dependency (retained from project context)
+Flask             ; Web framework used for route definitions
+Flask-Cors        ; Enables CORS for API consumption from the frontend
+gunicorn          ; WSGI server (useful for some deployments)
+requests          ; HTTP client used by service modules
+SQLAlchemy        ; Optional ORM (retained from project context)
+uvicorn           ; ASGI server used to run the app via run_server.py
+asgiref           ; Provides WSGI-to-ASGI adapter used by asgi.py
