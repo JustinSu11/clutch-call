@@ -6,6 +6,7 @@ Purpose: Header component for the site, includes navigation links and branding
 
 import { Square } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import Link from "next/link"
 
 export default function SiteHeader() {
     return (
@@ -20,7 +21,10 @@ export default function SiteHeader() {
                     <a className="text-sm font-medium text-zin-800 hover:text-red-600 transition-colors" href="#how-it-works">How it works</a>
                 </nav>
                 <div flex-items-center gap-3>
-                    <Button className="h-10 px-5 bg-red-500 hover:bg-red-600 text-white">Try Now</Button>
+                    <Button className="h-10 px-5 bg-red-500 hover:bg-red-600 text-white">
+                        {/* Link to dashboard page */}
+                        <Link href="/dashboard">Try Now</Link>
+                    </Button>
                 </div>
             </div>
         </header>
