@@ -34,11 +34,6 @@ export default function DashboardLayout({
                     <span>Home</span>
                   </a>
                 </nav>
-                <div className="mt-auto">
-                  <button className="w-full flex min-w-[84px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-12 px-6 bg-red-500 text-white text-base font-bold leading-normal tracking-wide shadow-md hover:bg-red-600 transition">
-                    <span className="truncate">Upgrade to Pro</span>
-                  </button>
-                </div>
               </div>
             </aside>
 

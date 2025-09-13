@@ -8,8 +8,6 @@
 export default function Dashboard() {
   return (
     <>
-      <h1 className="text-4xl font-extrabold text-gray-900 mb-8">Welcome back, Alex</h1>
-      
       {/* Upcoming Matches Section */}
       <section>
         <h2 className="text-3xl font-bold text-gray-900 mb-4">Upcoming Matches</h2>
