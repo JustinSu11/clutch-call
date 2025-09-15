@@ -4,7 +4,7 @@ Last updated: 09/09/2025
 Purpose: Footer component for the site, includes links to social media and other relevant information
 */
 
-import FooterLink from "./ui/FooterLink"
+import FooterLink from "@/components/WelcomeViewComponents/FooterLink"
 
 export default function SiteFooter() {
     return (

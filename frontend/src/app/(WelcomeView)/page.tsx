@@ -5,9 +5,9 @@ Purpose: Landing page for ClutchCall, explaining what it is and its features
 */
 
 import * as React from 'react'
-import WelcomeHero from "@/components/WelcomeHero"
-import WhyChooseSection from '@/components/WhyChooseSection'
-import CallToActionSection from '@/components/CallToActionSection'
+import WelcomeHero from "@/components/WelcomeViewComponents/WelcomeHero"
+import WhyChooseSection from '@/components/WelcomeViewComponents/WhyChooseSection'
+import CallToActionSection from '@/components/WelcomeViewComponents/CallToActionSection'
 
 export default function Home() {
   return (
