@@ -1,26 +1,22 @@
-import "@/styles/globals.css";
-import { Inter } from "next/font/google"
+// Removed: import "@/styles/globals.css";
+import { Inter } from "next/font/google";
 import SiteHeader from "@/components/WelcomeViewComponents/SiteHeader";
 import SiteFooter from "@/components/WelcomeViewComponents/SiteFooter";
 
 const inter = Inter({
-    subsets: ["latin"],
-    variable: "--font-inter",
-    display: "swap",
-})
+  subsets: ["latin"],
+  variable: "--font-inter",
+  display: "swap",
+});
 
-export default function RootLayout({
+export default function Layout({
   children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+}: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en">
-        <SiteHeader />
-        <body className={inter.variable}>
-            {children}
-        </body>
-        <SiteFooter />
-    </html>
+    <div className={inter.variable}>
+      <SiteHeader />
+      {children}
+      <SiteFooter />
+    </div>
   );
 }
