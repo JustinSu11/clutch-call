@@ -5,7 +5,7 @@
 
     Last Updated: 09/16/2025 by CJ Quintero
 
-    Description: This file defines the root layout that is used for all pages (aka routes aka views)
+    Description: This file defines the ROOT LAYOUT that is used for all pages (aka routes aka views)
     across the entire app. It includes global styles and sets up the top level HTML structure.
 
 */

@@ -9,6 +9,7 @@ import WelcomeHero from "@/components/WelcomeViewComponents/WelcomeHero"
 import WhyChooseSection from '@/components/WelcomeViewComponents/WhyChooseSection'
 import CallToActionSection from '@/components/WelcomeViewComponents/CallToActionSection'
 import SiteHeader from '@/components/WelcomeViewComponents/SiteHeader';
+import SiteFooter from '@/components/WelcomeViewComponents/SiteFooter';
 
 
 export default function WelcomeView() 
@@ -21,6 +22,7 @@ export default function WelcomeView()
               <WelcomeHero />
               <WhyChooseSection />
               <CallToActionSection />
+              <SiteFooter />
           </main>
       </div>
     </>
