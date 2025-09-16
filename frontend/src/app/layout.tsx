@@ -19,9 +19,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en">
         <body>
             {/* 
-                For a specific page, we want to setup its components based on that page's layout 
-                This means use all the children components of that page's layout to format that
-                specific page
+                Means to use the components for that specific page
+                Ex) If on the WelcomeView page, it will use the WelcomeView components to build the page
             */}
             {children}
         </body>
