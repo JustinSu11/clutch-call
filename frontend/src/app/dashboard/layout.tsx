@@ -5,12 +5,14 @@
 
     Last Updated: 09/16/2025 by CJ Quintero
 
-    Description: This file defines the layout for the dashboard page
+    Description: This file defines the layout for the all pages under /dashboard.
+    They will share a common layout that includes a sidebar and main content area.
 
 */
 
 import type { Metadata } from 'next'
 import Sidebar from '@/components/DashboardComponents/Sidebar'
+import UpcomingMatches from '@/components/DashboardComponents/UpcomingMatches'
 
 export const metadata: Metadata = {
   title: 'ClutchCall - Dashboard',
@@ -26,9 +28,8 @@ export default function DashboardLayout({
   return (
     <div className="relative flex size-full min-h-screen flex-col group/design-root overflow-x-hidden">
       <div className="flex h-full grow">
-
+        {/* All pages under /dashboard will have this sidebar */}
         <Sidebar />
-
         {/* Main Content Area */}
         <main className="flex-1 p-8">
           <div className="max-w-7xl mx-auto">

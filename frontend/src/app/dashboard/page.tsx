@@ -1,20 +1,22 @@
 /*
+    File: src/app/dashboard/page.tsx 
     Created by: CJ Quintero
     Last updated: 09/13/2025
 
-    This file contains the main method for the dashboard page
+    This file contains the content for the dashboard home page.
+    In the link, this is /dashboard and is the default dashboard page
+
+   When users navigate to a tab under the sidebar, such as /dashboard/predictions,
+   they will be directed to a different page file, but the layout.tsx file will remain the same.
+   The new page is physically located under /dashboard/predictions/page.tsx
 */
+
+import UpcomingMatches from "@/components/DashboardComponents/UpcomingMatches";
 
 export default function Dashboard() {
   return (
     <>
-      {/* Upcoming Matches Section */}
-      <section>
-        <h2 className="text-3xl font-bold text-gray-900 mb-4">Upcoming Matches</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {/* Match cards */}
-        </div>
-      </section>
+      <UpcomingMatches />
 
       {/* Recent Predictions Section */}
       <section className="mt-12">
