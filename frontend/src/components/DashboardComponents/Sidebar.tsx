@@ -23,7 +23,7 @@ export default function Sidebar() {
             <aside className="flex flex-col w-64 bg-white p-6 border-r border-gray-200">
                 <div className="flex flex-col h-full">
                     {/* The header for the sidebar */}
-                    <h1 className="text-2xl font-bold text-gray-900 mb-8">ClutchCall</h1>
+                    <h1 className="flex justify-center text-4xl font-bold text-gray-900 mb-8">ClutchCall</h1>
                     {/* <nav> groups links together */}
                     <nav className="flex flex-col gap-2">
                         {/* Each <a> tag is a link in the sidebar.
