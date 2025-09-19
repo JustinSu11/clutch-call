@@ -12,6 +12,7 @@ from ..services.nfl_service import (
     get_game_by_id,
     get_box_score,
     get_upcoming_games,
+    get_today_games,
 )
 
 # Blueprint for NFL routes; mounted at /api/v1/nfl
@@ -43,3 +44,9 @@ def nfl_upcoming():
     """List upcoming NFL games in the next N days (default 7)."""
     days = int(request.args.get("days", 7))
     return get_upcoming_games(days=days)
+
+
+@bp.get("/today")
+def nfl_today():
+    """List NFL games for today."""
+    return get_today_games()

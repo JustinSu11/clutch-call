@@ -137,3 +137,26 @@ def get_upcoming_games(days: int = 7):
                 }
             )
     return {"data": all_items}
+
+
+def get_today_games():
+    """List NBA games for today using ScoreboardV2."""
+    today = datetime.utcnow().date()
+    ds = today.strftime("%m/%d/%Y")
+    sb = scoreboardv2.ScoreboardV2(game_date=ds).get_normalized_dict()
+    
+    # Get GameHeader data for today's games
+    headers = sb.get("GameHeader", [])
+    items = []
+    for h in headers:
+        items.append(
+            {
+                "game_id": h.get("GAME_ID"),
+                "game_date": ds,
+                "home_team_id": h.get("HOME_TEAM_ID"),
+                "visitor_team_id": h.get("VISITOR_TEAM_ID"),
+                "game_status": h.get("GAME_STATUS_TEXT"),
+                "league": "NBA"
+            }
+        )
+    return {"data": items}

@@ -57,3 +57,18 @@ def get_upcoming_games(days: int = 7):
     fmt = "%Y%m%d"
     params = {"dates": f"{today.strftime(fmt)}-{end.strftime(fmt)}"}
     return _get(SCOREBOARD, params)
+
+
+def get_today_games():
+    """List NFL games for today using ESPN scoreboard."""
+    today = datetime.utcnow().date()
+    fmt = "%Y%m%d"
+    params = {"dates": today.strftime(fmt)}
+    data = _get(SCOREBOARD, params)
+    
+    # Add league identifier to response
+    if "events" in data:
+        for event in data["events"]:
+            event["league"] = "NFL"
+    
+    return data

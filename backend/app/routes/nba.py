@@ -13,6 +13,7 @@ from ..services.nba_service import (
     get_box_score,
     get_team_last_games,
     get_upcoming_games,
+    get_today_games,
 )
 
 # Blueprint for NBA-related routes; mounted by the app factory at /api/v1/nba
@@ -67,3 +68,9 @@ def nba_upcoming():
     """List games between today and today+days (default 7)."""
     days = int(request.args.get("days", 7))
     return get_upcoming_games(days=days)
+
+
+@bp.get("/today")
+def nba_today():
+    """List NBA games for today."""
+    return get_today_games()

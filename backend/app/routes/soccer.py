@@ -12,6 +12,7 @@ from ..services.soccer_service import (
     get_game_by_id,
     get_box_score,
     get_upcoming_games,
+    get_today_games,
 )
 
 # Blueprint for Soccer routes; mounted at /api/v1/soccer
@@ -46,3 +47,10 @@ def soccer_upcoming():
     league = request.args.get("league", "MLS")
     days = int(request.args.get("days", 7))
     return get_upcoming_games(league=league, days=days)
+
+
+@bp.get("/today")
+def soccer_today():
+    """List soccer games for today for a specific league."""
+    league = request.args.get("league", "MLS")
+    return get_today_games(league=league)

@@ -29,7 +29,13 @@ def create_app() -> Flask:
     # CORS: allow local frontend dev by default
     # The CORS_ORIGINS env var (comma-separated or *) controls which origins can call the API.
     # For development, defaults to * to simplify cross-origin calls.
-    CORS(app, resources={r"/*": {"origins": os.getenv("CORS_ORIGINS", "*")}})
+    CORS(app, resources={
+        r"/*": {
+            "origins": os.getenv("CORS_ORIGINS", "*"),
+            "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+            "allow_headers": ["Content-Type", "Authorization"]
+        }
+    })
 
     # Register blueprints under API prefix
     # Import here (inside the factory) to avoid circular imports when app is created
@@ -37,6 +43,7 @@ def create_app() -> Flask:
     from .routes.nba import bp as nba_bp
     from .routes.nfl import bp as nfl_bp
     from .routes.soccer import bp as soccer_bp
+    from .routes.today import bp as today_bp
 
     prefix = app.config["API_PREFIX"]
     # Mount each blueprint under the desired subpath
@@ -44,6 +51,7 @@ def create_app() -> Flask:
     app.register_blueprint(nba_bp, url_prefix=f"{prefix}/nba")
     app.register_blueprint(nfl_bp, url_prefix=f"{prefix}/nfl")
     app.register_blueprint(soccer_bp, url_prefix=f"{prefix}/soccer")
+    app.register_blueprint(today_bp, url_prefix=f"{prefix}/today")
 
     # Error handlers for consistent JSON responses
     @app.errorhandler(404)
