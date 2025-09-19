@@ -44,6 +44,12 @@ def main():
             print("[PASS] /nba/game/{id}/boxscore")
     else:
         print("[SKIP] No games available to test game-by-id/boxscore")
+    
+    with open("nba_output.json", "w") as f:
+        import json
+
+        json.dump(games, f, indent=2)
+        
 
 
 if __name__ == "__main__":

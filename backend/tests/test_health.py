@@ -21,6 +21,10 @@ def main():
     assert isinstance(data, dict), "Expected dict JSON"
     assert data.get("status") == "healthy", "Health status mismatch"
     print("[PASS] /health")
+    with open("health_check_output.json", "w") as f:
+        import json
+
+        json.dump(data, f, indent=2)
 
 
 if __name__ == "__main__":

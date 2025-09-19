@@ -44,6 +44,11 @@ def main():
             print("[PASS] /nfl/game/{event_id}/boxscore")
     else:
         print("[SKIP] No events available to test game-by-id/boxscore")
+    
+    with open("nfl_output.json", "w") as f:
+        import json
+
+        json.dump(events, f, indent=2)
 
 
 if __name__ == "__main__":
