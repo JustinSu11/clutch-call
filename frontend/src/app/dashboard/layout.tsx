@@ -11,8 +11,8 @@
 */
 
 import type { Metadata } from 'next'
-import Sidebar from '@/components/DashboardComponents/Sidebar'
-import UpcomingMatches from '@/components/DashboardComponents/UpcomingMatches'
+import Sidebar from '@/components/DashboardComponents/MainDashboardComponents/Sidebar'
+import UpcomingMatches from '@/components/DashboardComponents/MainDashboardComponents/UpcomingMatches'
 
 export const metadata: Metadata = {
   title: 'ClutchCall - Dashboard',

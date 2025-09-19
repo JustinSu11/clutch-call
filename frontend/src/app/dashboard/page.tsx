@@ -11,9 +11,9 @@
    The new page is physically located under /dashboard/predictions/page.tsx
 */
 
-import UpcomingMatches from "@/components/DashboardComponents/UpcomingMatches";
+import UpcomingMatches from "@/components/DashboardComponents/MainDashboardComponents/UpcomingMatches";
 
-export default function Dashboard() {
+export default function DashboardMain() {
   return (
     <>
       <UpcomingMatches />
