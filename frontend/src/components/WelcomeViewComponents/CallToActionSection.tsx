@@ -4,7 +4,7 @@ Last updated: 09/08/2025
 Purpose: Call to action section prompting users to try the app
 */
 
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/WelcomeViewComponents/button"
 
 export default function CallToActionSection() {
     return (
