@@ -4,13 +4,12 @@
     Last Updated: 09/19/2025 by CJ Quintero
 
     Description:
-    This file defines the layout for the all pages under /dashboard.
+    This file defines the layout for all pages under /dashboard.
     They will share a common layout that includes a sidebar and main content area.
 */
 
 import type { Metadata } from 'next'
 import Sidebar from '@/components/DashboardComponents/MainDashboardComponents/Sidebar'
-import UpcomingMatches from '@/components/DashboardComponents/MainDashboardComponents/UpcomingMatches'
 
 export const metadata: Metadata = {
   title: 'ClutchCall - Dashboard',

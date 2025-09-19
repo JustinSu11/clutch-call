@@ -4,7 +4,7 @@
     Purpose: Header component for the site, includes navigation links and branding
 */
 import { Square } from "lucide-react"
-import { Button } from "@/components/WelcomeViewComponents/button"
+import { Button } from "@/components/ui/button"
 import Link from "next/link"
 
 export default function SiteHeader() {
