@@ -1,42 +1,25 @@
 /*
     File: src/app/dashboard/page.tsx 
-    Created by: CJ Quintero
-    Last updated: 09/13/2025
+    Author: CJ Quintero
+    Last Updated: 09/19/2025 by CJ Quintero
 
+    Description:
     This file contains the content for the dashboard home page.
     In the link, this is /dashboard and is the default dashboard page
 
-   When users navigate to a tab under the sidebar, such as /dashboard/predictions,
-   they will be directed to a different page file, but the layout.tsx file will remain the same.
-   The new page is physically located under /dashboard/predictions/page.tsx
+    When users navigate to a tab under the sidebar, such as /dashboard/predictions,
+    they will be directed to a different page file, but the layout.tsx file will remain the same.
+    The new page is physically located under /dashboard/predictions/page.tsx
 */
-
 import UpcomingMatches from "@/components/DashboardComponents/MainDashboardComponents/UpcomingMatches";
+import RecentPredictions from "@/components/DashboardComponents/MainDashboardComponents/RecentPredictions";
+
 
 export default function DashboardMain() {
   return (
     <>
       <UpcomingMatches />
-
-      {/* Recent Predictions Section */}
-      <section className="mt-12">
-        <h2 className="text-3xl font-bold text-gray-900 mb-4">Recent Predictions</h2>
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-x-auto">
-          <table className="w-full text-left">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-4 text-sm font-semibold text-gray-600 uppercase tracking-wider">Match</th>
-                <th className="px-6 py-4 text-sm font-semibold text-gray-600 uppercase tracking-wider">Prediction</th>
-                <th className="px-6 py-4 text-sm font-semibold text-gray-600 uppercase tracking-wider">Result</th>
-                <th className="px-6 py-4 text-sm font-semibold text-gray-600 uppercase tracking-wider">Status</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              {/* Table rows */}
-            </tbody>
-          </table>
-        </div>
-      </section>
+      <RecentPredictions />
 
       {/* Stats Section */}
       <section className="mt-12">
