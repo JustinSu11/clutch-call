@@ -28,7 +28,7 @@ export default function DashboardLayout({
       <div className="flex h-full grow">
 
         {/* Sidebar */}
-        <aside className="flex flex-col w-64 bg-background p-6 border-r border-gray-200">
+        <aside className="flex flex-col w-64 bg-secondary-background p-6">
           <div className="flex flex-col h-full">
             <h1 className="text-2xl font-bold text-text-primary mb-8">ClutchCall</h1>
             <ThemeToggle />
