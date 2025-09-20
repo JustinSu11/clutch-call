@@ -1,16 +1,45 @@
 @import "tailwindcss";
 
-:root { 
-    --primary-color: #EF4444;
-    --secondary-color: #FEE2E2;
-    --background-color: #F9FAFB;
-    --text-primary: #1F2937;
-    --text-secondary: #6B7280;
-    --accent-color: #F87171;
-} 
-
-body { 
-    font-family: 'Inter', sans-serif;
-    background-color: var(--background-color);
-    color: var(--text-primary); 
+@theme {
+    --color-primary: var(--primary);
+    --color-secondary: var(--secondary);
+    --color-background: var(--background);
+    --color-secondary-background: var(--secondary-background);
+    --color-text-primary: var(--text-primary);
+    --color-text-secondary: var(--text-secondary);
+    --color-accent: var(--accent);
+    --color-backdrop: var(--backdrop);
 }
+
+@layer base {
+    :root {
+        --primary: #EF4444;
+        --secondary: #FEE2E2;
+        --background: #F9FAFB;
+        --secondary-background: #f5f5f5;
+        --text-primary: #1F2937;
+        --text-secondary: #6B7280;
+        --accent: #F87171;
+    } 
+
+    .dark {
+        --primary: #e54d42;
+        --secondary: #21262d;
+        --background: #0d1117;
+        --secondary-background: #131821;
+        --text-primary: #c9d1d9;
+        --text-secondary: #8b949e;
+        --accent: #30363d;
+    }
+
+    html {
+        @apply scroll-smooth;
+    }
+
+    body { 
+        @apply bg-background text-primary transition-colors duration-300;
+        font-family: 'Inter', sans-serif;
+    }
+}
+
+
