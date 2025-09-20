@@ -17,7 +17,7 @@ export default function FeatureCard({
     description: string;
 }) {
     return (
-        <Card className="border-zinc-200 shadow-sm">
+        <Card className="bg-secondary-background shadow-sm">
             <CardHeader className="flex flex-col items-center text-center">
                 <div className="flex h-16 w-16 items-center justify-center rounded-full bg-secondary mb-4">
                     {icon}
