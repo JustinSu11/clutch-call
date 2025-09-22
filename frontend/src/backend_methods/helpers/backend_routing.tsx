@@ -1,6 +1,12 @@
+/*
+Author: Maaz Haque
+File: backend_routing.tsx
+Description: This file contains the routes and methods to make requests to the backend.
+*/
+
 const BASE_URL = "http://127.0.0.1:8000/api/v1";
 
-const ROUTES = {
+export const ROUTES = {
     health: `${BASE_URL}/health`,
     nba_games: `${BASE_URL}/nba/games`,
     specific_nba_game_details: (gameId: string) => `${BASE_URL}/nba/game/${gameId}`,
@@ -17,31 +23,23 @@ const ROUTES = {
     upcoming_soccer_matches: `${BASE_URL}/soccer/upcoming`,
 };
 
-
-function getRequest(url: string)
-{
-    try{
-        return fetch(url).then(response => response.json());
-    }
-    catch(error){
-        console.error("Error fetching data:", error);
-        throw error;
-    }
-}
-
-function postRequest(url: string, data: any)
-{
-    try{
-        return fetch(url, {
-            method: 'POST',
+//method to make a post or get request to the backend using axiom
+export const makeBackendRequest = async (method: 'GET' | 'POST', route: string, data?: any) => {
+    try {
+        const response = await fetch(route, {
+            method,
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify(data),
-        }).then(response => response.json());
-    }
-    catch(error){
-        console.error("Error posting data:", error);
+            body: method === 'POST' ? JSON.stringify(data) : undefined,
+        });
+        return response.json();
+    } catch (error) {
+        console.error("Error fetching data:", error);
         throw error;
     }
+};
+
+export const checkBackendHealth = async () => {
+    return makeBackendRequest('GET', ROUTES.health);
 }
