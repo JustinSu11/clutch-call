@@ -43,6 +43,5 @@ By default it listens on http://127.0.0.1:8000. You can change host/port via env
 
 ## Notes
 
-- NBA data: https://api.balldontlie.io
+- NBA data: nba_api
 - NFL and Soccer data: ESPN public endpoints used by their websites (no auth). These are publicly accessible JSON endpoints.
-- This backend is intentionally not wired to the frontend.
