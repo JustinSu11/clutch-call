@@ -22,12 +22,13 @@ export default function SiteHeader() {
                 </nav>
 
                 <div className="flex items-center gap-3">
+                    <ThemeToggle />
                     <Link href="/dashboard">
                         <Button className="h-10 px-5 bg-red-500 hover:bg-red-600 text-white">
                             Try Now
                         </Button>
                     </Link>
-                    <ThemeToggle />
+
                 </div>
             </div>
     </header>
