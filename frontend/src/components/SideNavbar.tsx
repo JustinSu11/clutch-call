@@ -1,8 +1,8 @@
 import { 
     Sidebar, 
+    SidebarHeader,
     SidebarContent,
     SidebarGroup,
-    SidebarGroupLabel,
     SidebarGroupContent,
     SidebarMenuItem,
     SidebarMenuButton,
@@ -25,9 +25,9 @@ const items = [
 export function SideNavbar() {
     return (
         <Sidebar>
+            <SidebarHeader>ClutchCall</SidebarHeader>
             <SidebarContent>
                 <SidebarGroup>
-                    <SidebarGroupLabel>ClutchCall</SidebarGroupLabel>
                     <SidebarGroupContent>
                         {items.map((item) => (
                             <SidebarMenuItem key = {item.title}>
