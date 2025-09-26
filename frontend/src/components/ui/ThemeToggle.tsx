@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils';
 export const ThemeToggle = () => {
     const [isDarkMode, setIsDarkMode] = useState(true);
 
+    //allow persistence of theme choice across page reloads
     useEffect(() => {
         const savedTheme = localStorage.getItem('theme');
         if (savedTheme === 'dark') {
