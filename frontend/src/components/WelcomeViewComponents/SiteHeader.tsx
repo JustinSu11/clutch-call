@@ -17,9 +17,11 @@ export default function SiteHeader() {
         </a>
 
         <nav className="hidden items-center gap-8 md:flex">
-          <Link href="/predictions" className="text-sm font-medium text-zinc-800 hover:text-red-600 transition-colors">
-            Predictions
+          <Link href='/predictions'>
+            <Button></Button>
           </Link>
+
+          <a className="text-sm font-medium text-zinc-800 hover:text-red-600 transition-colors" href="#predictions">Predictions</a>
           <a className="text-sm font-medium text-zinc-800 hover:text-red-600 transition-colors" href="#how-it-works">How it works</a>
         </nav>
 
