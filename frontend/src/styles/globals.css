@@ -73,7 +73,7 @@ Purpose: Landing page for ClutchCall, explaining what it is and its features
     }
 
     body { 
-        @apply bg-background text-primary transition-colors duration-300;
+        @apply bg-background text-primary;
         font-family: 'Inter', sans-serif;
     }
 }

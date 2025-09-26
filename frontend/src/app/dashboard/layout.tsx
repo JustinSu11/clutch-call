@@ -10,7 +10,6 @@
 */
 
 import { cookies } from 'next/headers'
-import { ThemeToggle } from '@/components/ui/ThemeToggle'
 import type { Metadata } from 'next'
 import Sidebar from '@/components/DashboardComponents/MainDashboardComponents/Sidebar'
 
@@ -28,19 +27,19 @@ export async function DashboardLayout({
     //These two variables below allow the sidebar open/close state to persist across page reloads
     const cookieStore = await cookies()
     const defaultOpen = cookieStore.get("sidebar_state")?.value === "true"
-  return (
-    <div className="relative flex size-full min-h-screen flex-col group/design-root overflow-x-hidden">
-      <div className="flex h-full grow">
-        {/* All pages under /dashboard will have this sidebar */}
-        <Sidebar />
-        {/* Main Content Area */}
-        <main className="flex-1 p-8">
-          <div className="max-w-7xl mx-auto">
-            {children}
-          </div>
-        </main>
-      </div>
-    </div>
+    return (
+        <div className="relative flex size-full min-h-screen flex-col group/design-root overflow-x-hidden">
+        <div className="flex h-full grow">
+            {/* All pages under /dashboard will have this sidebar */}
+            <Sidebar />
+            {/* Main Content Area */}
+            <main className="flex-1 p-8">
+            <div className="max-w-7xl mx-auto">
+                {children}
+            </div>
+            </main>
+        </div>
+        </div>
   )
 }
 
