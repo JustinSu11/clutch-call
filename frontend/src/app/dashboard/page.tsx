@@ -1,52 +1,25 @@
 /*
-    Created by: CJ Quintero
-    Last updated: 09/13/2025
+    File: src/app/dashboard/page.tsx 
+    Author: CJ Quintero
+    Last Updated: 09/19/2025 by CJ Quintero
 
-    This file contains the main method for the dashboard page
+    Description:
+    This file contains the content for the dashboard home page.
+    In the link, this is /dashboard and is the default dashboard page
+
+    When users navigate to a tab under the sidebar, such as /dashboard/predictions,
+    they will be directed to a different page file, but the layout.tsx file will remain the same.
+    The new page is physically located under /dashboard/predictions/page.tsx
 */
+import UpcomingMatches from "@/components/DashboardComponents/MainDashboardComponents/UpcomingMatches";
+import RecentPredictions from "@/components/DashboardComponents/MainDashboardComponents/RecentPredictions";
 
-export default function Dashboard() {
+
+export default function DashboardMain() {
   return (
     <>
-      {/* Upcoming Matches Section */}
-      <section>
-        <h2 className="text-3xl font-bold text-text-primary mb-4">Upcoming Matches</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {/* Match cards */}
-        </div>
-      </section>
-
-      {/* Recent Predictions Section */}
-      <section className="mt-12">
-        <h2 className="text-3xl font-bold text-text-primary mb-4">Recent Predictions</h2>
-        <div className="bg-background rounded-xl shadow-sm  overflow-x-auto">
-          <table className="w-full text-left">
-            <thead className="bg-secondary-background">
-              <tr>
-                <th className="px-6 py-4 text-sm font-semibold text-text-secondary uppercase tracking-wider">Match</th>
-                <th className="px-6 py-4 text-sm font-semibold text-text-secondary uppercase tracking-wider">Prediction</th>
-                <th className="px-6 py-4 text-sm font-semibold text-text-secondary uppercase tracking-wider">Result</th>
-                <th className="px-6 py-4 text-sm font-semibold text-text-secondary uppercase tracking-wider">Status</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              {/* Table rows */}
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      {/* Stats Section */}
-      <section className="mt-12">
-        <h2 className="text-3xl font-bold text-text-primary mb-4">Your Stats</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          <div className="bg-secondary-background rounded-xl shadow-sm p-6">
-            <p className="text-base font-medium text-text-secondary">Total Predictions</p>
-            <p className="text-4xl font-bold text-text-primary mt-2">150</p>
-          </div>
-          {/* Add other stat cards */}
-        </div>
-      </section>
+      <UpcomingMatches />
+      <RecentPredictions />
     </>
   );
 }
