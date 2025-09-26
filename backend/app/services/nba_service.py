@@ -4,10 +4,13 @@ Author: Maaz Haque
 Purpose: Thin service layer for NBA data using the python package `nba_api` (which
          calls stats.nba.com). Provides helpers to list games, fetch a specific
          game (summary), box score stats, team recent games, and upcoming games.
+         *** UPDATED to include AI prediction logic. ***
 """
 
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
+import pandas as pd
+import joblib
 
 from nba_api.stats.endpoints import (
     boxscoretraditionalv2,
@@ -16,6 +19,80 @@ from nba_api.stats.endpoints import (
     scoreboardv2,
     teamgamelog,
 )
+
+# --- Updated Integration ---
+
+# 1. Load the trained model once when the service starts up
+MODEL_PATH = 'models/saved_models/nba_model.pkl'
+try:
+    model = joblib.load(MODEL_PATH)
+    print("NBA prediction model loaded successfully.")
+except FileNotFoundError:
+    print(f"Error: Prediction model not found at {MODEL_PATH}")
+    model = None
+
+def predict_outcome(home_avg_pts: float, away_avg_pts: float):
+    """
+    Predicts the outcome using the loaded model.
+    This function takes the FINAL features required by the model.
+    """
+    if model is None:
+        return {"error": "Model not available. Please train the model first."}
+
+    # Create a pandas DataFrame from the input, matching the training format
+    feature_data = pd.DataFrame(
+        [[home_avg_pts, away_avg_pts]], 
+        columns=['HomeAvgPts', 'AwayAvgPts']
+    )
+
+    # Use the model to predict the outcome and probabilities
+    prediction = model.predict(feature_data)
+    prediction_proba = model.predict_proba(feature_data)
+
+    # Format the output for the user
+    winner_index = prediction[0]
+    confidence = prediction_proba[0][winner_index]
+    winner = "Home" if winner_index == 1 else "Away"
+    
+    return {
+        "predicted_winner": winner,
+        "confidence": f"{confidence * 100:.2f}%",
+        "model_features": {
+            "home_team_avg_pts_last_5": home_avg_pts,
+            "away_team_avg_pts_last_5": away_avg_pts,
+        }
+    }
+
+def generate_prediction_for_game(game_id: str):
+    """
+    Orchestrator function to generate a prediction for a given game_id.
+    It fetches necessary data, engineers features, and calls the prediction model.
+    """
+    # Step 1: Get game details to find the two teams
+    game_summary = get_game_by_id(game_id)
+    game_header = game_summary.get("GameHeader", [{}])[0]
+    home_team_id = game_header.get("HOME_TEAM_ID")
+    visitor_team_id = game_header.get("VISITOR_TEAM_ID")
+
+    if not home_team_id or not visitor_team_id:
+        return {"error": "Could not determine teams for the given game_id."}
+
+    # Step 2: Get recent stats for each team using our existing functions
+    home_team_games = get_team_last_games(home_team_id, n=5).get("data", [])
+    away_team_games = get_team_last_games(visitor_team_id, n=5).get("data", [])
+    
+    if not home_team_games or not away_team_games:
+        return {"error": "Could not fetch recent game data for one or both teams."}
+
+    # Step 3: Feature Engineering - Calculate the average points for each team
+    home_avg_pts = sum(game['pts'] for game in home_team_games) / len(home_team_games)
+    away_avg_pts = sum(game['pts'] for game in away_team_games) / len(away_team_games)
+
+    # Step 4: Call our prediction function with the engineered features
+    prediction = predict_outcome(home_avg_pts, away_avg_pts)
+    return prediction
+
+# --- Update End integration ---
 
 
 def _season_to_nba_format(season: Optional[str]) -> Optional[str]:

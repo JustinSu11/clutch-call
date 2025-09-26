@@ -4,6 +4,7 @@ Author: Maaz Haque
 Purpose: Exposes NBA endpoints using the free balldontlie API. Endpoints return JSON
          data for games, single-game details, basic box scores (via stats), a team's
          recent games, and upcoming games within a date window.
+         *** UPDATED to include AI prediction endpoint. ***
 """
 
 from flask import Blueprint, request
@@ -14,10 +15,19 @@ from ..services.nba_service import (
     get_team_last_games,
     get_upcoming_games,
     get_today_games,
+    generate_prediction_for_game,  # <--- 1. The new function
 )
 
 # Blueprint for NBA-related routes; mounted by the app factory at /api/v1/nba
 bp = Blueprint("nba", __name__)
+
+
+# --- Prediction Endpoint ---
+@bp.get("/predict/<game_id>") # <--- 2. New route
+def nba_predict_game(game_id: str):
+    """Generate a prediction for a single game by its game ID."""
+    return generate_prediction_for_game(game_id)
+# -----------------------------
 
 
 @bp.get("/games")
