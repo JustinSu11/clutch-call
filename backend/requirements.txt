@@ -1,0 +1,12 @@
+
+nba_api           # NBA-related data work 
+numpy             # AI dependency 
+pandas            # AI dependency 
+torch             # AI dependency 
+scikit-learn      # AI dependency 
+Flask             # Web framework used for route definitions
+Flask-Cors        # Enables CORS for API consumption from the frontend
+gunicorn          
+requests          # HTTP client used by service modules
+uvicorn           # ASGI server used to run the app via run_server.py
+asgiref           # Provides WSGI-to-ASGI adapter used by asgi.py
