@@ -1,3 +1,11 @@
+/*
+    File: frontend/src/app/predictions/page.tsx
+    Created: 09/29/2025 by Michael Tajchman
+    Last Updated: 09/29/2025 by Michael Tajchman
+
+    Description: This file contains the main React component for the Predictions screen of the ClutchCall web application.
+    It includes a header with navigation, a filterable list of sports, and a table displaying AI-powered match predictions.
+*/
 "use client";
 import { get } from 'http';
 import React, { useState } from 'react';
