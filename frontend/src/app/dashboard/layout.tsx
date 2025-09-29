@@ -1,15 +1,17 @@
 /*
     File: src/app/dashboard/layout.tsx 
-    Created: 09/16/2025 
     Author: CJ Quintero
 
-    Last Updated: 09/16/2025 by CJ Quintero
+    Last Updated: 09/24/2025 by Justin Nguyen
 
-    Description: This file defines the layout for the dashboard page
-
+    Description:
+    This file defines the layout for all pages under /dashboard.
+    They will share a common layout that includes a sidebar and main content area.
 */
 
+import { cookies } from 'next/headers'
 import type { Metadata } from 'next'
+import Sidebar from '@/components/DashboardComponents/MainDashboardComponents/Sidebar'
 
 export const metadata: Metadata = {
   title: 'ClutchCall - Dashboard',
@@ -17,37 +19,28 @@ export const metadata: Metadata = {
   // icon goes here eventually
 }
 
-export default function DashboardLayout({
+export async function DashboardLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  return (
-    <div className="relative flex size-full min-h-screen flex-col group/design-root overflow-x-hidden">
-      <div className="flex h-full grow">
-
-        {/* Sidebar */}
-        <aside className="flex flex-col w-64 bg-white p-6 border-r border-gray-200">
-          <div className="flex flex-col h-full">
-            <h1 className="text-2xl font-bold text-gray-900 mb-8">ClutchCall</h1>
-            <nav className="flex flex-col gap-2">
-              <a className="flex items-center gap-3 px-4 py-3 rounded-lg bg-red-100 text-red-500 font-medium" href="#">
-                <svg fill="currentColor" height="24" viewBox="0 0 256 256" width="24" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M224,115.55V208a16,16,0,0,1-16,16H168a16,16,0,0,1-16-16V168a8,8,0,0,0-8-8H112a8,8,0,0,0-8,8v40a16,16,0,0,1-16,16H48a16,16,0,0,1-16-16V115.55a16,16,0,0,1,5.17-11.78l80-75.48.11-.11a16,16,0,0,1,21.53,0,1.14,1.14,0,0,0,.11.11l80,75.48A16,16,0,0,1,224,115.55Z"></path>
-                </svg>
-                  <span>Home</span>
-              </a>
-            </nav>
-          </div>
-        </aside>
-
-        {/* Main Content Area */}
-        <main className="flex-1 p-8">
-          <div className="max-w-7xl mx-auto">
-            {children}
-          </div>
-        </main>
-      </div>
-    </div>
+    //These two variables below allow the sidebar open/close state to persist across page reloads
+    const cookieStore = await cookies()
+    const defaultOpen = cookieStore.get("sidebar_state")?.value === "true"
+    return (
+        <div className="relative flex size-full min-h-screen flex-col group/design-root overflow-x-hidden">
+        <div className="flex h-full grow">
+            {/* All pages under /dashboard will have this sidebar */}
+            <Sidebar />
+            {/* Main Content Area */}
+            <main className="flex-1 p-8">
+            <div className="max-w-7xl mx-auto">
+                {children}
+            </div>
+            </main>
+        </div>
+        </div>
   )
 }
+
+export default DashboardLayout

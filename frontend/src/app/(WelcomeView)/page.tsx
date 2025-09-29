@@ -16,7 +16,7 @@ export default function WelcomeView()
 {
   return (
     <>
-      <div className="min-h-screen flex flex-col bg-zinc-50 text-zinc-900">
+      <div className="min-h-screen bg-background text-text-primary flex flex-col">
           <main className="flex-1">
               <SiteHeader />
               <WelcomeHero />

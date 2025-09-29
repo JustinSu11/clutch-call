@@ -1,16 +1,79 @@
+/* 
+Author: Justin Nguyen
+Last Updated: 09/24/2025 by Justin Nguyen
+Purpose: Landing page for ClutchCall, explaining what it is and its features
+*/
+
 @import "tailwindcss";
 
-:root { 
-    --primary-color: #EF4444;
-    --secondary-color: #FEE2E2;
-    --background-color: #F9FAFB;
-    --text-primary: #1F2937;
-    --text-secondary: #6B7280;
-    --accent-color: #F87171;
-} 
+@theme {
+    --color-primary: var(--primary);
+    --color-secondary: var(--secondary);
+    --color-background: var(--background);
+    --color-secondary-background: var(--secondary-background);
+    --color-text-primary: var(--text-primary);
+    --color-text-secondary: var(--text-secondary);
+    --color-accent: var(--accent);
+    --color-backdrop: var(--backdrop);
 
-body { 
-    font-family: 'Inter', sans-serif;
-    background-color: var(--background-color);
-    color: var(--text-primary); 
+    /*Sidebar variables*/
+    --color-sidebar: var(--sidebar);
+    --color-sidebar-foreground: var(--sidebar-foreground);
+    --color-sidebar-primary: var(--sidebar-primary);
+    --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+    --color-sidebar-accent: var(--sidebar-accent);
+    --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+    --color-sidebar-border: var(--sidebar-border);
+    --color-sidebar-ring: var(--sidebar-ring);
+}
+
+@layer base {
+    :root {
+        --primary: #EF4444;
+        --secondary: #FEE2E2;
+        --background: #F9FAFB;
+        --secondary-background: #f5f5f5;
+        --text-primary: #1F2937;
+        --text-secondary: #6B7280;
+        --accent: #F87171;
+
+        /*Sidebar variable colors*/
+        --sidebar: hsl(0 0% 98%);
+        --sidebar-foreground: hsl(240 5.3% 26.1%);
+        --sidebar-primary: hsl(240 5.9% 10%);
+        --sidebar-primary-foreground: hsl(0 0% 98%);
+        --sidebar-accent: hsl(240 4.8% 95.9%);
+        --sidebar-accent-foreground: hsl(240 5.9% 10%);
+        --sidebar-border: hsl(220 13% 91%);
+        --sidebar-ring: hsl(217.2 91.2% 59.8%);
+    } 
+
+    .dark {
+        --primary: #e54d42;
+        --secondary: #21262d;
+        --background: #0d1117;
+        --secondary-background: #131821;
+        --text-primary: #c9d1d9;
+        --text-secondary: #8b949e;
+        --accent: #30363d;
+
+        /*Sidebar variable colors*/
+        --sidebar: hsl(240 5.9% 10%);
+        --sidebar-foreground: hsl(240 4.8% 95.9%);
+        --sidebar-primary: hsl(224.3 76.3% 48%);
+        --sidebar-primary-foreground: hsl(0 0% 100%);
+        --sidebar-accent: hsl(240 3.7% 15.9%);
+        --sidebar-accent-foreground: hsl(240 4.8% 95.9%);
+        --sidebar-border: hsl(240 3.7% 15.9%);
+        --sidebar-ring: hsl(217.2 91.2% 59.8%);
+    }
+
+    html {
+        @apply scroll-smooth;
+    }
+
+    body { 
+        @apply bg-background text-primary transition-colors duration-200;
+        font-family: 'Inter', sans-serif;
+    }
 }
