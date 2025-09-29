@@ -88,3 +88,108 @@ def get_today_games(league: str = "MLS"):
             event["league"] = league
     
     return data
+
+
+def get_live_games(leagues=None):
+    """Get currently live/active soccer games from specified leagues."""
+    if leagues is None:
+        leagues = ["MLS", "EPL", "LaLiga"]
+    
+    all_live_games = []
+    errors = {}
+    
+    for league in leagues:
+        try:
+            today = datetime.utcnow().date()
+            fmt = "%Y%m%d"
+            params = {"dates": today.strftime(fmt)}
+            data = _get(_scoreboard_url(league), params)
+            
+            if "events" in data:
+                for event in data["events"]:
+                    status = event.get("status", {})
+                    status_type = status.get("type", {}).get("name", "").lower()
+                    
+                    # Check if match is currently active
+                    if status_type in ["in-progress", "live"] or status.get("period", 0) > 0:
+                        event["league"] = league
+                        event["live"] = True
+                        all_live_games.append(event)
+                        
+        except Exception as e:
+            errors[league] = str(e)
+    
+    result = {
+        "matches": all_live_games,
+        "leagues_checked": leagues,
+        "errors": errors if errors else None
+    }
+    
+    return result
+
+
+def get_historical_games(start_date=None, end_date=None, leagues=None, team_id=None, page=1, per_page=50):
+    """Get historical soccer games with filtering options."""
+    if leagues is None:
+        leagues = ["MLS", "EPL", "LaLiga"]
+    
+    all_games = []
+    errors = {}
+    
+    for league in leagues:
+        try:
+            params = {}
+            
+            # Handle date range
+            if start_date and end_date:
+                # Convert YYYY-MM-DD to YYYYMMDD
+                start_fmt = start_date.replace("-", "")
+                end_fmt = end_date.replace("-", "")
+                params["dates"] = f"{start_fmt}-{end_fmt}"
+            else:
+                # Default to last 30 days
+                today = datetime.utcnow().date()
+                start = today - timedelta(days=30)
+                fmt = "%Y%m%d"
+                params["dates"] = f"{start.strftime(fmt)}-{today.strftime(fmt)}"
+            
+            data = _get(_scoreboard_url(league), params)
+            
+            if "events" in data:
+                for event in data["events"]:
+                    # Filter by team_id if provided
+                    if team_id:
+                        competitors = event.get("competitions", [{}])[0].get("competitors", [])
+                        team_match = any(
+                            comp.get("team", {}).get("id") == team_id 
+                            for comp in competitors
+                        )
+                        if not team_match:
+                            continue
+                    
+                    # Add historical context
+                    event["league"] = league
+                    event["historical"] = True
+                    event["stats_context"] = "Historical statistics and performance data available"
+                    all_games.append(event)
+                    
+        except Exception as e:
+            errors[league] = str(e)
+    
+    # Simple pagination
+    start_idx = (page - 1) * per_page
+    end_idx = start_idx + per_page
+    paginated_games = all_games[start_idx:end_idx]
+    
+    result = {
+        "matches": paginated_games,
+        "leagues_checked": leagues,
+        "meta": {
+            "page": page,
+            "per_page": per_page,
+            "total": len(all_games)
+        },
+        "errors": errors if errors else None
+    }
+    
+    return result

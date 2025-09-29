@@ -160,3 +160,60 @@ def get_today_games():
             }
         )
     return {"data": items}
+
+
+def get_live_games():
+    """Get currently live/active NBA games."""
+    try:
+        today = datetime.now().strftime("%m/%d/%Y")
+        scoreboard = scoreboardv2.ScoreboardV2(game_date=today)
+        data = scoreboard.get_data_frames()[0]
+        
+        if data.empty:
+            return {"data": []}
+        
+        headers = data.to_dict("records")
+        live_games = []
+        
+        for h in headers:
+            game_status = h.get("GAME_STATUS_TEXT", "").lower()
+            # Check if game is currently active
+            if any(status in game_status for status in ["qtr", "half", "ot", "live", "progress"]):
+                live_games.append({
+                    "game_id": h.get("GAME_ID"),
+                    "game_date": today,
+                    "home_team_id": h.get("HOME_TEAM_ID"),
+                    "visitor_team_id": h.get("VISITOR_TEAM_ID"),
+                    "game_status": h.get("GAME_STATUS_TEXT"),
+                    "home_score": h.get("PTS_HOME"),
+                    "visitor_score": h.get("PTS_AWAY"),
+                    "league": "NBA",
+                    "live": True
+                })
+        
+        return {"data": live_games}
+    except Exception as e:
+        return {"error": str(e), "data": []}
+
+
+def get_historical_games(start_date=None, end_date=None, season=None, team_id=None, page=1, per_page=50):
+    """Get historical NBA games with filtering options."""
+    try:
+        # Use get_games with appropriate filters
+        if season:
+            season_fmt = _season_to_nba_format(season)
+            data = get_games(season=season_fmt, team_id=team_id, page=page, per_page=per_page)
+        else:
+            # For date range queries, we'll use a basic approach
+            # In a real implementation, you'd want more sophisticated date filtering
+            data = get_games(team_id=team_id, page=page, per_page=per_page)
+        
+        # Add historical context to the response
+        if isinstance(data, dict) and "data" in data:
+            for game in data["data"]:
+                game["historical"] = True
+                game["stats_context"] = "Historical statistics and performance data available"
+        
+        return data
+    except Exception as e:
+        return {"error": str(e), "data": [], "meta": {"page": page, "per_page": per_page, "total": 0}}
