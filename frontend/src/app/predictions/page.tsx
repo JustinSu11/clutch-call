@@ -1,21 +1,30 @@
 "use client";
-import { get } from 'http';
 import React, { useState } from 'react';
 
 // --- Main App Component ---
 
 export default function PredictionsScreen() {
     // --- State Management ---
-    // Example sports list - this would come from your backend
-    const sports = ['All Sports', 'NFL', 'NBA', 'MLS'];
+    // --- Types ---
+    type SportKey = 'All Sports' | 'NFL' | 'NBA' | 'MLS';
     
+    // Example sports list - this would come from your backend
+    const sports: SportKey[] = ['All Sports', 'NFL', 'NBA', 'MLS'];
+    type Prediction = {
+        id: number;
+        match: string;
+        prediction: string;
+        confidence: number;
+        analysis: string;
+    };
+
     // State to keep track of the currently selected sport filter
-    const [activeSport, setActiveSport] = useState('NFL');
+    const [activeSport, setActiveSport] = useState<SportKey>('NFL');
 
     // --- Sample Data ---
     // This is example data. In a real application, you would fetch this from your backend API
     // based on the `activeSport` filter.
-    const predictionsData = {
+    const predictionsData: Record<SportKey, Prediction[]> = {
         'NFL': [
             { id: 1, match: 'Lions vs. Tigers', prediction: 'Lions to win', confidence: 75, analysis: 'AI analysis suggests Lions have a strong offensive lineup and a solid defense.' },
             { id: 2, match: 'Bears vs. Wolves', prediction: 'Bears to win', confidence: 60, analysis: 'AI analysis indicates a close match, but Bears have a slight edge due to recent performance.' },
@@ -37,15 +46,15 @@ export default function PredictionsScreen() {
 
     // Dynamically get the predictions for the currently active sport
     // If 'All Sports' is selected, we'll flatten all predictions into one list.
-    const currentPredictions = activeSport === 'All Sports' 
-        ? Object.values(predictionsData).flat().filter(p => p.id) // Filter out the empty 'All Sports' array
+    const currentPredictions: Prediction[] = activeSport === 'All Sports'
+        ? Object.values(predictionsData).flat().filter((p): p is Prediction => !!p && typeof p.id === 'number')
         : predictionsData[activeSport] || [];
 
 
 // --- Helper Functions ---
 
 // Determines a blended color for the confidence bar
-const getConfidenceStyle = (confidence) => {
+const getConfidenceStyle = (confidence: number) => {
   // Clamp the confidence value between 0 and 100
   const clampedConfidence = Math.max(0, Math.min(100, confidence));
 
@@ -53,9 +62,9 @@ const getConfidenceStyle = (confidence) => {
   const hue = (clampedConfidence / 100) * 100;
   
   // Return an object suitable for an inline style prop in React
-  return { 
-    backgroundColor: `hsl(${hue}, 90%, 45%)` 
-  };``
+    return {
+        backgroundColor: `hsl(${hue}, 90%, 45%)`
+    };
 };
 
     return (
@@ -142,7 +151,7 @@ const getConfidenceStyle = (confidence) => {
                                     ))
                                 ) : (
                                     <tr>
-                                        <td colSpan="4" className="text-center py-10 text-gray-500">
+                                        <td colSpan={4} className="text-center py-10 text-gray-500">
                                             No predictions available for {activeSport}.
                                         </td>
                                     </tr>
