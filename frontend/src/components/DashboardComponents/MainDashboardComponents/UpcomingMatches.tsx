@@ -15,7 +15,7 @@ export default function UpcomingMatches() {
         <div>
             {/* Upcoming Matches Section */}
             <section>
-                <h2 className="text-3xl font-bold text-gray-900 mb-4">Upcoming Matches</h2>
+                <h2 className="text-3xl font-bold text-text-primary mb-4">Upcoming Matches</h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                     {/* Match cards go here */}
                 </div>

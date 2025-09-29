@@ -17,15 +17,15 @@ export default function FeatureCard({
     description: string;
 }) {
     return (
-        <Card className="border-zinc-200 shadow-sm">
+        <Card className="bg-secondary-background shadow-sm">
             <CardHeader className="flex flex-col items-center text-center">
-                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-red-100 mb-4">
+                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-secondary mb-4">
                     {icon}
                 </div>
                 <CardTitle className="text-xl">{title}</CardTitle>
             </CardHeader>
             <CardContent>
-                <p className="text-zinc-600 text-base text-center leading-relaxed">{description}</p>
+                <p className="text-text-secondary text-base text-center leading-relaxed">{description}</p>
             </CardContent>
         </Card>
     )
