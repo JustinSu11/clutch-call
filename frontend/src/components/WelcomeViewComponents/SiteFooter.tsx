@@ -8,7 +8,7 @@ import FooterLink from "@/components/WelcomeViewComponents/FooterLink"
 
 export default function SiteFooter() {
     return (
-        <footer className="bg-white">
+        <footer className="bg-background">
             <div className="container mx-auto px-6 py-10">
                 <div className="flex flex-col items-center gap-6 md:flex-row md:justify-center md:gap-10">
                     <FooterLink href="#">Privacy Policy</FooterLink>

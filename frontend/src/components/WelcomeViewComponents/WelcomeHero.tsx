@@ -4,7 +4,7 @@ Last updated: 09/08/2025
 Purpose: Hero section for landing page with a quick description of the app 
 */
 
-import { Button } from "@/components/WelcomeViewComponents/button"
+import { Button } from "@/components/ui/button"
 import * as React from "react"
 
 export default function WelcomeHero() {
