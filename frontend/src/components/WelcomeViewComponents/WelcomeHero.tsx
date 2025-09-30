@@ -4,6 +4,7 @@ Last updated: 09/08/2025
 Purpose: Hero section for landing page with a quick description of the app 
 */
 
+import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import * as React from "react"
 
@@ -28,9 +29,11 @@ export default function WelcomeHero() {
                     ClutchCall uses AI to predict sports match outcomes, giving you an edge in understanding game dynamics and potential results.
                 </p>
                 <div className="mt-8 flex justify-center">
-                    <Button size="lg" className="h-14 px-8 bg-red-500 hover:bg-red-600 cursor-pointer">
-                        Explore Predictions
-                    </Button>
+                    <Link href="user/predictions">
+                        <Button size="lg" className="h-14 px-8 bg-red-500 hover:bg-red-600 cursor-pointer">
+                            Explore Predictions
+                        </Button>
+                    </Link>
                 </div>
             </div>
         </section>

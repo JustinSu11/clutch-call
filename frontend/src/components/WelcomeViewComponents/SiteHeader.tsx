@@ -17,13 +17,13 @@ export default function SiteHeader() {
                 </a>
 
                 <nav className="hidden items-center gap-8 md:flex">
-                    <a className="text-sm font-medium text-text-primary hover:text-primary transition-colors" href='/predictions'>Predictions</a>
+                    <a className="text-sm font-medium text-text-primary hover:text-primary transition-colors" href='/user/predictions'>Predictions</a>
                     <a className="text-sm font-medium text-text-primary hover:text-primary transition-colors" href="#how-it-works">How it works</a>
                 </nav>
 
                 <div className="flex items-center gap-3">
                     <ThemeToggle />
-                    <Link href="/dashboard">
+                    <Link href="/user/dashboard">
                         <Button className="h-10 px-5 bg-red-500 hover:bg-red-600 text-white">
                             Try Now
                         </Button>
