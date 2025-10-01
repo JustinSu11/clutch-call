@@ -158,7 +158,7 @@ const PredictionRow: React.FC<{ item: Prediction }> = ({ item }) => (
             <div className="text-md font-medium text-text-primary">{item.match}</div>
         </td>
         <td className="px-6 py-4 whitespace-nowrap">
-            <div className="ttext-md font-medium text-text-primary">{item.prediction}</div>
+            <div className="text-md font-medium text-text-primary">{item.prediction}</div>
         </td>
         <td className="px-6 py-4 whitespace-nowrap">
             <div className="flex items-center">
