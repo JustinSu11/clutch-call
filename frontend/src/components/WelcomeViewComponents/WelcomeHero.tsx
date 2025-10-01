@@ -29,7 +29,7 @@ export default function WelcomeHero() {
                     ClutchCall uses AI to predict sports match outcomes, giving you an edge in understanding game dynamics and potential results.
                 </p>
                 <div className="mt-8 flex justify-center">
-                    <Link href="user/predictions">
+                    <Link href="/predictions">
                         <Button size="lg" className="h-14 px-8 bg-red-500 hover:bg-red-600 cursor-pointer">
                             Explore Predictions
                         </Button>

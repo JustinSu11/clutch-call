@@ -29,12 +29,12 @@ export default function Sidebar() {
                     <h1 className="flex justify-center text-4xl font-bold text-text-primary mb-8">ClutchCall</h1>
                     {/* <nav> groups links together */}
                     <nav className="flex flex-col gap-2">
-                        <a className="flex items-center gap-3 px-4 py-3 rounded-lg bg-secondary text-primary font-medium" href="/user/dashboard">
+                        <a className="flex items-center gap-3 px-4 py-3 rounded-lg bg-secondary text-primary font-medium" href="/dashboard">
                             <Home />
                             {/* The text label for the tab */}
                             <span>Home</span>
                         </a>
-                        <a className="flex items-center gap-3 px-4 py-3 rounded-lg bg-secondary text-primary font-medium" href="/user/predictions">
+                        <a className="flex items-center gap-3 px-4 py-3 rounded-lg bg-secondary text-primary font-medium" href="/predictions">
                             <Target />
                             <span>Predictions</span>
                         </a>
