@@ -10,7 +10,7 @@
 import React, { useState, useEffect } from 'react';
 import { parseUpcomingNFLGames } from '@/utils/nfl_parser';
 //import { parseUpcomingNBAGames } from '@/utils/nba_parser';
-//import { parseUpcomingMLSGames } from '@/utils/mls_parser';
+import { parseUpcomingMLSGames } from '@/utils/mls_parser';
 
 // declare data types
 type SportKey = 'All Sports' | 'NFL' | 'NBA' | 'MLS';
@@ -47,6 +47,26 @@ const buildNFLPredictions = async (): Promise<Prediction[]> => {
         sport: 'NFL'
     }));
 };
+
+const buildMLSPredictions = async (): Promise<Prediction[]> => {
+    /*
+        buildMLSPredictions:
+        This method builds a list of Prediction objects for upcoming MLS games.
+
+        returns:
+            predictions: an array of Prediction objects for each upcoming MLS game
+    */
+    const upcomingMLSGames = await parseUpcomingMLSGames();
+
+    // map each game to a Prediction object
+    return upcomingMLSGames.map((game) => ({
+        match: `${game.awayTeam} at ${game.homeTeam}`,
+        prediction: "Mexico wins world cup",
+        confidence: 10,
+        analysis: "we will fill this later",
+        sport: 'MLS'
+    }));
+}
 
 
 
@@ -155,7 +175,7 @@ export default function PredictionsScreen() {
         Promise.all([
             buildNFLPredictions(),
             // buildNBAPredictions(),
-            // buildMLSPredictions(),
+            buildMLSPredictions(),
         ])
             .then(results => setPredictions(results.flat()))
             .catch(() => setError('Failed to fetch predictions'))
