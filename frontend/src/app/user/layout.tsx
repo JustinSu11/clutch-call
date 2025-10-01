@@ -1,5 +1,5 @@
 /*
-    File: src/app/dashboard/layout.tsx 
+    File: src/app/user/layout.tsx 
     Author: CJ Quintero
 
     Last Updated: 09/24/2025 by Justin Nguyen
