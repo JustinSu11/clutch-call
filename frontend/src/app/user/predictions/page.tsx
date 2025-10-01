@@ -9,7 +9,7 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import { parseUpcomingNFLGames } from '@/utils/nfl_parser';
-//import { parseUpcomingNBAGames } from '@/utils/nba_parser';
+import { parseUpcomingNBAGames } from '@/utils/nba_parser';
 import { parseUpcomingMLSGames } from '@/utils/mls_parser';
 
 // declare data types
@@ -68,7 +68,25 @@ const buildMLSPredictions = async (): Promise<Prediction[]> => {
     }));
 }
 
+const buildNBAPredictions = async (): Promise<Prediction[]> => {
+    /*
+        buildNBAPredictions:
+        This method builds a list of Prediction objects for upcoming NBA games.
 
+        returns:
+            predictions: an array of Prediction objects for each upcoming NBA game
+    */
+    const upcomingNBAGames = await parseUpcomingNBAGames();
+
+    // map each game to a Prediction object
+    return upcomingNBAGames.map((game) => ({
+        match: `${game.awayTeam} at ${game.homeTeam}`,
+        prediction: "SPURS FOR THE WIN",
+        confidence: 50,
+        analysis: "to be determined later",
+        sport: 'NBA'
+    }));
+}
 
 const getConfidenceStyle = (confidence: number) => {
     /* 
@@ -174,7 +192,7 @@ export default function PredictionsScreen() {
 
         Promise.all([
             buildNFLPredictions(),
-            // buildNBAPredictions(),
+            //buildNBAPredictions(),
             buildMLSPredictions(),
         ])
             .then(results => setPredictions(results.flat()))
