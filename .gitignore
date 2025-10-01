@@ -42,3 +42,10 @@ yarn-error.log*
 next-env.d.ts
 
 *.pyc
+*.pyo
+*.pyd
+
+*.pyc
+*.pyo
+*.pyd
+*.pyc
