@@ -29,7 +29,7 @@ export const parseUpcomingMLSGames = async () => {
     const responseData = await mls_methods.getUpcomingSoccerMatches();
 
     // parse major header
-    const events = responseData["events"]
+    const events = responseData["events"];
 
     // declare the Game type
     // each game will have a home team and an away team
