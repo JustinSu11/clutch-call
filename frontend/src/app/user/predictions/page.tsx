@@ -7,8 +7,11 @@
     It includes a header with navigation, a filterable list of sports, and a table displaying AI-powered match predictions.
 */
 "use client";
-import React, { useState, } from 'react';
+import React, { useState, useEffect } from 'react';
 import { parseUpcomingNFLGames } from '@/utils/nfl_parser';
+//import { parseUpcomingNBAGames } from '@/utils/nba_parser';
+//import { parseUpcomingMLSGames } from '@/utils/mls_parser';
+import { parse } from 'path';
 
 // declare data types
 type SportKey = 'All Sports' | 'NFL' | 'NBA' | 'MLS';
@@ -25,6 +28,21 @@ type Prediction = {
     confidence: number;
     analysis: string;
 };
+
+const buildNFLPredictions = async (): Promise<Prediction[]> => {
+    const upcomingNFLGames = await parseUpcomingNFLGames();
+
+    // map each game to a Prediction object
+    return upcomingNFLGames.map((game, idx) => ({
+        id: idx,
+        match: `${game.awayTeam} at ${game.homeTeam}`,
+        prediction: "Cowboys win superbowl",
+        confidence: 100,
+        analysis: "LOL"
+    }));
+};
+
+
 
 const getConfidenceStyle = (confidence: number) => {
     /* 
@@ -43,6 +61,7 @@ const getConfidenceStyle = (confidence: number) => {
     const hue = (clampedConfidence / 100) * 100;
     return { backgroundColor: `hsl(${hue}, 90%, 45%)` };
 };
+
 
 // --- Components ---
 const SportsFilter: React.FC<{
@@ -118,24 +137,14 @@ const PredictionRow: React.FC<{ item: Prediction }> = ({ item }) => (
 export default function PredictionsScreen() {
     const sports: SportKey[] = ['All Sports', 'NFL', 'NBA', 'MLS'];
     const [activeSport, setActiveSport] = useState<SportKey>('NFL');
+    const [predictions, setPredictions] = useState<Prediction[]>([]);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
-
-    const predictionsData: Record<SportKey, Prediction[]> = {
-        'NFL': [
-            // ...sample data...
-        ],
-        'NBA': [
-            // ...sample data...
-        ],
-        'MLS': [
-            // ...sample data...
-        ],
-        'All Sports': [],
-    };
-
-    const currentPredictions: Prediction[] = activeSport === 'All Sports'
-        ? Object.values(predictionsData).flat().filter((p): p is Prediction => !!p && typeof p.id === 'number')
-        : predictionsData[activeSport] || [];
+    // In an async context, e.g. useEffect:
+    useEffect(() => {
+        buildNFLPredictions().then(setPredictions);
+    }, []);
 
     return (
         <div className="bg-gray-50 min-h-screen font-sans">
@@ -161,8 +170,20 @@ export default function PredictionsScreen() {
                                 </tr>
                             </thead>
                             <tbody className="bg-white divide-y divide-gray-200">
-                                {currentPredictions.length > 0 ? (
-                                    currentPredictions.map((item) => (
+                                {loading ? (
+                                    <tr>
+                                        <td colSpan={4} className="text-center py-10 text-gray-500">
+                                            Loading predictions...
+                                        </td>
+                                    </tr>
+                                ) : error ? (
+                                    <tr>
+                                        <td colSpan={4} className="text-center py-10 text-red-500">
+                                            {error}
+                                        </td>
+                                    </tr>
+                                ) : predictions.length > 0 ? (
+                                    predictions.map((item) => (
                                         <PredictionRow key={item.id} item={item} />
                                     ))
                                 ) : (
