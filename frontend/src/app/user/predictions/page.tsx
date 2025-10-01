@@ -22,7 +22,6 @@ type Game = {
 };
 
 type Prediction = {
-    id: number;
     match: string;
     prediction: string;
     confidence: number;
@@ -33,8 +32,7 @@ const buildNFLPredictions = async (): Promise<Prediction[]> => {
     const upcomingNFLGames = await parseUpcomingNFLGames();
 
     // map each game to a Prediction object
-    return upcomingNFLGames.map((game, idx) => ({
-        id: idx,
+    return upcomingNFLGames.map((game) => ({
         match: `${game.awayTeam} at ${game.homeTeam}`,
         prediction: "Cowboys win superbowl",
         confidence: 100,
@@ -183,8 +181,8 @@ export default function PredictionsScreen() {
                                         </td>
                                     </tr>
                                 ) : predictions.length > 0 ? (
-                                    predictions.map((item) => (
-                                        <PredictionRow key={item.id} item={item} />
+                                    predictions.map((item, idx) => (
+                                        <PredictionRow key={idx} item={item} />
                                     ))
                                 ) : (
                                     <tr>
