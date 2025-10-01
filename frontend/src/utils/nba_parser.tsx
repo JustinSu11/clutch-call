@@ -5,7 +5,7 @@
 
     Description: This file contains methods 
     to parse each response from the nba backend methods provided
-    in frontend/src/backend_methods/nb_methods.tsx
+    in frontend/src/backend_methods/nba_methods.tsx
 
     NOTE:: The response is already validated and parsed into 
     an object by the backend method. We just need to call the backend method here
@@ -55,8 +55,7 @@ export const parseUpcomingNBAGames = async () => {
         // sanity check to ensure the extracted team names match the official game name
         // ex) "awayTeam at homeTeam" such as "Dallas Cowboys at New York Jets"
         if (`${awayTeam} at ${homeTeam}` !== officialGameName) {
-            console.warn(`${awayTeam} at ${homeTeam} does not equal the official game name.
-            officialGameName = ${officialGameName} `);
+            console.warn(`${awayTeam} at ${homeTeam} does not equal the official game name. officialGameName = ${officialGameName}`);
         }
 
         return { homeTeam, awayTeam };

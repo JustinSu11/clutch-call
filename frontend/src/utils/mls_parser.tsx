@@ -52,8 +52,7 @@ export const parseUpcomingMLSGames = async () => {
         // sanity check to ensure the extracted team names match the official game name
         // ex) "awayTeam at homeTeam" such as "Dallas Cowboys at New York Jets"
         if (`${awayTeam} at ${homeTeam}` !== officialGameName) {
-            console.warn(`${awayTeam} at ${homeTeam} does not equal the official game name.
-            officialGameName = ${officialGameName} `);
+            console.warn(`${awayTeam} at ${homeTeam} does not equal the official game name. officialGameName = ${officialGameName}`);
         }
 
         return { homeTeam, awayTeam };
