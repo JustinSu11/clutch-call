@@ -5,7 +5,7 @@
 
     Description: This file contains methods 
     to parse each response from the nba backend methods provided
-    in frontend/src/backend_methods/nb_methods.tsx
+    in frontend/src/backend_methods/nba_methods.tsx
 
     NOTE:: The response is already validated and parsed into 
     an object by the backend method. We just need to call the backend method here
