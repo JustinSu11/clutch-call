@@ -41,9 +41,9 @@ const buildNFLPredictions = async (): Promise<Prediction[]> => {
     // map each game to a Prediction object
     return upcomingNFLGames.map((game) => ({
         match: `${game.awayTeam} at ${game.homeTeam}`,
-        prediction: "Cowboys win superbowl",
-        confidence: 100,
-        analysis: "LOL",
+        prediction: `${game.homeTeam} predicted to win`,
+        confidence: 60,
+        analysis: `Based on recent performance and home field advantage, ${game.homeTeam} is favored over ${game.awayTeam}.`,
         sport: 'NFL'
     }));
 };
