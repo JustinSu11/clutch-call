@@ -206,12 +206,12 @@ export default function PredictionsScreen() {
     : predictions.filter(p => p.sport === activeSport);
 
     return (
-        <div className="bg-background rounded-xl shadow-sm overflow-x-auto">
+        <div className="overflow-x-auto">
             {/* Header Navigation */}
-            <header className="bg-secondary-background">
+            <header className="">
                 {/* ...header code... */}
             </header>
-            <main className="bg-secondary-background">
+            <main className="">
                 <div className="mb-8">
                     <h2 className="text-3xl font-bold text-text-primary mb-4">Match Predictions</h2>
                     <p className="text-text-primary mb-4">AI-powered predictions for upcoming sports matches.</p>
@@ -220,7 +220,7 @@ export default function PredictionsScreen() {
                 <div className="bg-white shadow-md rounded-lg overflow-hidden">
                     <div className="overflow-x-auto">
                         <table className="min-w-full divide-y divide-gray-200">
-                            <thead className="bg-gray-50">
+                            <thead className="bg-secondary-background rounded-xl shadow-sm">
                                 <tr>
                                     <th className="px-6 py-4 text-sm font-semibold text-text-secondary uppercase tracking-wider">Match</th>
                                     <th className="px-6 py-4 text-sm font-semibold text-text-secondary uppercase tracking-wider">Prediction</th>
