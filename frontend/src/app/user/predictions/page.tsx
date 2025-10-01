@@ -1,7 +1,7 @@
 /*
     File: frontend/src/app/predictions/page.tsx
     Created: 09/29/2025 by Michael Tajchman
-    Last Updated: 09/29/2025 by Michael Tajchman
+    Last Updated: 09/30/2025 by CJ Quintero
 
     Description: This file contains the main React component for the Predictions screen of the ClutchCall web application.
     It includes a header with navigation, a filterable list of sports, and a table displaying AI-powered match predictions.
@@ -11,7 +11,6 @@ import React, { useState, useEffect } from 'react';
 import { parseUpcomingNFLGames } from '@/utils/nfl_parser';
 //import { parseUpcomingNBAGames } from '@/utils/nba_parser';
 //import { parseUpcomingMLSGames } from '@/utils/mls_parser';
-import { parse } from 'path';
 
 // declare data types
 type SportKey = 'All Sports' | 'NFL' | 'NBA' | 'MLS';
@@ -22,13 +21,21 @@ type Game = {
 };
 
 type Prediction = {
-    match: string;
-    prediction: string;
-    confidence: number;
-    analysis: string;
+    match: string;          // gets built from homeTeam and awayTeam 
+    prediction: string;     // the eventual prediction text
+    confidence: number;     // a number between 0 and 100 showing how confident the AI prediction is
+    analysis: string;       // the AI explanation for the prediction
+    sport: SportKey;        // the sport this prediction belongs to used for filtering (NFL, NBA, MLS)
 };
 
 const buildNFLPredictions = async (): Promise<Prediction[]> => {
+    /*
+        buildNFLPredictions:
+        This method builds a list of Prediction objects for upcoming NFL games.
+
+        returns:
+            predictions: an array of Prediction objects for each upcoming NFL game
+    */
     const upcomingNFLGames = await parseUpcomingNFLGames();
 
     // map each game to a Prediction object
@@ -36,7 +43,8 @@ const buildNFLPredictions = async (): Promise<Prediction[]> => {
         match: `${game.awayTeam} at ${game.homeTeam}`,
         prediction: "Cowboys win superbowl",
         confidence: 100,
-        analysis: "LOL"
+        analysis: "LOL",
+        sport: 'NFL'
     }));
 };
 
@@ -139,10 +147,25 @@ export default function PredictionsScreen() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    // In an async context, e.g. useEffect:
+    // on component mount, fetch predictions for all sports
     useEffect(() => {
-        buildNFLPredictions().then(setPredictions);
+        setLoading(true);
+        setError(null);
+
+        Promise.all([
+            buildNFLPredictions(),
+            // buildNBAPredictions(),
+            // buildMLSPredictions(),
+        ])
+            .then(results => setPredictions(results.flat()))
+            .catch(() => setError('Failed to fetch predictions'))
+            .finally(() => setLoading(false));
     }, []);
+
+    // filter predictions based on activeSport
+    const filteredPredictions = activeSport === 'All Sports'
+    ? predictions
+    : predictions.filter(p => p.sport === activeSport);
 
     return (
         <div className="bg-gray-50 min-h-screen font-sans">
@@ -180,8 +203,8 @@ export default function PredictionsScreen() {
                                             {error}
                                         </td>
                                     </tr>
-                                ) : predictions.length > 0 ? (
-                                    predictions.map((item, idx) => (
+                                ) : filteredPredictions.length > 0 ? (
+                                    filteredPredictions.map((item, idx) => (
                                         <PredictionRow key={idx} item={item} />
                                     ))
                                 ) : (
