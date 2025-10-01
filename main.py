@@ -6,11 +6,12 @@ FastAPI application providing REST endpoints for EPL match prediction and team d
 from contextlib import asynccontextmanager
 from difflib import get_close_matches
 
+import pandas as pd
 from fastapi import FastAPI, HTTPException, Query
 
 from config import SEASONS
 from exceptions import APIError, DataError
-from models import RatesResponse, TeamsResponse, CanonicalizeResponse, InfoResponse
+from models import RatesResponse, TeamsResponse, CanonicalizeResponse, InfoResponse, UpcomingMatchesResponse, UpcomingMatch
 from predictor import build_model
 
 
@@ -89,6 +90,33 @@ def predict(
         raise HTTPException(status_code=502, detail=str(e))
     except DataError as e:
         raise HTTPException(status_code=422, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Unexpected error: {e}")
+
+
+@app.get("/upcoming", response_model=UpcomingMatchesResponse)
+def get_upcoming_matches(season: int = Query(None, description="Season year (defaults to current season)")):
+    try:
+        p = app.state.predictor
+        if p is None:
+            raise HTTPException(status_code=503, detail="Model not ready")
+        
+        upcoming_df = p.fetch_upcoming_matches(season)
+        matches = []
+        
+        for _, row in upcoming_df.iterrows():
+            match = UpcomingMatch(
+                match_id=int(row['match_id']),
+                date=row['date'].isoformat(),
+                matchday=int(row['matchday']) if pd.notna(row['matchday']) else None,
+                home_team=row['home_team'],
+                away_team=row['away_team']
+            )
+            matches.append(match)
+        
+        return UpcomingMatchesResponse(matches=matches)
+    except APIError as e:
+        raise HTTPException(status_code=502, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Unexpected error: {e}")
 

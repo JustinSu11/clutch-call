@@ -59,6 +59,12 @@ curl "http://localhost:8000/predict?home=Arsenal&away=Chelsea"
 
 # With team aliases
 curl "http://localhost:8000/predict?home=spurs&away=man%20city"
+
+# Get upcoming matches
+curl "http://localhost:8000/upcoming"
+
+# Get upcoming matches for specific season
+curl "http://localhost:8000/upcoming?season=2024"
 ```
 
 ## File Structure (for team reference)
@@ -118,6 +124,7 @@ pip list
 | `/docs` | Interactive API docs | Open in browser |
 | `/teams` | List all team names | `GET /teams` |
 | `/predict` | Get match predictions | `GET /predict?home=Arsenal&away=Chelsea` |
+| `/upcoming` | Get upcoming scheduled matches | `GET /upcoming?season=2024` |
 
 ## Team Notes
 

@@ -100,6 +100,41 @@ class EPLPredictor:
         self.matches_df = df.sort_values('date').reset_index(drop=True)
         return self.matches_df
 
+    def fetch_upcoming_matches(self, season: int = None) -> pd.DataFrame:
+        if season is None:
+            season = max(SEASONS)
+        
+        url = f"{BASE_URL}/competitions/PL/matches"
+        params = {'season': season, 'status': 'SCHEDULED'}
+        r = requests.get(url, headers=self.headers, params=params, timeout=REQUEST_TIMEOUT)
+        
+        if r.status_code == 403:
+            raise APIError("football-data.org: 403 (invalid key / plan).")
+        if r.status_code == 429:
+            raise APIError("football-data.org: 429 (rate limit).")
+        if r.status_code == 404:
+            return pd.DataFrame([])
+        
+        r.raise_for_status()
+        data = r.json()
+        rows = []
+        
+        for m in data.get('matches', []):
+            rows.append({
+                'match_id': m['id'],
+                'date': m['utcDate'],
+                'matchday': m.get('matchday'),
+                'home_team': m['homeTeam']['name'],
+                'away_team': m['awayTeam']['name'],
+            })
+        
+        df = pd.DataFrame(rows)
+        if not df.empty:
+            df['date'] = pd.to_datetime(df['date'])
+            df = df.sort_values('date').reset_index(drop=True)
+        
+        return df
+
     def create_features(self, min_history_matches: int = MIN_HISTORY_MATCHES) -> pd.DataFrame:
         if self.matches_df is None or self.matches_df.empty:
             raise DataError("No matches to featurize.")
