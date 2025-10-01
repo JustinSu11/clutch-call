@@ -7,10 +7,15 @@
     It includes a header with navigation, a filterable list of sports, and a table displaying AI-powered match predictions.
 */
 "use client";
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { parseUpcomingNFLGames } from '@/utils/nfl_parser';
+
+// temp
+parseUpcomingNFLGames(); // Initial call to parse NFL games
+
+
 
 // --- Main App Component ---
-
 export default function PredictionsScreen() {
     // --- State Management ---
     // --- Types ---
