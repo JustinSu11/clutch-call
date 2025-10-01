@@ -29,7 +29,7 @@ export const parseUpcomingNFLGames = async () => {
     const responseData = await nfl_methods.getUpcomingNFLGames();
 
     // parse major header
-    const events = responseData["events"]
+    const events = responseData["events"];
 
     // declare the Game type
     // each game will have a home team and an away team
