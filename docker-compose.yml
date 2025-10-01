@@ -1,0 +1,44 @@
+name: clutch-call
+services:
+  backend:
+    build:
+      context: ./backend
+    image: clutch-call-backend:latest
+    environment:
+      - HOST=0.0.0.0
+      - PORT=8000
+      - API_PREFIX=/api/v1
+      - CORS_ORIGINS=http://localhost:3000,http://frontend:3000
+    ports:
+      - "8000:8000"
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request,sys; sys.exit(0) if urllib.request.urlopen('http://localhost:8000/').status==200 else sys.exit(1)\""]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+    networks:
+      - appnet
+
+  frontend:
+    build:
+      context: ./frontend
+      target: dev
+    image: clutch-call-frontend:dev
+    environment:
+      - NODE_ENV=development
+      - PORT=3000
+      - HOSTNAME=0.0.0.0
+      - NEXT_PUBLIC_API_BASE_URL=http://backend:8000/api/v1
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    networks:
+      - appnet
+
+networks:
+  appnet:
+    driver: bridge
