@@ -11,6 +11,7 @@ from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
 import pandas as pd
 import joblib
+import os
 
 from nba_api.stats.endpoints import (
     boxscoretraditionalv2,
@@ -23,7 +24,9 @@ from nba_api.stats.endpoints import (
 # --- Updated Integration ---
 
 # 1. Load the trained model once when the service starts up
-MODEL_PATH = 'models/saved_models/nba_model.pkl'
+# Use a robust path to ensure the model is found correctly
+MODEL_PATH = os.path.join(os.path.dirname(__file__), '../../models/saved_models/nba_model.pkl')
+
 try:
     model = joblib.load(MODEL_PATH)
     print("NBA prediction model loaded successfully.")
@@ -68,29 +71,35 @@ def generate_prediction_for_game(game_id: str):
     Orchestrator function to generate a prediction for a given game_id.
     It fetches necessary data, engineers features, and calls the prediction model.
     """
-    # Step 1: Get game details to find the two teams
-    game_summary = get_game_by_id(game_id)
-    game_header = game_summary.get("GameHeader", [{}])[0]
-    home_team_id = game_header.get("HOME_TEAM_ID")
-    visitor_team_id = game_header.get("VISITOR_TEAM_ID")
+    # Wrap the entire logic in a try-except block for robustness
+    try:
+        # Step 1: Get game details to find the two teams
+        game_summary = get_game_by_id(game_id)
+        game_header = game_summary.get("GameHeader", [{}])[0]
+        home_team_id = game_header.get("HOME_TEAM_ID")
+        visitor_team_id = game_header.get("VISITOR_TEAM_ID")
 
-    if not home_team_id or not visitor_team_id:
-        return {"error": "Could not determine teams for the given game_id."}
+        if not home_team_id or not visitor_team_id:
+            return {"error": "Could not determine teams for the given game_id."}
 
-    # Step 2: Get recent stats for each team using our existing functions
-    home_team_games = get_team_last_games(home_team_id, n=5).get("data", [])
-    away_team_games = get_team_last_games(visitor_team_id, n=5).get("data", [])
+        # Step 2: Get recent stats for each team using our existing functions
+        home_team_games = get_team_last_games(home_team_id, n=5).get("data", [])
+        away_team_games = get_team_last_games(visitor_team_id, n=5).get("data", [])
+        
+        if not home_team_games or not away_team_games:
+            return {"error": "Could not fetch recent game data for one or both teams."}
+
+        # Step 3: Feature Engineering - Calculate the average points for each team
+        home_avg_pts = sum(game['pts'] for game in home_team_games) / len(home_team_games)
+        away_avg_pts = sum(game['pts'] for game in away_team_games) / len(away_team_games)
+
+        # Step 4: Call our prediction function with the engineered features
+        prediction = predict_outcome(home_avg_pts, away_avg_pts)
+        return prediction
     
-    if not home_team_games or not away_team_games:
-        return {"error": "Could not fetch recent game data for one or both teams."}
-
-    # Step 3: Feature Engineering - Calculate the average points for each team
-    home_avg_pts = sum(game['pts'] for game in home_team_games) / len(home_team_games)
-    away_avg_pts = sum(game['pts'] for game in away_team_games) / len(away_team_games)
-
-    # Step 4: Call our prediction function with the engineered features
-    prediction = predict_outcome(home_avg_pts, away_avg_pts)
-    return prediction
+    except Exception as e:
+        # If any part of the process fails (e.g., NBA API is down), return a clean error
+        return {"error": "Failed to generate prediction due to an internal error.", "details": str(e)}
 
 # --- Update End integration ---
 
