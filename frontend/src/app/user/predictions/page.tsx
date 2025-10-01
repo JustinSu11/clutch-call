@@ -11,7 +11,6 @@ import React, { useState, useEffect } from 'react';
 import { parseUpcomingNFLGames } from '@/utils/nfl_parser';
 import { parseUpcomingNBAGames } from '@/utils/nba_parser';
 import { parseUpcomingMLSGames } from '@/utils/mls_parser';
-import ThemeToggle from "@/components/ThemeToggle";
 
 // declare data types
 type SportKey = 'All Sports' | 'NFL' | 'NBA' | 'MLS';
