@@ -13,7 +13,7 @@
 */
 import * as nba_methods from '../backend_methods/nba_methods';
 
-// THIS METHOD CURRENT DOES NOT WORK 
+// THIS METHOD CURRENTLY DOES NOT WORK 
 // due to missing nba api data, I do not know the response json structure yet
 // to be able to parse it properly
 // until then, the code is copy pasted from the nfl and mls parsers
