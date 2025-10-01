@@ -237,7 +237,7 @@ export default function PredictionsScreen() {
                                     </tr>
                                 ) : error ? (
                                     <tr>
-                                        <td colSpan={4} className="text-center py-10 text-red-500">
+                                        <td colSpan={4} className="text-center py-10 text-text-primary bg-secondary-background">
                                             {error}
                                         </td>
                                     </tr>
