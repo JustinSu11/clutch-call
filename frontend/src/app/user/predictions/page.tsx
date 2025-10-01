@@ -213,7 +213,7 @@ export default function PredictionsScreen() {
             </header>
             <main className="">
                 <div className="mb-8">
-                    <h2 className="text-3xl font-bold text-text-primary mb-4">Match Predictions</h2>
+                    <h2 className="text-3xl font-bold text-text-primary mb-4">Predictions</h2>
                     <p className="text-text-primary mb-4">AI-powered predictions for upcoming sports matches.</p>
                 </div>
                 <SportsFilter sports={sports} activeSport={activeSport} setActiveSport={setActiveSport} />
@@ -231,7 +231,7 @@ export default function PredictionsScreen() {
                             <tbody className="bg-white divide-y divide-gray-200">
                                 {loading ? (
                                     <tr>
-                                        <td colSpan={4} className="text-center py-10 text-gray-500">
+                                        <td colSpan={4} className="text-center py-10 text-text-primary bg-secondary-background">
                                             Loading predictions...
                                         </td>
                                     </tr>
@@ -247,7 +247,7 @@ export default function PredictionsScreen() {
                                     ))
                                 ) : (
                                     <tr>
-                                        <td colSpan={4} className="text-center py-10 text-gray-500">
+                                        <td colSpan={4} className="text-center py-10 text-text-primary bg-secondary-background">
                                             No predictions available for {activeSport}.
                                         </td>
                                     </tr>
