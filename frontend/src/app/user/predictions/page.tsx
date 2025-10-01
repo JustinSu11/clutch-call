@@ -153,12 +153,12 @@ const PredictionRow: React.FC<{ item: Prediction }> = ({ item }) => (
         returns:
         a table row displaying the prediction details, including a confidence bar
     */
-    <tr>
+    <tr className="bg-secondary-background">
         <td className="px-6 py-4 whitespace-nowrap">
-            <div className="text-sm font-medium text-gray-900">{item.match}</div>
+            <div className="text-md font-medium text-text-primary">{item.match}</div>
         </td>
         <td className="px-6 py-4 whitespace-nowrap">
-            <div className="text-sm text-gray-800">{item.prediction}</div>
+            <div className="ttext-md font-medium text-text-primary">{item.prediction}</div>
         </td>
         <td className="px-6 py-4 whitespace-nowrap">
             <div className="flex items-center">
@@ -168,11 +168,11 @@ const PredictionRow: React.FC<{ item: Prediction }> = ({ item }) => (
                         style={{ ...getConfidenceStyle(item.confidence), width: `${item.confidence}%` }}
                     ></div>
                 </div>
-                <span className="text-sm font-medium text-gray-800">{item.confidence}%</span>
+                <span className="text-md font-medium text-text-primary">{item.confidence}%</span>
             </div>
         </td>
         <td className="px-6 py-4">
-            <div className="text-sm text-gray-600 max-w-xs break-words">{item.analysis}</div>
+            <div className="text-md font-medium text-text-primary">{item.analysis}</div>
         </td>
     </tr>
 );
