@@ -43,7 +43,7 @@ export default function Sidebar() {
     return (
         <div>
             {/* <aside> defines a secondary component like sidebars. It's considered secondary content for the page*/}
-            <aside className="sticky flex flex-col w-64 h-[100vh] bg-secondary-background p-6">
+            <aside className="sticky top-0 self-start flex flex-col w-64 h-[100vh] bg-secondary-background p-6">
                 <div className="flex flex-col h-full">
                     {/* The header for the sidebar */}
                     <h1 className="flex justify-center text-4xl font-bold text-text-primary mb-8">ClutchCall</h1>
