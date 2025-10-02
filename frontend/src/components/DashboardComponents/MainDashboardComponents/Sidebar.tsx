@@ -52,11 +52,11 @@ export default function Sidebar() {
         <div>
             {isSideBarOpen ? (
                 // <aside> defines a secondary component like sidebars. It's considered secondary content for the page
-                <aside className="sticky top-0 self-start flex flex-col w-64 h-[100vh] bg-secondary-background p-6">
+                <aside className="sticky top-0 self-start flex flex-col w-64 h-[100vh] bg-secondary-background py-6 px-1">
                     <div className="flex flex-col h-full">
                         {/* The header for the sidebar */}
-                        <div className="flex justify-center text-3xl font-bold text-text-primary">
-                            <Button variant="ghost" className="mb-8 text-text-primary hover:text-primary" onClick={() => handleSideBarOpenClose()}>
+                        <div className="flex text-3xl font-bold text-text-primary">
+                            <Button variant="ghost" className="mb-8 ml-1 text-text-primary hover:text-primary" onClick={() => handleSideBarOpenClose()}>
                                 <AlignJustify size={24}/>
                             </Button>
                             ClutchCall
