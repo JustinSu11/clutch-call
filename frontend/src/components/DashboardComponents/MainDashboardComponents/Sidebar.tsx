@@ -105,4 +105,6 @@ export default function Sidebar() {
     )
 }
 
+//instead of implementing a collapsible side bar using the method above, what if I used jsx for the classNames and check if the sidebar open state is true then I'll implement a class for the open side bar if not then it'll implement a class for a closed side bar rather than rendering a whole page based on the open state.
+
 
