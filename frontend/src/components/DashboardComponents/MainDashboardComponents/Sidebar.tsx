@@ -9,9 +9,11 @@
 */
 "use client"
 import { ThemeToggle } from "@/components/ui/ThemeToggle"
-import { Home, ChartScatter } from "lucide-react"
+import { Home, ChartScatter, AlignJustify } from "lucide-react"
 import { usePathname } from "next/navigation"
 import Link from "next/link"
+import { useState } from "react"
+import { Button } from "@/components/ui/button"
 
 const navItems = [
     {
@@ -40,31 +42,65 @@ export default function Sidebar() {
     const pathname = usePathname()
     const currentTitle = navItems.find(item => pathname?.startsWith(item.href))?.title
 
+    const [isSideBarOpen, setIsSideBarOpen] = useState(true)
+
+    function handleSideBarOpenClose() {
+        setIsSideBarOpen(!isSideBarOpen)
+    }
+
     return (
         <div>
-            {/* <aside> defines a secondary component like sidebars. It's considered secondary content for the page*/}
-            <aside className="sticky top-0 self-start flex flex-col w-64 h-[100vh] bg-secondary-background p-6">
-                <div className="flex flex-col h-full">
-                    {/* The header for the sidebar */}
-                    <h1 className="flex justify-center text-4xl font-bold text-text-primary mb-8">ClutchCall</h1>
-                    {/* <nav> groups links together */}
-                    <nav className="flex flex-col gap-2">
-                        {
-                            navItems.map((item) => (
-                                <Link className={`flex items-center gap-3 px-4 py-3 rounded-lg text-text-primary font-medium hover:text-red-600 ${item.title === currentTitle ? "bg-secondary text-primary" : "text-text-primary"}`} href={item.href} id={item.title} key={item.title}>
-                                    <item.icon />
-                                    {/* The text label for the tab */}
-                                    <span>{item.title}</span>
-                                </Link>
-                            ))
-                        }
-                    </nav>
-                </div>
-                <div className="mx-auto">
-                    <ThemeToggle />
-                </div>
-                
-            </aside>
+            {isSideBarOpen ? (
+                // <aside> defines a secondary component like sidebars. It's considered secondary content for the page
+                <aside className="sticky top-0 self-start flex flex-col w-64 h-[100vh] bg-secondary-background p-6">
+                    <div className="flex flex-col h-full">
+                        {/* The header for the sidebar */}
+                        <div className="flex justify-center text-3xl font-bold text-text-primary">
+                            <Button variant="ghost" className="mb-8 text-text-primary hover:text-primary" onClick={() => handleSideBarOpenClose()}>
+                                <AlignJustify size={24}/>
+                            </Button>
+                            ClutchCall
+                        </div>
+                        {/* <nav> groups links together */}
+                        <nav className="flex flex-col gap-2">
+                            {
+                                navItems.map((item) => (
+                                    <Link className={`flex items-center gap-3 px-4 py-3 rounded-lg text-text-primary font-medium hover:text-primary ${item.title === currentTitle ? "bg-secondary text-primary" : "text-text-primary"}`} href={item.href} id={item.title} key={item.title}>
+                                        <item.icon />
+                                        {/* The text label for the tab */}
+                                        <span>{item.title}</span>
+                                    </Link>
+                                ))
+                            }
+                        </nav>
+                    </div>
+                    <div className="mx-auto">
+                        <ThemeToggle />
+                    </div>
+                </aside>
+            ) : (
+                <aside className="sticky top-0 self-start flex flex-col w-16 h-[100vh] bg-secondary-background py-6 px-1">
+                    <div className="flex flex-col h-full">
+                        {/* The header for the sidebar */}
+                        <Button variant="ghost" className="mb-8 text-text-primary hover:text-primary" onClick={() => handleSideBarOpenClose()}>
+                            <AlignJustify size={24} />
+                        </Button>
+                        {/* <nav> groups links together */}
+                        <nav className="flex flex-col gap-2">
+                            {
+                                navItems.map((item) => (
+                                    <Link className={`flex items-center gap-3 px-4 py-3 rounded-lg text-text-primary font-medium hover:text-primary ${item.title === currentTitle ? "bg-secondary text-primary" : "text-text-primary"}`} href={item.href} id={item.title} key={item.title}>
+                                        <item.icon />
+                                    </Link>
+                                ))
+                            }
+                        </nav>
+                    </div>
+                    <div className="mx-auto">
+                        <ThemeToggle />
+                    </div>
+                </aside>
+            )}
         </div>
     )
 }
