@@ -10,3 +10,5 @@ gunicorn
 requests          # HTTP client used by service modules
 uvicorn           # ASGI server used to run the app via run_server.py
 asgiref           # Provides WSGI-to-ASGI adapter used by asgi.py
+joblib            # Used for model serialization
+fastapi           # FastAPI framework for building APIs
