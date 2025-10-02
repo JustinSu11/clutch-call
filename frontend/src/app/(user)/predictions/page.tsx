@@ -134,7 +134,7 @@ const SportsFilter: React.FC<{
                     activeSport === sport
                         ? 'bg-secondary text-text-primary'
                         : 'hover:text-primary'
-                }`}
+                } cursor-pointer`}
             >
                 {sport}
             </button>
