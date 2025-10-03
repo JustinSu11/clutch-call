@@ -3,13 +3,13 @@
     Created: 09/19/2025 
     Author: CJ Quintero
 
-    Last Updated: 09/26/2025 by Justin Nguyen
+    Last Updated: 10/01/2025 by CJ Quintero
 
     Description: This file has the code for the sidebar component in the dashboard.
 */
 
 import { ThemeToggle } from "@/components/ui/ThemeToggle"
-import { Home } from "lucide-react"
+import { Home, Target } from "lucide-react"
 
 export default function Sidebar() {
     /*
@@ -29,15 +29,14 @@ export default function Sidebar() {
                     <h1 className="flex justify-center text-4xl font-bold text-text-primary mb-8">ClutchCall</h1>
                     {/* <nav> groups links together */}
                     <nav className="flex flex-col gap-2">
-                        {/* Each <a> tag is a link in the sidebar.
-                            The href="#" is used as a placeholder that doesn't link to an actual page, it
-                            just takes you back to the top of the page.
-                        */}
-                        <a className="flex items-center gap-3 px-4 py-3 rounded-lg bg-secondary text-primary font-medium" href="#">
-                            {/* <svg> is used to insert an inline SVG icon. This one displays a house for the Home tab on the sidebar*/}
+                        <a className="flex items-center gap-3 px-4 py-3 rounded-lg bg-secondary text-primary font-medium" href="/user/dashboard">
                             <Home />
                             {/* The text label for the tab */}
                             <span>Home</span>
+                        </a>
+                        <a className="flex items-center gap-3 px-4 py-3 rounded-lg bg-secondary text-primary font-medium" href="/user/predictions">
+                            <Target />
+                            <span>Predictions</span>
                         </a>
                     </nav>
                 </div>

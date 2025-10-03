@@ -125,15 +125,15 @@ const SportsFilter: React.FC<{
     activeSport: SportKey;
     setActiveSport: (sport: SportKey) => void;
 }> = ({ sports, activeSport, setActiveSport }) => (
-    <div className="flex space-x-2 border-b border-gray-200 pb-4 mb-8 overflow-x-auto">
+    <div className="text-text-primary mb-4">
         {sports.map((sport) => (
             <button
                 key={sport}
                 onClick={() => setActiveSport(sport)}
-                className={`px-4 py-2 text-sm font-medium rounded-md whitespace-nowrap ${
+                className={`px-4 py-2 text-sm text-text-primary font-medium rounded-md whitespace-nowrap ${
                     activeSport === sport
-                        ? 'bg-indigo-100 text-indigo-700'
-                        : 'text-gray-600 hover:bg-gray-100'
+                        ? 'bg-accent text-text-primary'
+                        : 'hover:bg-accent text-text-primary'
                 }`}
             >
                 {sport}
@@ -153,12 +153,12 @@ const PredictionRow: React.FC<{ item: Prediction }> = ({ item }) => (
         returns:
         a table row displaying the prediction details, including a confidence bar
     */
-    <tr>
+    <tr className="bg-secondary-background">
         <td className="px-6 py-4 whitespace-nowrap">
-            <div className="text-sm font-medium text-gray-900">{item.match}</div>
+            <div className="text-md font-medium text-text-primary">{item.match}</div>
         </td>
         <td className="px-6 py-4 whitespace-nowrap">
-            <div className="text-sm text-gray-800">{item.prediction}</div>
+            <div className="text-md font-medium text-text-primary">{item.prediction}</div>
         </td>
         <td className="px-6 py-4 whitespace-nowrap">
             <div className="flex items-center">
@@ -168,11 +168,11 @@ const PredictionRow: React.FC<{ item: Prediction }> = ({ item }) => (
                         style={{ ...getConfidenceStyle(item.confidence), width: `${item.confidence}%` }}
                     ></div>
                 </div>
-                <span className="text-sm font-medium text-gray-800">{item.confidence}%</span>
+                <span className="text-md font-medium text-text-primary">{item.confidence}%</span>
             </div>
         </td>
         <td className="px-6 py-4">
-            <div className="text-sm text-gray-600 max-w-xs break-words">{item.analysis}</div>
+            <div className="text-md font-medium text-text-primary">{item.analysis}</div>
         </td>
     </tr>
 );
@@ -206,38 +206,38 @@ export default function PredictionsScreen() {
     : predictions.filter(p => p.sport === activeSport);
 
     return (
-        <div className="bg-gray-50 min-h-screen font-sans">
+        <div className="overflow-x-auto">
             {/* Header Navigation */}
-            <header className="bg-white shadow-sm">
+            <header className="">
                 {/* ...header code... */}
             </header>
-            <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+            <main className="">
                 <div className="mb-8">
-                    <h2 className="text-3xl font-bold text-gray-900">Match Predictions</h2>
-                    <p className="text-gray-600 mt-1">AI-powered predictions for upcoming sports matches.</p>
+                    <h2 className="text-3xl font-bold text-text-primary mb-4">Predictions</h2>
+                    <p className="text-text-primary mb-4">AI-powered predictions for upcoming sports matches.</p>
                 </div>
                 <SportsFilter sports={sports} activeSport={activeSport} setActiveSport={setActiveSport} />
                 <div className="bg-white shadow-md rounded-lg overflow-hidden">
                     <div className="overflow-x-auto">
                         <table className="min-w-full divide-y divide-gray-200">
-                            <thead className="bg-gray-50">
+                            <thead className="bg-secondary-background rounded-xl shadow-sm">
                                 <tr>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Match</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Prediction</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Confidence</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">AI Analysis</th>
+                                    <th className="px-6 py-4 text-sm font-semibold text-text-secondary uppercase tracking-wider">Match</th>
+                                    <th className="px-6 py-4 text-sm font-semibold text-text-secondary uppercase tracking-wider">Prediction</th>
+                                    <th className="px-6 py-4 text-sm font-semibold text-text-secondary uppercase tracking-wider">Confidence</th>
+                                    <th className="px-6 py-4 text-sm font-semibold text-text-secondary uppercase tracking-wider">AI Analysis</th>
                                 </tr>
                             </thead>
                             <tbody className="bg-white divide-y divide-gray-200">
                                 {loading ? (
                                     <tr>
-                                        <td colSpan={4} className="text-center py-10 text-gray-500">
+                                        <td colSpan={4} className="text-center py-10 text-text-primary bg-secondary-background">
                                             Loading predictions...
                                         </td>
                                     </tr>
                                 ) : error ? (
                                     <tr>
-                                        <td colSpan={4} className="text-center py-10 text-red-500">
+                                        <td colSpan={4} className="text-center py-10 text-text-primary bg-secondary-background">
                                             {error}
                                         </td>
                                     </tr>
@@ -247,7 +247,7 @@ export default function PredictionsScreen() {
                                     ))
                                 ) : (
                                     <tr>
-                                        <td colSpan={4} className="text-center py-10 text-gray-500">
+                                        <td colSpan={4} className="text-center py-10 text-text-primary bg-secondary-background">
                                             No predictions available for {activeSport}.
                                         </td>
                                     </tr>
