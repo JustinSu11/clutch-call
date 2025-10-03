@@ -50,61 +50,36 @@ export default function Sidebar() {
 
     return (
         <div>
-            {isSideBarOpen ? (
-                // <aside> defines a secondary component like sidebars. It's considered secondary content for the page
-                <aside className="sticky top-0 self-start flex flex-col w-64 h-[100vh] bg-secondary-background py-6 px-1">
-                    <div className="flex flex-col h-full">
-                        {/* The header for the sidebar */}
-                        <div className="flex text-3xl font-bold text-text-primary">
-                            <Button variant="ghost" className="mb-8 ml-1 text-text-primary hover:text-primary" onClick={() => handleSideBarOpenClose()}>
-                                <AlignJustify size={24}/>
-                            </Button>
-                            ClutchCall
-                        </div>
-                        {/* <nav> groups links together */}
-                        <nav className="flex flex-col gap-2">
-                            {
-                                navItems.map((item) => (
-                                    <Link className={`flex items-center gap-3 px-4 py-3 rounded-lg text-text-primary font-medium hover:text-primary ${item.title === currentTitle ? "bg-secondary text-primary" : "text-text-primary"}`} href={item.href} id={item.title} key={item.title}>
-                                        <item.icon />
-                                        {/* The text label for the tab */}
-                                        <span>{item.title}</span>
-                                    </Link>
-                                ))
-                            }
-                        </nav>
-                    </div>
-                    <div className="mx-auto">
-                        <ThemeToggle />
-                    </div>
-                </aside>
-            ) : (
-                <aside className="sticky top-0 self-start flex flex-col w-16 h-[100vh] bg-secondary-background py-6 px-1">
-                    <div className="flex flex-col h-full">
-                        {/* The header for the sidebar */}
-                        <Button variant="ghost" className="mb-8 text-text-primary hover:text-primary" onClick={() => handleSideBarOpenClose()}>
-                            <AlignJustify size={24} />
+            <aside className={`sticky top-0 self-start flex flex-col ${isSideBarOpen ? "w-64" : "w-16"} h-[100vh] bg-secondary-background py-6 px-1 transition-[width] duration-300 ease-in-out overflow-hidden`}>
+                <div className="flex flex-col h-full">
+                    {/* The header for the sidebar */}
+                    <div className="flex text-3xl font-bold text-text-primary gap-3">
+                        <Button variant="ghost" className="mb-8 ml-1 text-text-primary hover:text-primary hover:bg-secondary" onClick={handleSideBarOpenClose}>
+                            <AlignJustify size={24}/>
                         </Button>
-                        {/* <nav> groups links together */}
-                        <nav className="flex flex-col gap-2">
-                            {
-                                navItems.map((item) => (
-                                    <Link className={`flex items-center gap-3 px-4 py-3 rounded-lg text-text-primary font-medium hover:text-primary ${item.title === currentTitle ? "bg-secondary text-primary" : "text-text-primary"}`} href={item.href} id={item.title} key={item.title}>
-                                        <item.icon />
-                                    </Link>
-                                ))
-                            }
-                        </nav>
+                        <span className={`whitespace-nowrap transition-all duration-200 ${isSideBarOpen ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-2 pointer-events-none"}`}>
+                            ClutchCall
+                        </span>
                     </div>
-                    <div className="mx-auto">
-                        <ThemeToggle />
-                    </div>
-                </aside>
-            )}
+                    {/* <nav> groups links together */}
+                    <nav className="flex flex-col gap-2">
+                        {
+                            navItems.map((item) => (
+                                <Link className={` flex items-center gap-3 px-4 py-3 rounded-lg text-text-primary font-medium hover:text-primary  ${item.title === currentTitle ? "bg-secondary text-primary" : "text-text-primary"} `} href={item.href} id={item.title} key={item.title}>
+                                    <item.icon className="flex-shrink-0 transition-transform duration-200" />
+                                    {/*label for the nav item*/}
+                                    { isSideBarOpen && (<span className="opacity-100 translate-x-0">{item.title}</span>) }
+                                </Link>
+                            ))
+                        }
+                    </nav>
+                </div>
+                <div className="mx-auto">
+                    <ThemeToggle />
+                </div>
+            </aside>
         </div>
     )
 }
-
-//instead of implementing a collapsible side bar using the method above, what if I used jsx for the classNames and check if the sidebar open state is true then I'll implement a class for the open side bar if not then it'll implement a class for a closed side bar rather than rendering a whole page based on the open state.
 
 
