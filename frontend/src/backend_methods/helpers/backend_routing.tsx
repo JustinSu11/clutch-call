@@ -4,7 +4,22 @@ File: backend_routing.tsx
 Description: This file contains the routes and methods to make requests to the backend.
 */
 
-const BASE_URL = "http://127.0.0.1:8000/api/v1";
+// Dynamic base URL based on production environment
+const getBaseUrl = (): string => {
+    const isProduction = process.env.NEXT_PUBLIC_PRODUCTION === 'true';
+    const baseUrl = isProduction 
+        ? "https://clutch-call.onrender.com/api/v1"
+        : "http://127.0.0.1:8000/api/v1";
+    
+    // Log the environment for debugging (only in development)
+    if (!isProduction) {
+        console.log(`Backend URL: ${baseUrl} (Production: ${isProduction})`);
+    }
+    
+    return baseUrl;
+};
+
+const BASE_URL = getBaseUrl();
 
 export const ROUTES = {
     // Health check
@@ -70,4 +85,23 @@ export const makeBackendRequest = async (method: 'GET' | 'POST', route: string, 
 
 export const checkBackendHealth = async () => {
     return makeBackendRequest('GET', ROUTES.health);
+}
+
+// Utility function to check current environment
+export const getCurrentEnvironment = () => {
+    return {
+        isProduction: process.env.NEXT_PUBLIC_PRODUCTION === 'true',
+        baseUrl: BASE_URL
+    };
+}
+
+// Utility function to get environment info for debugging
+export const getEnvironmentInfo = () => {
+    const env = getCurrentEnvironment();
+    console.log('Environment Info:', {
+        isProduction: env.isProduction,
+        baseUrl: env.baseUrl,
+        environmentVariable: process.env.NEXT_PUBLIC_PRODUCTION
+    });
+    return env;
 }

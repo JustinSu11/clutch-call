@@ -12,17 +12,20 @@
 
 // global imports are auto imported into every page 
 import "@/styles/globals.css";
+import HealthCheckProvider from "@/components/HealthCheckProvider";
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     // Every page must be in HTML obviously
     <html lang="en">
         <body>
-            {/* 
-                Means to use the components for that specific page
-                Ex) If on the WelcomeView page, it will use the WelcomeView components to build the page
-            */}
-            {children}
+            <HealthCheckProvider> {/* Wraps the entire application in the health check provider, this is here to prevent the deployed backend from shutting down */}
+                {/* 
+                    Means to use the components for that specific page
+                    Ex) If on the WelcomeView page, it will use the WelcomeView components to build the page
+                */}
+                {children}
+            </HealthCheckProvider>
         </body>
     </html>
   );
