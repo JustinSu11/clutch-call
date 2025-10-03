@@ -9,7 +9,7 @@
 */
 "use client"
 import { ThemeToggle } from "@/components/ui/ThemeToggle"
-import { Home, ChartScatter, AlignJustify } from "lucide-react"
+import { Home, ChartScatter, AlignJustify, X } from "lucide-react"
 import { usePathname } from "next/navigation"
 import Link from "next/link"
 import { useState } from "react"
@@ -42,7 +42,7 @@ export default function Sidebar() {
     const pathname = usePathname()
     const currentTitle = navItems.find(item => pathname?.startsWith(item.href))?.title
 
-    const [isSideBarOpen, setIsSideBarOpen] = useState(true)
+    const [isSideBarOpen, setIsSideBarOpen] = useState(false)
 
     function handleSideBarOpenClose() {
         setIsSideBarOpen(!isSideBarOpen)
@@ -54,8 +54,11 @@ export default function Sidebar() {
                 <div className="flex flex-col h-full">
                     {/* The header for the sidebar */}
                     <div className="flex text-3xl font-bold text-text-primary gap-3">
-                        <Button variant="ghost" className="mb-8 ml-1 text-text-primary hover:text-primary hover:bg-secondary" onClick={handleSideBarOpenClose}>
-                            <AlignJustify size={24}/>
+                        <Button variant="ghost" className="mb-8 ml-1 text-text-primary hover:text-primary hover:bg-secondary transition-transform duration-300" onClick={handleSideBarOpenClose}>
+                             <span className="relative inline-block w-4 h-6">
+                                <AlignJustify size={24} className={`absolute inset-0 m-auto transition-all duration-300 will-change-transform ${isSideBarOpen ? "opacity-0 -rotate-90 scale-75" : "opacity-100 rotate-0 scale-100"}`}/>
+                                <X size={20} className={`absolute inset-0 m-auto transition-all duration-300 will-change-transform ${isSideBarOpen ? "opacity-100 rotate-0 scale-100" : "opacity-0 rotate-90 scale-75"}`}/>
+                            </span>
                         </Button>
                         <span className={`whitespace-nowrap transition-all duration-200 ${isSideBarOpen ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-2 pointer-events-none"}`}>
                             ClutchCall
