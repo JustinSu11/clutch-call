@@ -56,6 +56,7 @@ import {
 interface TestResult {
     method: string;
     success: boolean;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     data?: any;
     error?: string;
     timestamp: Date;
@@ -80,7 +81,7 @@ export default function TestingPage() {
         perPage: '25',
         betType: 'all'
     });
-
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const addResult = (method: string, success: boolean, data?: any, error?: string) => {
         const result: TestResult = {
             method,
@@ -91,7 +92,7 @@ export default function TestingPage() {
         };
         setResults(prev => [result, ...prev]);
     };
-
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const handleTest = async (methodName: string, method: () => Promise<any>) => {
         setLoading(methodName);
         try {
@@ -106,6 +107,7 @@ export default function TestingPage() {
 
     const handleTestWithParam = async (
         methodName: string,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         method: (param: string) => Promise<any>,
         param: string,
         paramName: string
@@ -328,7 +330,7 @@ export default function TestingPage() {
                     
                     {/* Today's Games Section */}
                     <div className="mb-8">
-                        <h3 className="text-lg font-semibold text-gray-800 mb-4">Today's Games</h3>
+                        <h3 className="text-lg font-semibold text-gray-800 mb-4">Today&apos;s Games</h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                             <button
                                 onClick={() => handleTest('getTodayAllGames', () => getTodayAllGames(true, ['MLS', 'EPL', 'LaLiga']))}
