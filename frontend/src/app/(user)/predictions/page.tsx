@@ -11,17 +11,14 @@ import React, { useState, useEffect } from 'react';
 import { parseUpcomingNFLGames } from '@/utils/nfl_parser';
 import { parseUpcomingNBAGames } from '@/utils/nba_parser';
 import { parseUpcomingMLSGames } from '@/utils/mls_parser';
+import { UpcomingGame } from '@/utils/data_class';
 
 // declare data types
 type SportKey = 'All Sports' | 'NFL' | 'NBA' | 'MLS';
 
-type Game = {
-    homeTeam: string;
-    awayTeam: string;
-};
-
 type Prediction = {
     match: string;          // gets built from homeTeam and awayTeam 
+    date: string;           // YYYY-MM-DD
     prediction: string;     // the eventual prediction text
     confidence: number;     // a number between 0 and 100 showing how confident the AI prediction is
     analysis: string;       // the AI explanation for the prediction
@@ -41,6 +38,7 @@ const buildNFLPredictions = async (): Promise<Prediction[]> => {
     // map each game to a Prediction object
     return upcomingNFLGames.map((game) => ({
         match: `${game.awayTeam} at ${game.homeTeam}`,
+        date: `${game.gameDate}`,
         prediction: `${game.homeTeam} predicted to win`,
         confidence: 100,
         analysis: `Based on recent performance and home field advantage, ${game.homeTeam} is favored over ${game.awayTeam}.`,
@@ -61,6 +59,7 @@ const buildMLSPredictions = async (): Promise<Prediction[]> => {
     // map each game to a Prediction object
     return upcomingMLSGames.map((game) => ({
         match: `${game.awayTeam} at ${game.homeTeam}`,
+        date: `${game.gameDate}`,
         prediction: `${game.homeTeam} predicted to win`,
         confidence: 100,
         analysis: `Based on recent performance and home field advantage, ${game.homeTeam} is favored over ${game.awayTeam}.`,
@@ -81,6 +80,7 @@ const buildNBAPredictions = async (): Promise<Prediction[]> => {
     // map each game to a Prediction object
     return upcomingNBAGames.map((game) => ({
         match: `${game.awayTeam} at ${game.homeTeam}`,
+        date: `${game.gameDate}`,
         prediction: `${game.homeTeam} predicted to win`,
         confidence: 100,
         analysis: `Based on recent performance and home field advantage, ${game.homeTeam} is favored over ${game.awayTeam}.`,
