@@ -21,7 +21,6 @@ type Prediction = {
     date: string;           // YYYY-MM-DD
     prediction: string;     // the eventual prediction text
     confidence: number;     // a number between 0 and 100 showing how confident the AI prediction is
-    analysis: string;       // the AI explanation for the prediction
     sport: SportKey;        // the sport this prediction belongs to used for filtering (NFL, NBA, MLS)
 };
 
@@ -41,7 +40,6 @@ const buildNFLPredictions = async (): Promise<Prediction[]> => {
         date: `${game.gameDate}`,
         prediction: `${game.homeTeam} predicted to win`,
         confidence: 100,
-        analysis: `Based on recent performance and home field advantage, ${game.homeTeam} is favored over ${game.awayTeam}.`,
         sport: 'NFL'
     }));
 };
@@ -62,7 +60,6 @@ const buildMLSPredictions = async (): Promise<Prediction[]> => {
         date: `${game.gameDate}`,
         prediction: `${game.homeTeam} predicted to win`,
         confidence: 100,
-        analysis: `Based on recent performance and home field advantage, ${game.homeTeam} is favored over ${game.awayTeam}.`,
         sport: 'MLS'
     }));
 }
@@ -83,7 +80,6 @@ const buildNBAPredictions = async (): Promise<Prediction[]> => {
         date: `${game.gameDate}`,
         prediction: `${game.homeTeam} predicted to win`,
         confidence: 100,
-        analysis: `Based on recent performance and home field advantage, ${game.homeTeam} is favored over ${game.awayTeam}.`,
         sport: 'NBA'
     }));
 }
@@ -154,13 +150,16 @@ const PredictionRow: React.FC<{ item: Prediction }> = ({ item }) => (
         a table row displaying the prediction details, including a confidence bar
     */
     <tr className="bg-secondary-background">
-        <td className="px-6 py-4 whitespace-nowrap">
+        <td className="text-center px-6 py-4 whitespace-nowrap">
             <div className="text-md font-medium text-text-primary">{item.match}</div>
         </td>
-        <td className="px-6 py-4 whitespace-nowrap">
+        <td className="text-center px-6 py-4 whitespace-nowrap">
+            <div className="text-md font-medium text-text-primary">{item.date}</div>
+        </td>
+        <td className="text-center px-6 py-4 whitespace-nowrap">
             <div className="text-md font-medium text-text-primary">{item.prediction}</div>
         </td>
-        <td className="px-6 py-4 whitespace-nowrap">
+        <td className="text-center px-6 py-4 whitespace-nowrap">
             <div className="flex items-center">
                 <div className="w-24 bg-gray-200 rounded-full h-2.5 mr-3">
                     <div
@@ -170,9 +169,6 @@ const PredictionRow: React.FC<{ item: Prediction }> = ({ item }) => (
                 </div>
                 <span className="text-md font-medium text-text-primary">{item.confidence}%</span>
             </div>
-        </td>
-        <td className="px-6 py-4">
-            <div className="text-md font-medium text-text-primary">{item.analysis}</div>
         </td>
     </tr>
 );
@@ -223,9 +219,9 @@ export default function PredictionsScreen() {
                             <thead className="bg-secondary-background rounded-xl shadow-sm">
                                 <tr>
                                     <th className="px-6 py-4 text-sm font-semibold text-text-secondary uppercase tracking-wider">Match</th>
+                                    <th className="px-6 py-4 text-sm font-semibold text-text-secondary uppercase tracking-wider">Date</th>
                                     <th className="px-6 py-4 text-sm font-semibold text-text-secondary uppercase tracking-wider">Prediction</th>
                                     <th className="px-6 py-4 text-sm font-semibold text-text-secondary uppercase tracking-wider">Confidence</th>
-                                    <th className="px-6 py-4 text-sm font-semibold text-text-secondary uppercase tracking-wider">AI Analysis</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-secondary">
