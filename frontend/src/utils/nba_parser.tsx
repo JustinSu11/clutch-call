@@ -1,7 +1,7 @@
 /*
     File: frontend/src/utils/nba_parser.tsx
     Created: 09/30/2025 by CJ Quintero
-    Last Updated: 09/30/2025 by CJ Quintero
+    Last Updated: 10/08/2025 by CJ Quintero
 
     Description: This file contains methods 
     to parse each response from the nba backend methods provided
@@ -12,6 +12,7 @@
     without the extra validation step.
 */
 import * as nba_methods from '../backend_methods/nba_methods';
+import { UpcomingGame } from './data_class';
 
 // THIS METHOD CURRENTLY DOES NOT WORK 
 // due to missing nba api data, I do not know the response json structure yet
@@ -34,22 +35,16 @@ export const parseUpcomingNBAGames = async () => {
     // parse major header
     const events = responseData["events"];
 
-    // declare the Game type
-    // each game will have a home team and an away team
-    type Game = {
-    homeTeam: string;
-    awayTeam: string;
-    };
-
     // map through each event to extract home and away team names
     // into the games array
     // DO NOT DELETE THE COMMAND TO DISABLE THE ANY TYPE
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const games: Game[] = events.map((event: any)  => {
+    const games: UpcomingGame[] = events.map((event: any)  => {
 
         // extract home and away team names
         const homeTeam = event['competitions'][0]['competitors'][0]['team']['displayName'];
         const awayTeam = event['competitions'][0]['competitors'][1]['team']['displayName'];
+        const gameDate = event['date'].split('T')[0]; // extract date only, ignore time
 
         // the official game name for reference
         const officialGameName = event['name'];
@@ -60,7 +55,7 @@ export const parseUpcomingNBAGames = async () => {
             console.warn(`${awayTeam} at ${homeTeam} does not equal the official game name. officialGameName = ${officialGameName}`);
         }
 
-        return { homeTeam, awayTeam };
+        return { homeTeam, awayTeam, gameDate };
     });
 
     return games;
