@@ -48,6 +48,26 @@ export const ROUTES = {
     historical_soccer_games: `${BASE_URL}/historical/soccer`,
     statistical_trends: `${BASE_URL}/historical/trends`,
     
+    // New Historical Routes for All Teams
+    historical_nba_all_teams: `${BASE_URL}/historical/nba/all-teams`,
+    historical_nfl_all_teams: `${BASE_URL}/historical/nfl/all-teams`,
+    historical_soccer_all_teams: `${BASE_URL}/historical/soccer/all-teams`,
+    
+    // Historical Routes for Specific Teams by Name
+    historical_nba_team_by_name: (teamName: string) => `${BASE_URL}/historical/nba/team/${encodeURIComponent(teamName)}`,
+    historical_nfl_team_by_name: (teamName: string) => `${BASE_URL}/historical/nfl/team/${encodeURIComponent(teamName)}`,
+    historical_soccer_team_by_name: (teamName: string) => `${BASE_URL}/historical/soccer/team/${encodeURIComponent(teamName)}`,
+    
+    // Season-Specific Historical Routes
+    historical_nba_season: (season: string) => `${BASE_URL}/historical/nba/season/${encodeURIComponent(season)}`,
+    historical_nfl_season: (season: string) => `${BASE_URL}/historical/nfl/season/${encodeURIComponent(season)}`,
+    historical_soccer_season: (season: string) => `${BASE_URL}/historical/soccer/season/${encodeURIComponent(season)}`,
+    
+    // Team Stats and Performance Routes
+    historical_nba_team_stats: `${BASE_URL}/historical/nba/team-stats`,
+    historical_nfl_team_stats: `${BASE_URL}/historical/nfl/team-stats`,
+    historical_soccer_team_stats: `${BASE_URL}/historical/soccer/team-stats`,
+    
     // Individual League Routes (existing)
     nba_games: `${BASE_URL}/nba/games`,
     specific_nba_game_details: (gameId: string) => `${BASE_URL}/nba/game/${gameId}`,
