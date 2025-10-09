@@ -13,6 +13,10 @@
 */
 import * as nba_methods from '../backend_methods/nba_methods';
 import { UpcomingGame } from './data_class';
+import * as sports_stats_methods from '../backend_methods/sports_stats_methods';
+
+// global
+const seasonStartDate = '2025-10-21'; // NBA season started on Oct 21, 2025
 
 // THIS METHOD CURRENTLY DOES NOT WORK 
 // due to missing nba api data, I do not know the response json structure yet
@@ -55,8 +59,96 @@ export const parseUpcomingNBAGames = async () => {
             console.warn(`${awayTeam} at ${homeTeam} does not equal the official game name. officialGameName = ${officialGameName}`);
         }
 
-        return { homeTeam, awayTeam, gameDate };
+        // change gameDate to MM-DD-YYY format
+        const month = gameDate.split('-')[1];
+        const day = gameDate.split('-')[2];
+        const year = gameDate.split('-')[0];
+        const formattedGameDate = `${month}-${day}-${year}`;
+
+        return { homeTeam, awayTeam, gameDate: formattedGameDate };
     });
 
     return games;
+};
+
+
+export const parseNBATeamStats = async (teamName: string) => {
+    /*
+        parseNBATeamStats:
+        This method gets a team's current season stats from the backend method
+        and parses the response to return the team's stats.
+
+        params:
+            teamName: String - the name of the team to get the stats for. 
+                      Must use full display name 
+
+        returns:
+            stats: dict - an object with wins, losses, draws, totalGames
+    */
+
+    // makes the local date in YYYY-MM-DD using the local timezone
+    const todaysDateLocal = (() => {
+        const d = new Date();
+        const yyyy = d.getFullYear();
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const dd = String(d.getDate()).padStart(2, '0');
+        return `${yyyy}-${mm}-${dd}`;
+    })();
+
+    // await the response from the backend method
+    const responseData = await sports_stats_methods.getHistoricalNFLTeamByName(teamName, {
+        startDate: `${seasonStartDate}`,              
+        endDate: `${todaysDateLocal}`,             
+    });
+
+    // parse major header
+    const events = responseData['data']['events'];
+
+    // vars to hold the stats
+    let totalGames = 0;
+    let wins = 0;
+    let losses = 0;
+    let ties = 0;
+
+    // for each event, get the game info
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    events.forEach((event: any) => {
+        
+        // get the eventDate and compare to current dat
+        const iso = event['date'];
+        const eventDate = new Date(iso);
+
+        // this prevents upcoming games from being counted
+        // by ensuring we only count games that have already passed
+        if(eventDate.getTime() >= Date.now()) {
+            return;
+        }
+
+        // home team stuff is always ['competitions'][0]['competitors'][0]
+        // away team stuff is always ['competitions'][0]['competitors'][1]
+        const homeTeam = event['competitions'][0]['competitors'][0]['team']['displayName'];
+        const awayTeam = event['competitions'][0]['competitors'][1]['team']['displayName'];
+
+        const homeScore = parseInt(event['competitions'][0]['competitors'][0]['score']);
+        const awayScore = parseInt(event['competitions'][0]['competitors'][1]['score']);
+
+        // determine if the requested team is home or away for this specific game
+        if (homeTeam === teamName) {
+            
+            // if the home team (the requested team) won
+            if (homeScore > awayScore) { wins++;}
+            else if (homeScore < awayScore) { losses++; }
+            else if (homeScore === awayScore) { ties++; } // tie game
+        }
+        else if (awayTeam === teamName) {
+            // if the away team (the requested team) won
+            if (awayScore > homeScore) { wins++; }
+            else if (awayScore < homeScore) { losses++; }
+            else if (awayScore === homeScore) { ties++; } // tie game
+        }
+
+        totalGames++;
+    });
+
+    return { wins, losses, ties, totalGames};
 };

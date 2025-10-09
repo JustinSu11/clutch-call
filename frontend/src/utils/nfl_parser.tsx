@@ -17,6 +17,8 @@ import * as sports_stats_methods from '../backend_methods/sports_stats_methods';
 import { HistoricalGameFilters } from '../backend_methods/sports_stats_methods';
 import { UpcomingGame, HistoricalGame } from './data_class';
 
+// globals
+const seasonStartDate = '2025-09-04'; // NFL season started on Sep 4, 2025
 
 export const parseUpcomingNFLGames = async () => {
     /*
@@ -79,7 +81,7 @@ export const parseNFLTeamStats = async (teamName: string) => {
                       Must use full display name such as "Dallas Cowboys" not "Cowboys"
 
         returns:
-            teamStats: an array where each subscript has its own team name and stats
+            stats: dict - an object with wins, losses, draws, totalGames
     */
 
     // makes the local date in YYYY-MM-DD using the local timezone
@@ -90,8 +92,6 @@ export const parseNFLTeamStats = async (teamName: string) => {
         const dd = String(d.getDate()).padStart(2, '0');
         return `${yyyy}-${mm}-${dd}`;
     })();
-
-    const seasonStartDate = '2025-09-04'; // NFL season started on Sep 4, 2025
 
     // await the response from the backend method
     const responseData = await sports_stats_methods.getHistoricalNFLTeamByName(teamName, {

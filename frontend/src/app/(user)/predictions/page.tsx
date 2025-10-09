@@ -9,8 +9,8 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import { parseUpcomingNFLGames, parseNFLTeamStats } from '@/utils/nfl_parser';
-import { parseUpcomingNBAGames } from '@/utils/nba_parser';
-import { parseUpcomingMLSGames } from '@/utils/mls_parser';
+import { parseUpcomingNBAGames, parseNBATeamStats } from '@/utils/nba_parser';
+import { parseUpcomingMLSGames, parseMLSTeamStats } from '@/utils/mls_parser';
 import { UpcomingGame } from '@/utils/data_class';
 import { get } from 'http';
 import { urlToHttpOptions } from 'url';
@@ -114,11 +114,44 @@ const getNFLTeamStats = async (teamName: string) => {
         params:
             teamName: string - the full display name of the team (e.g., "Dallas Cowboys")
         returns:
-            TBD
+            stats: dict - an object containing wins, losses, ties, and totalGames
 
     */
    
     const stats = await parseNFLTeamStats(`${teamName}`);
+
+    return stats;
+}
+
+const getMLSTeamStats = async (teamName: string) => {
+    /*
+        getTeamStats:
+        This method gets the current season stats for a given MLS team.
+        
+        params:
+            teamName: string - the full display name of the team (e.g., "LA Galaxy")
+        returns:
+            stats: dict - an object containing wins, losses, ties, and totalGames
+    */
+   
+    const stats = await parseMLSTeamStats(`${teamName}`);
+
+    return stats;
+}
+
+const getNBATeamStats = async (teamName: string) => {
+    /*
+        getTeamStats:
+        This method gets the current season stats for a given NBA team.
+        
+        params:
+            teamName: string - the full display name of the team (e.g., "Los Angeles Lakers")
+        returns:
+            stats: dict - an object containing wins, losses, ties, and totalGames
+
+    */
+   
+    const stats = await parseNBATeamStats(`${teamName}`);
 
     return stats;
 }
@@ -186,7 +219,7 @@ export default function PredictionsScreen() {
     const [homeStats, setHomeStats] = useState<TeamStats | null>(null);
     const [awayStats, setAwayStats] = useState<TeamStats | null>(null);
 
-    const openMatchDialog = async (homeTeam: string, awayTeam: string) => {
+    const openMatchDialog = async (homeTeam: string, awayTeam: string, sport: SportKey) => {
         setSelectedHome(homeTeam);
         setSelectedAway(awayTeam);
         setDialogOpen(true);
@@ -194,8 +227,20 @@ export default function PredictionsScreen() {
         setHomeStats(null);
         setAwayStats(null);
         try {
-            const home = await getNFLTeamStats(homeTeam);
-            const away = await getNFLTeamStats(awayTeam);
+            let home = { wins: 0, losses: 0, ties: 0, totalGames: 0 };
+            let away = { wins: 0, losses: 0, ties: 0, totalGames: 0 };
+            if (sport === 'NFL') {
+                home = await getNFLTeamStats(homeTeam);
+                away = await getNFLTeamStats(awayTeam);
+            }
+            else if (sport === 'MLS') {
+                home = await getMLSTeamStats(homeTeam);
+                away = await getMLSTeamStats(awayTeam);
+            }
+            else if (sport === 'NBA') {
+                home = await getNBATeamStats(homeTeam);
+                away = await getNBATeamStats(awayTeam);
+            }
             setHomeStats({
                 wins: home.wins,
                 losses: home.losses,
@@ -277,7 +322,7 @@ export default function PredictionsScreen() {
                                             <PredictionRow
                                                 key={idx}
                                                 item={item}
-                                                onClick={() => openMatchDialog(homeTeam ?? '', awayTeam ?? '')}
+                                                onClick={() => openMatchDialog(homeTeam ?? '', awayTeam ?? '', item.sport)}
                                             />
                                         );
                                     })
