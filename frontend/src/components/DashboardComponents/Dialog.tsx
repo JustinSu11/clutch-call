@@ -57,10 +57,10 @@ export default function MatchDialog({
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2 border-r pr-4">
-                            <h4 className="font-semibold">{homeTeam}</h4>
-                            {homeStats ? (
+                            <h4 className="font-semibold">{awayTeam}</h4>
+                            {awayStats ? (
                                 <ul className="text-sm space-y-1">
-                                    {Object.entries(homeStats).map(([k, v]) => (
+                                    {Object.entries(awayStats).map(([k, v]) => (
                                         <li key={k} className="flex justify-between">
                                             <span className="text-gray-600">{k}</span>
                                             <span className="font-medium">{String(v)}</span>
@@ -73,10 +73,10 @@ export default function MatchDialog({
                         </div>
 
                         <div className="space-y-2 pl-4">
-                            <h4 className="font-semibold">{awayTeam}</h4>
-                            {awayStats ? (
+                            <h4 className="font-semibold">{homeTeam}</h4>
+                            {homeStats ? (
                                 <ul className="text-sm space-y-1">
-                                    {Object.entries(awayStats).map(([k, v]) => (
+                                    {Object.entries(homeStats).map(([k, v]) => (
                                         <li key={k} className="flex justify-between">
                                             <span className="text-gray-600">{k}</span>
                                             <span className="font-medium">{String(v)}</span>
