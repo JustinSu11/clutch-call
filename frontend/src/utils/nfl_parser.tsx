@@ -75,8 +75,22 @@ export const parseNFLTeamStats = async (teamName: string) => {
             teamStats: an array where each subscript has its own team name and stats
     */
 
+    // makes the local date in YYYY-MM-DD using the local timezone
+    const todaysDateLocal = (() => {
+        const d = new Date();
+        const yyyy = d.getFullYear();
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const dd = String(d.getDate()).padStart(2, '0');
+        return `${yyyy}-${mm}-${dd}`;
+    })();
+
+    const seasonStartDate = '2025-09-04'; // NFL season started on Sep 4, 2025
+
     // await the response from the backend method
-    const responseData = await sports_stats_methods.getHistoricalNFLTeamByName(teamName);
+    const responseData = await sports_stats_methods.getHistoricalNFLTeamByName(teamName, {
+        startDate: `${seasonStartDate}`,              
+        endDate: `${todaysDateLocal}`,             
+    });
 
     // parse major header
     const events = responseData['data']['events'];
@@ -88,17 +102,17 @@ export const parseNFLTeamStats = async (teamName: string) => {
     let ties = 0;
 
 
-    // for each event, get the team name and the
+    // for each event, get the game info
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const teamStats = events.map((event: any) => {
+    events.forEach((event: any) => {
 
         // home team stuff is always ['competitions'][0]['competitors'][0]
         // away team stuff is always ['competitions'][0]['competitors'][1]
         const homeTeam = event['competitions'][0]['competitors'][0]['team']['displayName'];
         const awayTeam = event['competitions'][0]['competitors'][1]['team']['displayName'];
 
-        const homeScore = event['competitions'][0]['competitors'][0]['score'];
-        const awayScore = event['competitions'][0]['competitors'][1]['score'];
+        const homeScore = parseInt(event['competitions'][0]['competitors'][0]['score']);
+        const awayScore = parseInt(event['competitions'][0]['competitors'][1]['score']);
 
         // determine if the requested team is home or away for this specific game
         if (homeTeam === teamName) {
@@ -109,7 +123,6 @@ export const parseNFLTeamStats = async (teamName: string) => {
             else { ties++; } // tie game
         }
         else {
-
             // if the away team (the requested team) won
             if (awayScore > homeScore) { wins++; }
             else if (awayScore < homeScore) { losses++; }
