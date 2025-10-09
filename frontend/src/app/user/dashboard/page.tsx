@@ -11,8 +11,8 @@
     they will be directed to a different page file, but the layout.tsx file will remain the same.
     The new page is physically located under /dashboard/predictions/page.tsx
 */
-import UpcomingMatches from "@/components/DashboardComponents/MainDashboardComponents/UpcomingMatches";
-import RecentPredictions from "@/components/DashboardComponents/MainDashboardComponents/RecentPredictions";
+import UpcomingMatches from "@/components/DashboardComponents/UpcomingMatches";
+import RecentPredictions from "@/components/DashboardComponents/RecentPredictions";
 
 
 export default function DashboardMain() {

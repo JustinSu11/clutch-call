@@ -12,6 +12,7 @@
     without the extra validation step.
 */
 import * as nfl_methods from '../backend_methods/nfl_methods';
+import formatDate from './date-formatter-for-matches';
 
 
 export const parseUpcomingNFLGames = async () => {
@@ -36,6 +37,7 @@ export const parseUpcomingNFLGames = async () => {
     type Game = {
     homeTeam: string;
     awayTeam: string;
+    date: Date;
     };
 
     // map through each event to extract home and away team names
@@ -46,6 +48,9 @@ export const parseUpcomingNFLGames = async () => {
         const homeTeam = event['competitions'][0]['competitors'][0]['team']['displayName'];
         const awayTeam = event['competitions'][0]['competitors'][1]['team']['displayName'];
 
+        // extract date of match
+        const date = formatDate(event['date'])
+
         // the official game name for reference
         const officialGameName = event['name'];
 
@@ -55,7 +60,7 @@ export const parseUpcomingNFLGames = async () => {
             console.warn(`${awayTeam} at ${homeTeam} does not equal the official game name. officialGameName = ${officialGameName}`);
         }
 
-        return { homeTeam, awayTeam };
+        return { homeTeam, awayTeam, date };
     });
 
     return games;
