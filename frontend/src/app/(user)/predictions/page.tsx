@@ -22,7 +22,7 @@ type SportKey = 'All Sports' | 'NFL' | 'NBA' | 'MLS';
 
 type Prediction = {
     match: string;          // gets built from homeTeam and awayTeam 
-    date: string;           // YYYY-MM-DD
+    date: string;           // MM-DD-YYYY
     prediction: string;     // the eventual prediction text
     confidence: number;     // a number between 0 and 100 showing how confident the AI prediction is
     sport: SportKey;        // the sport this prediction belongs to used for filtering (NFL, NBA, MLS)

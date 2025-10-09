@@ -55,7 +55,14 @@ export const parseUpcomingNFLGames = async () => {
             console.warn(`${awayTeam} at ${homeTeam} does not equal the official game name. officialGameName = ${officialGameName}`);
         }
 
-        return { homeTeam, awayTeam, gameDate };
+        // change gameDate to MM-DD-YYY format
+        const month = gameDate.split('-')[1];
+        const day = gameDate.split('-')[2];
+        const year = gameDate.split('-')[0];
+        const formattedGameDate = `${month}-${day}-${year}`;
+
+
+        return { homeTeam, awayTeam, gameDate: formattedGameDate };
     });
 
     return games;
