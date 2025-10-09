@@ -101,10 +101,10 @@ export const parseNFLTeamStats = async (teamName: string) => {
     let losses = 0;
     let ties = 0;
 
-
     // for each event, get the game info
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     events.forEach((event: any) => {
+        // need to validate that the game is in the past
 
         // home team stuff is always ['competitions'][0]['competitors'][0]
         // away team stuff is always ['competitions'][0]['competitors'][1]
@@ -116,17 +116,17 @@ export const parseNFLTeamStats = async (teamName: string) => {
 
         // determine if the requested team is home or away for this specific game
         if (homeTeam === teamName) {
-
+            
             // if the home team (the requested team) won
             if (homeScore > awayScore) { wins++;}
             else if (homeScore < awayScore) { losses++; }
-            else { ties++; } // tie game
+            else if (homeScore === awayScore) { ties++; } // tie game
         }
-        else {
+        else if (awayTeam === teamName) {
             // if the away team (the requested team) won
             if (awayScore > homeScore) { wins++; }
             else if (awayScore < homeScore) { losses++; }
-            else { ties++; } // tie game
+            else if (awayScore === homeScore) { ties++; } // tie game
         }
 
         totalGames++;
