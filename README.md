@@ -65,6 +65,9 @@ curl "http://localhost:8000/upcoming"
 
 # Get upcoming matches for specific season
 curl "http://localhost:8000/upcoming?season=2024"
+
+# Retrain model with latest data
+curl -X POST "http://localhost:8000/train"
 ```
 
 ## File Structure (for team reference)
@@ -125,6 +128,7 @@ pip list
 | `/teams` | List all team names | `GET /teams` |
 | `/predict` | Get match predictions | `GET /predict?home=Arsenal&away=Chelsea` |
 | `/upcoming` | Get upcoming scheduled matches | `GET /upcoming?season=2024` |
+| `/train` | Retrain model with latest data | `POST /train` |
 
 ## Team Notes
 

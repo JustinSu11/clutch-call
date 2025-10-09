@@ -78,7 +78,7 @@ def canonicalize(name: str = Query(..., description="Any team nickname or partia
 def predict(
         home: str = Query(..., description="Home team (aliases allowed, e.g., 'Spurs')"),
         away: str = Query(..., description="Away team (aliases allowed, e.g., 'Man City')"),
-        last_n: int = Query(10, ge=3, le=20, description="Recent matches per team (3–20)")
+        last_n: int = Query(4, ge=3, le=20, description="Recent matches per team (3–20)")
 ):
     try:
         p = app.state.predictor
@@ -119,6 +119,21 @@ def get_upcoming_matches(season: int = Query(None, description="Season year (def
         raise HTTPException(status_code=502, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Unexpected error: {e}")
+
+
+@app.post("/train")
+def train_model():
+    try:
+        print("Starting model retraining...")
+        app.state.predictor = build_model()
+        print("Model retrained successfully!")
+        return {"status": "success", "message": "Model retrained successfully"}
+    except APIError as e:
+        raise HTTPException(status_code=502, detail=str(e))
+    except DataError as e:
+        raise HTTPException(status_code=422, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Training failed: {e}")
 
 
 if __name__ == "__main__":
