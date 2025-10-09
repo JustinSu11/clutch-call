@@ -15,7 +15,7 @@ import { ClassDictionary } from 'clsx';
 import * as nfl_methods from '../backend_methods/nfl_methods';
 import * as sports_stats_methods from '../backend_methods/sports_stats_methods';
 import { HistoricalGameFilters } from '../backend_methods/sports_stats_methods';
-import { UpcomingGame} from './data_class';
+import { UpcomingGame, Leader } from './data_class';
 
 // globals
 const seasonStartDate = '2025-09-04'; // NFL season started on Sep 4, 2025
@@ -63,8 +63,23 @@ export const parseUpcomingNFLGames = async () => {
         const year = gameDate.split('-')[0];
         const formattedGameDate = `${month}-${day}-${year}`;
 
+        // get the leaders for this game
+        const rawLeaders = event['competitions'][0]['leaders']; 
+        
+        // grab the leaders for the current game
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const leaders: Leader[] = (rawLeaders ?? []).map((leader: any) => {
+            return {
+                title: leader['displayName'],
+                playerID: leader['leaders'][0]['athlete']['id'],
+                playerName: leader['leaders'][0]['athlete']['displayName'],
+                value: leader['leaders'][0]['displayValue'],
+                playerHeadshot: leader['leaders'][0]['athlete']['headshot'],
+            }
+        });
 
-        return { homeTeam, awayTeam, gameDate: formattedGameDate };
+
+        return { homeTeam, awayTeam, gameDate: formattedGameDate, leaders };
     });
 
     return games;
