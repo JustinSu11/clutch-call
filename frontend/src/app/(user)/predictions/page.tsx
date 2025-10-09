@@ -1,7 +1,7 @@
 /*
     File: frontend/src/app/predictions/page.tsx
     Created: 09/29/2025 by Michael Tajchman
-    Last Updated: 09/30/2025 by CJ Quintero
+    Last Updated: 10/09/2025 by CJ Quintero
 
     Description: This file contains the main React component for the Predictions screen of the ClutchCall web application.
     It includes a header with navigation, a filterable list of sports, and a table displaying AI-powered match predictions.
@@ -148,7 +148,7 @@ const SportsFilter: React.FC<{
 );
 
 const PredictionRow: React.FC<{ item: Prediction; onClick?: () => void }> = ({ item, onClick }) => (
-    <tr onClick={onClick} className="bg-secondary-background hover:bg-gray-50 cursor-pointer">
+    <tr onClick={onClick} className="bg-secondary-background hover:bg-secondary cursor-pointer">
         <td className="text-center px-6 py-4 whitespace-nowrap">
             <div className="text-md font-medium text-text-primary">{item.match}</div>
         </td>
@@ -201,14 +201,12 @@ export default function PredictionsScreen() {
                 losses: home.losses,
                 ties: home.ties,
                 totalGames: home.totalGames,
-                teamName: homeTeam
             });
             setAwayStats({
                 wins: away.wins,
                 losses: away.losses,
                 ties: away.ties,
                 totalGames: away.totalGames,
-                teamName: awayTeam
             });
         } catch {
             setHomeStats(null);
