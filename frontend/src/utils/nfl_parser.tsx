@@ -104,7 +104,16 @@ export const parseNFLTeamStats = async (teamName: string) => {
     // for each event, get the game info
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     events.forEach((event: any) => {
-        // need to validate that the game is in the past
+        
+        // get the eventDate and compare to current dat
+        const iso = event['date'];
+        const eventDate = new Date(iso);
+
+        // this prevents upcoming games from being counted
+        // by ensuring we only count games that have already passed
+        if(eventDate.getTime() >= Date.now()) {
+            return;
+        }
 
         // home team stuff is always ['competitions'][0]['competitors'][0]
         // away team stuff is always ['competitions'][0]['competitors'][1]
