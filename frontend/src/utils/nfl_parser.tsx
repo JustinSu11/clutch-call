@@ -63,23 +63,7 @@ export const parseUpcomingNFLGames = async () => {
         const year = gameDate.split('-')[0];
         const formattedGameDate = `${month}-${day}-${year}`;
 
-        // get the leaders for this game
-        const rawLeaders = event['competitions'][0]['leaders']; 
-        
-        // grab the leaders for the current game
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const leaders: Leader[] = (rawLeaders ?? []).map((leader: any) => {
-            return {
-                title: leader['displayName'],
-                playerID: leader['leaders'][0]['athlete']['id'],
-                playerName: leader['leaders'][0]['athlete']['displayName'],
-                value: leader['leaders'][0]['displayValue'],
-                playerHeadshot: leader['leaders'][0]['athlete']['headshot'],
-            }
-        });
-
-
-        return { homeTeam, awayTeam, gameDate: formattedGameDate, leaders };
+        return { homeTeam, awayTeam, gameDate: formattedGameDate};
     });
 
     return games;
