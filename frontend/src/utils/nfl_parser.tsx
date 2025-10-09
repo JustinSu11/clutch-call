@@ -15,7 +15,7 @@ import { ClassDictionary } from 'clsx';
 import * as nfl_methods from '../backend_methods/nfl_methods';
 import * as sports_stats_methods from '../backend_methods/sports_stats_methods';
 import { HistoricalGameFilters } from '../backend_methods/sports_stats_methods';
-import { UpcomingGame, HistoricalGame } from './data_class';
+import { UpcomingGame} from './data_class';
 
 // globals
 const seasonStartDate = '2025-09-04'; // NFL season started on Sep 4, 2025

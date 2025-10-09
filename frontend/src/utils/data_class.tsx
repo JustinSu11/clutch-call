@@ -11,13 +11,3 @@ export type UpcomingGame = {
     awayTeam: string;
     gameDate: string;       // YYYY-MM-DD
 };
-
-// for previous games, we extract more information
-export type HistoricalGame = {
-    homeTeam: string;
-    awayTeam: string;       
-    homeScore: number;
-    awayScore: number;
-    winner: string;         // "home" or "away" or "tie"
-    gameDate: string;       // YYYY-MM-DD
-};
