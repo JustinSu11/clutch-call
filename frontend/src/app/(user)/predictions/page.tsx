@@ -8,10 +8,12 @@
 */
 "use client";
 import React, { useState, useEffect } from 'react';
-import { parseUpcomingNFLGames } from '@/utils/nfl_parser';
+import { parseUpcomingNFLGames, parseNFLTeamStats } from '@/utils/nfl_parser';
 import { parseUpcomingNBAGames } from '@/utils/nba_parser';
 import { parseUpcomingMLSGames } from '@/utils/mls_parser';
 import { UpcomingGame } from '@/utils/data_class';
+import { get } from 'http';
+
 
 // declare data types
 type SportKey = 'All Sports' | 'NFL' | 'NBA' | 'MLS';
@@ -101,6 +103,22 @@ const getConfidenceStyle = (confidence: number) => {
     const hue = (clampedConfidence / 100) * 100;
     return { backgroundColor: `hsl(${hue}, 90%, 45%)` };
 };
+
+const getNFLTeamStats = async (teamName: string) => {
+    /*
+        getTeamStats:
+        This method gets the current season stats for a given NFL team.
+        params:
+            teamName: string - the full display name of the team (e.g., "Dallas Cowboys")
+        returns:
+            stats: an object containing wins, losses, ties, and totalGames
+
+    */
+    const stats = await parseNFLTeamStats(`${teamName}`);
+
+    console.log(`${teamName} stats: ${stats.wins}-${stats.losses}-${stats.ties} over ${stats.totalGames} games`);
+
+}
 
 
 // --- Components ---

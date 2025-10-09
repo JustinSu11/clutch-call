@@ -13,7 +13,7 @@ export type UpcomingGame = {
 };
 
 // for previous games, we extract more information
-export type PreviousGame = {
+export type HistoricalGame = {
     homeTeam: string;
     awayTeam: string;       
     homeScore: number;

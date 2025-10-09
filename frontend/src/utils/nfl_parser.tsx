@@ -11,8 +11,11 @@
     an object by the backend method. We just need to call the backend method here
     without the extra validation step.
 */
+import { ClassDictionary } from 'clsx';
 import * as nfl_methods from '../backend_methods/nfl_methods';
-import { UpcomingGame } from './data_class';
+import * as sports_stats_methods from '../backend_methods/sports_stats_methods';
+import { HistoricalGameFilters } from '../backend_methods/sports_stats_methods';
+import { UpcomingGame, HistoricalGame } from './data_class';
 
 
 export const parseUpcomingNFLGames = async () => {
@@ -57,3 +60,65 @@ export const parseUpcomingNFLGames = async () => {
 
     return games;
 };
+
+export const parseNFLTeamStats = async (teamName: string) => {
+    /*
+        parseNFLTeamStats:
+        This method gets a team's current season stats from the backend method
+        and parses the response to return the team's stats.
+
+        params:
+            teamName: String - the name of the team to get the stats for. 
+                      Must use full display name such as "Dallas Cowboys" not "Cowboys"
+
+        returns:
+            teamStats: an array where each subscript has its own team name and stats
+    */
+
+    // await the response from the backend method
+    const responseData = await sports_stats_methods.getHistoricalNFLTeamByName(teamName);
+
+    // parse major header
+    const events = responseData['data']['events'];
+
+    // vars to hold the stats
+    let totalGames = 0;
+    let wins = 0;
+    let losses = 0;
+    let ties = 0;
+
+
+    // for each event, get the team name and the
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const teamStats = events.map((event: any) => {
+
+        // home team stuff is always ['competitions'][0]['competitors'][0]
+        // away team stuff is always ['competitions'][0]['competitors'][1]
+        const homeTeam = event['competitions'][0]['competitors'][0]['team']['displayName'];
+        const awayTeam = event['competitions'][0]['competitors'][1]['team']['displayName'];
+
+        const homeScore = event['competitions'][0]['competitors'][0]['score'];
+        const awayScore = event['competitions'][0]['competitors'][1]['score'];
+
+        // determine if the requested team is home or away for this specific game
+        if (homeTeam === teamName) {
+
+            // if the home team (the requested team) won
+            if (homeScore > awayScore) { wins++;}
+            else if (homeScore < awayScore) { losses++; }
+            else { ties++; } // tie game
+        }
+        else {
+
+            // if the away team (the requested team) won
+            if (awayScore > homeScore) { wins++; }
+            else if (awayScore < homeScore) { losses++; }
+            else { ties++; } // tie game
+        }
+
+        totalGames++;
+    });
+
+    return { wins, losses, ties, totalGames};
+};
+
