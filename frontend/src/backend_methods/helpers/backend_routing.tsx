@@ -55,6 +55,16 @@ export const ROUTES = {
     specific_nba_team_last_game: (teamId: string) => `${BASE_URL}/nba/teams/${teamId}/last`,
     upcoming_nba_games: `${BASE_URL}/nba/upcoming`,
     
+    // NBA ML Prediction Routes
+    nba_ml_status: `${BASE_URL}/nba/predictions/status`,
+    nba_ml_games: `${BASE_URL}/nba/predictions/games`,
+    nba_ml_players: `${BASE_URL}/nba/predictions/players`,
+    nba_ml_game_detail: (gameId: string) => `${BASE_URL}/nba/predictions/game/${gameId}`,
+    nba_ml_top_performers: `${BASE_URL}/nba/predictions/top-performers`,
+    nba_ml_models_info: `${BASE_URL}/nba/predictions/models/info`,
+    nba_ml_train: `${BASE_URL}/nba/predictions/train`,
+    nba_ml_delete_models: `${BASE_URL}/nba/predictions/models`,
+    
     nfl_games: `${BASE_URL}/nfl/games`,
     specific_nfl_game_details: (gameId: string) => `${BASE_URL}/nfl/game/${gameId}`,
     specific_nfl_game_boxscore: (gameId: string) => `${BASE_URL}/nfl/game/${gameId}/boxscore`,
@@ -66,15 +76,15 @@ export const ROUTES = {
     upcoming_soccer_matches: `${BASE_URL}/soccer/upcoming`,
 };
 
-//method to make a post or get request to the backend using axiom
-export const makeBackendRequest = async (method: 'GET' | 'POST', route: string, data?: any) => {
+//method to make a request to the backend using fetch
+export const makeBackendRequest = async (method: 'GET' | 'POST' | 'DELETE', route: string, data?: any) => {
     try {
         const response = await fetch(route, {
             method,
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: method === 'POST' ? JSON.stringify(data) : undefined,
+            body: (method === 'POST' || method === 'DELETE') && data ? JSON.stringify(data) : undefined,
         });
         return response.json();
     } catch (error) {

@@ -20,7 +20,15 @@ import {
     getSpecificNBAGameDetails,
     getSpecificNBAGameBoxscore,
     getSpecificNBATeamLastGame,
-    getUpcomingNBAGames
+    getUpcomingNBAGames,
+    getNBAMLStatus,
+    getNBAGamePredictions,
+    getNBAPlayerPredictions,
+    getNBAGamePredictionDetail,
+    getNBATopPerformers,
+    getNBAModelsInfo,
+    trainNBAModels,
+    deleteNBAModels
 } from '@/backend_methods/nba_methods';
 import {
     getSoccerMatches,
@@ -78,7 +86,16 @@ export default function TestingPage() {
         league: '',
         page: '1',
         perPage: '25',
-        betType: 'all'
+        betType: 'all',
+        // NBA ML Prediction inputs
+        mlDaysAhead: '1',
+        mlGameId: '',
+        mlTeamId: '',
+        mlMinPoints: '',
+        mlTopN: '10',
+        mlStat: 'points',
+        mlLimit: '10',
+        mlMinThreshold: ''
     });
 
     const addResult = (method: string, success: boolean, data?: any, error?: string) => {
@@ -267,6 +284,223 @@ export default function TestingPage() {
                                 {loading === 'getSpecificNBATeamLastGame' ? 'Loading...' : 'Get NBA Team Last Game'}
                             </button>
                         </div>
+                    </div>
+                </div>
+
+                {/* NBA ML Predictions */}
+                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8">
+                    <h2 className="text-2xl font-bold text-gray-900 mb-6">🏀 NBA AI Predictions</h2>
+                    
+                    {/* System Status and Model Management */}
+                    <div className="mb-6">
+                        <h3 className="text-lg font-semibold text-gray-800 mb-4">System Status & Model Management</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                            <button
+                                onClick={() => handleTest('getNBAMLStatus', getNBAMLStatus)}
+                                disabled={loading === 'getNBAMLStatus'}
+                                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-blue-400 transition-colors"
+                            >
+                                {loading === 'getNBAMLStatus' ? 'Loading...' : 'Check ML Status'}
+                            </button>
+                            <button
+                                onClick={() => handleTest('getNBAModelsInfo', getNBAModelsInfo)}
+                                disabled={loading === 'getNBAModelsInfo'}
+                                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-blue-400 transition-colors"
+                            >
+                                {loading === 'getNBAModelsInfo' ? 'Loading...' : 'Model Info'}
+                            </button>
+                            <button
+                                onClick={() => handleTest('trainNBAModels', () => trainNBAModels(undefined, true))}
+                                disabled={loading === 'trainNBAModels'}
+                                className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:bg-orange-400 transition-colors"
+                            >
+                                {loading === 'trainNBAModels' ? 'Training...' : 'Train Models'}
+                            </button>
+                        </div>
+                        <button
+                            onClick={() => handleTest('deleteNBAModels', deleteNBAModels)}
+                            disabled={loading === 'deleteNBAModels'}
+                            className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:bg-red-400 transition-colors"
+                        >
+                            {loading === 'deleteNBAModels' ? 'Deleting...' : '⚠️ Delete All Models'}
+                        </button>
+                    </div>
+
+                    {/* Prediction Parameters */}
+                    <div className="mb-6">
+                        <h3 className="text-lg font-semibold text-gray-800 mb-4">Prediction Parameters</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Days Ahead
+                                </label>
+                                <select
+                                    value={inputs.mlDaysAhead}
+                                    onChange={(e) => setInputs(prev => ({ ...prev, mlDaysAhead: e.target.value }))}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                >
+                                    <option value="1">1 Day</option>
+                                    <option value="2">2 Days</option>
+                                    <option value="3">3 Days</option>
+                                    <option value="7">7 Days</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Game ID (Optional)
+                                </label>
+                                <input
+                                    type="text"
+                                    value={inputs.mlGameId}
+                                    onChange={(e) => setInputs(prev => ({ ...prev, mlGameId: e.target.value }))}
+                                    placeholder="e.g., 0012500012"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Team ID (Optional)
+                                </label>
+                                <input
+                                    type="number"
+                                    value={inputs.mlTeamId}
+                                    onChange={(e) => setInputs(prev => ({ ...prev, mlTeamId: e.target.value }))}
+                                    placeholder="e.g., 1610612756"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Min Points
+                                </label>
+                                <input
+                                    type="number"
+                                    value={inputs.mlMinPoints}
+                                    onChange={(e) => setInputs(prev => ({ ...prev, mlMinPoints: e.target.value }))}
+                                    placeholder="e.g., 20"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Top N Players
+                                </label>
+                                <input
+                                    type="number"
+                                    value={inputs.mlTopN}
+                                    onChange={(e) => setInputs(prev => ({ ...prev, mlTopN: e.target.value }))}
+                                    placeholder="e.g., 10"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Stat Type
+                                </label>
+                                <select
+                                    value={inputs.mlStat}
+                                    onChange={(e) => setInputs(prev => ({ ...prev, mlStat: e.target.value }))}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                >
+                                    <option value="points">Points</option>
+                                    <option value="assists">Assists</option>
+                                    <option value="rebounds">Rebounds</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Result Limit
+                                </label>
+                                <input
+                                    type="number"
+                                    value={inputs.mlLimit}
+                                    onChange={(e) => setInputs(prev => ({ ...prev, mlLimit: e.target.value }))}
+                                    placeholder="e.g., 10"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Min Threshold
+                                </label>
+                                <input
+                                    type="number"
+                                    value={inputs.mlMinThreshold}
+                                    onChange={(e) => setInputs(prev => ({ ...prev, mlMinThreshold: e.target.value }))}
+                                    placeholder="e.g., 0.5"
+                                    step="0.1"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Game Predictions */}
+                    <div className="mb-6">
+                        <h3 className="text-lg font-semibold text-gray-800 mb-4">Game Outcome Predictions</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <button
+                                onClick={() => handleTest('getNBAGamePredictions', () => getNBAGamePredictions(parseInt(inputs.mlDaysAhead), true))}
+                                disabled={loading === 'getNBAGamePredictions'}
+                                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-green-400 transition-colors"
+                            >
+                                {loading === 'getNBAGamePredictions' ? 'Loading...' : '🎯 Get Game Predictions'}
+                            </button>
+                            <button
+                                onClick={() => handleTestWithParam('getNBAGamePredictionDetail', getNBAGamePredictionDetail, inputs.mlGameId, 'Game ID')}
+                                disabled={loading === 'getNBAGamePredictionDetail'}
+                                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-green-400 transition-colors"
+                            >
+                                {loading === 'getNBAGamePredictionDetail' ? 'Loading...' : '📊 Game Detail Prediction'}
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Player Predictions */}
+                    <div className="mb-6">
+                        <h3 className="text-lg font-semibold text-gray-800 mb-4">Player Performance Predictions</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <button
+                                onClick={() => handleTest('getNBAPlayerPredictions', () => getNBAPlayerPredictions(
+                                    parseInt(inputs.mlDaysAhead),
+                                    inputs.mlGameId || undefined,
+                                    inputs.mlTeamId ? parseInt(inputs.mlTeamId) : undefined,
+                                    inputs.mlMinPoints ? parseFloat(inputs.mlMinPoints) : undefined,
+                                    inputs.mlTopN ? parseInt(inputs.mlTopN) : undefined
+                                ))}
+                                disabled={loading === 'getNBAPlayerPredictions'}
+                                className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:bg-purple-400 transition-colors"
+                            >
+                                {loading === 'getNBAPlayerPredictions' ? 'Loading...' : '🏀 Get Player Predictions'}
+                            </button>
+                            <button
+                                onClick={() => handleTest('getNBATopPerformers', () => getNBATopPerformers(
+                                    parseInt(inputs.mlDaysAhead),
+                                    inputs.mlStat as 'points' | 'assists' | 'rebounds',
+                                    parseInt(inputs.mlTopN),
+                                    inputs.mlMinThreshold ? parseFloat(inputs.mlMinThreshold) : undefined
+                                ))}
+                                disabled={loading === 'getNBATopPerformers'}
+                                className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:bg-purple-400 transition-colors"
+                            >
+                                {loading === 'getNBATopPerformers' ? 'Loading...' : '⭐ Get Top Performers'}
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Usage Tips */}
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <h4 className="text-sm font-semibold text-blue-800 mb-2">💡 Usage Tips:</h4>
+                        <ul className="text-sm text-blue-700 space-y-1">
+                            <li>• Check ML Status first to see if models are trained</li>
+                            <li>• Train models if not available (takes ~5 minutes)</li>
+                            <li>• Game predictions show win probabilities for upcoming games</li>
+                            <li>• Player predictions show expected points, assists, and rebounds</li>
+                            <li>• Use filters to focus on specific games, teams, or performance levels</li>
+                            <li>• Top performers ranking works for points, assists, or rebounds</li>
+                        </ul>
                     </div>
                 </div>
 

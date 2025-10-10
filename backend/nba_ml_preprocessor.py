@@ -461,6 +461,10 @@ class NBADataPreprocessor:
         """Load saved scalers and encoders"""
         preprocessors_dir = os.path.join(self.data_dir, 'models', 'preprocessors')
         
+        # Check if preprocessors directory exists
+        if not os.path.exists(preprocessors_dir):
+            raise FileNotFoundError(f"Preprocessors directory not found: {preprocessors_dir}. Models may need to be trained.")
+        
         # Load scalers
         for filename in os.listdir(preprocessors_dir):
             if filename.endswith('_scaler.pkl'):

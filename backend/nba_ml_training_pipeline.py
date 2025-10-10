@@ -108,12 +108,20 @@ class NBAMLPipeline:
                     processed_data = self.preprocessor.process_all_data()
                     if not processed_data:
                         raise ValueError("Preprocessing failed")
+                    
+                    # Save preprocessors after successful data processing
+                    self.preprocessor.save_preprocessors()
+                    logger.info("✅ Preprocessors saved successfully")
             else:
                 # Process all data
                 processed_data = self.preprocessor.process_all_data()
                 
                 if not processed_data:
                     raise ValueError("No data was processed")
+                
+                # Save preprocessors after successful data processing
+                self.preprocessor.save_preprocessors()
+                logger.info("✅ Preprocessors saved successfully")
             
             self.pipeline_results['preprocessing'] = {
                 'status': 'success',

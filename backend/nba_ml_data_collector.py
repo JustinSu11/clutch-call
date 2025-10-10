@@ -291,6 +291,7 @@ class NBADataCollector:
     def get_upcoming_games(self, days_ahead: int = 7) -> pd.DataFrame:
         """Get upcoming games for prediction"""
         logger.info(f"Getting upcoming games for next {days_ahead} days...")
+        logger.info(f"Date range: {datetime.now().date()} to {datetime.now().date() + timedelta(days=days_ahead)}")
         
         upcoming_games = []
         start_date = datetime.now().date()
@@ -304,6 +305,8 @@ class NBADataCollector:
                 self.rate_limit()
                 scoreboard = scoreboardv2.ScoreboardV2(game_date=date_str)
                 games_data = scoreboard.get_data_frames()[0]
+                
+                logger.info(f"Checking {date_str}: Found {len(games_data)} games")
                 
                 if not games_data.empty:
                     for _, game in games_data.iterrows():
@@ -323,8 +326,13 @@ class NBADataCollector:
             current_date += timedelta(days=1)
         
         df = pd.DataFrame(upcoming_games)
+        logger.info(f"Total upcoming games found: {len(df)}")
+        
         if not df.empty:
             df.to_csv(os.path.join(self.data_dir, 'processed', 'upcoming_games.csv'), index=False)
+            logger.info(f"Upcoming games saved to: {os.path.join(self.data_dir, 'processed', 'upcoming_games.csv')}")
+        else:
+            logger.warning("No upcoming games found in the specified date range")
         
         return df
 
