@@ -17,9 +17,10 @@ import {
 import { Button } from "../ui/button"
 import { ChevronDown } from "lucide-react"
 
+
+//will need to pass a handle filter click function to handle the selection of different leagues
 const SportsFilterDropdown = () => {
 
-    
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -30,6 +31,7 @@ const SportsFilterDropdown = () => {
             </DropdownMenuTrigger>
             <DropdownMenuPortal>
                 <DropdownMenuContent align="start" className="flex flex-col bg-background border-0 text-text-primary">
+                    {/*Makes a item for each league in the imported availableLeagues array */}
                     <DropdownMenuLabel>Leagues</DropdownMenuLabel>
                         {availableLeagues.map((league) => (
                             <DropdownMenuItem key={league}>{league}</DropdownMenuItem>
