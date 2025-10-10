@@ -27,5 +27,5 @@ const getUpcomingNFLGames = async (): Promise<UpcomingMatch[]> => {
 
 
 export default function MatchCarousel() {
-
+    
 }

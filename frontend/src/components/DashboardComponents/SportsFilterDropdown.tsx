@@ -4,25 +4,25 @@ Last Updated: 10/10/2025 by Justin Nguyen
 Purpose: Dropdown sports filter
 */
 'use client'
-import { useState } from "react"
 import { availableLeagues } from "@/utils/available-sports"
 import { 
     DropdownMenu,
     DropdownMenuContent,
-    DropdownMenuItem,
     DropdownMenuLabel,
     DropdownMenuPortal,
-    DropdownMenuTrigger
+    DropdownMenuTrigger,
+    DropdownMenuCheckboxItem
 } from "../ui/dropdown-menu"
 import { Button } from "../ui/button"
 import { ChevronDown } from "lucide-react"
 
-
 //will need to pass a handle filter click function to handle the selection of different leagues
-const SportsFilterDropdown = () => {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const SportsFilterDropdown = (props: any) => {
 
     return (
         <DropdownMenu>
+            {/*Button for triggering the drop down*/}
             <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="text-text-primary hover:bg-secondary group">
                     Filter
@@ -34,7 +34,9 @@ const SportsFilterDropdown = () => {
                     {/*Makes a item for each league in the imported availableLeagues array */}
                     <DropdownMenuLabel>Leagues</DropdownMenuLabel>
                         {availableLeagues.map((league) => (
-                            <DropdownMenuItem key={league}>{league}</DropdownMenuItem>
+                            <DropdownMenuCheckboxItem checked={props.selectedLeagues.includes(league)} key={league} onCheckedChange={() => props.handleLeagueSelection(league)}>
+                                {league}
+                            </DropdownMenuCheckboxItem>
                         ))}
                 </DropdownMenuContent>
             </DropdownMenuPortal>
