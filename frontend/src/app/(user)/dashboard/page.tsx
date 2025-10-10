@@ -13,13 +13,28 @@
 */
 import UpcomingMatches from "@/components/DashboardComponents/UpcomingMatches";
 import RecentPredictions from "@/components/DashboardComponents/RecentPredictions";
+// import { useState } from 'react'
+import SportsFilterDropdown from "@/components/DashboardComponents/SportsFilterDropdown"
+
 
 
 export default function DashboardMain() {
-  return (
-    <>
-      <UpcomingMatches />
-      <RecentPredictions />
-    </>
-  );
+    // const [selectedLeague, setSelectedLeague] = useState('')
+
+    // function handleLeagueSelection(key: string) {
+    //     setSelectedLeague(key)
+    // }
+
+    return (
+        <>
+            <div className="mb-8">
+                    <div className="flex text-3xl font-bold text-text-primary mb-4 items-center">
+                        Dashboard
+                        <SportsFilterDropdown />
+                    </div>
+            </div>
+            <UpcomingMatches />
+            <RecentPredictions />
+        </>
+    );
 }

@@ -1,7 +1,7 @@
 /* 
 Author: Justin Nguyen
 Last Updated: 10/08/2025 by Justin Nguyen
-Purpose: Formats the input date and time of a match into a more appealing date format.
+Purpose: Carousel for upcoming and live matches for the selected sport.
 */
 
 import { parseUpcomingNBAGames } from "@/utils/nba_parser"
@@ -22,4 +22,10 @@ const getUpcomingNFLGames = async (): Promise<UpcomingMatch[]> => {
         home: match.homeTeam,
         date: match.date
     }))
+}
+
+
+
+export default function MatchCarousel() {
+
 }
