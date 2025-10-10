@@ -10,6 +10,7 @@
 
 import { ThemeToggle } from "@/components/ui/ThemeToggle"
 import { Home } from "lucide-react"
+import { ArrowLeftRight } from "lucide-react"
 
 export default function Sidebar() {
     /*
@@ -38,6 +39,10 @@ export default function Sidebar() {
                             <Home />
                             {/* The text label for the tab */}
                             <span>Home</span>
+                        </a>
+                        <a className="flex items-center gap-3 px-4 py-3 rounded-lg text-primary font-medium hover:bg-secondary" href="/user/team-comparison">
+                            {<ArrowLeftRight />}
+                            <span>Team Comparison</span>
                         </a>
                     </nav>
                 </div>
