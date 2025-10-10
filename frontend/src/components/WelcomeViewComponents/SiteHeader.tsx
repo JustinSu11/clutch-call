@@ -24,7 +24,7 @@ export default function SiteHeader() {
                 <div className="flex gap-3">
                     <ThemeToggle />
                     <Link href="/dashboard">
-                        <Button className="h-10 px-5 bg-red-500 hover:bg-red-600 text-white">
+                        <Button className="h-10 px-5 bg-red-500 hover:bg-red-600 active:bg-red-700 text-white">
                             Try Now
                         </Button>
                     </Link>
