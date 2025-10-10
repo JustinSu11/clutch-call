@@ -4,6 +4,7 @@
  * Purpose: Displays game details in a card format with team names, scores, and status
  */
 
+/*
 import { GameData } from '@/lib/api/sports';
 
 interface GameCardProps {
@@ -57,7 +58,8 @@ export default function GameCard({ game, league }: GameCardProps) {
         </div>
         
         <div className="space-y-2">
-          {/* Away Team */}
+          {/* Away Team *///}
+          /*
           <div className="flex justify-between items-center">
             <div className="flex items-center space-x-3">
               {awayTeam?.team?.logo && (
@@ -81,7 +83,8 @@ export default function GameCard({ game, league }: GameCardProps) {
             </div>
           </div>
           
-          {/* Home Team */}
+          {/* Home Team *///}
+          /*
           <div className="flex justify-between items-center">
             <div className="flex items-center space-x-3">
               {homeTeam?.team?.logo && (
@@ -125,3 +128,4 @@ export default function GameCard({ game, league }: GameCardProps) {
     return renderESPNGame(game, 'text-orange-600', 'bg-orange-100');
   }
 }
+  */

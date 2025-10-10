@@ -42,6 +42,8 @@ export const parseUpcomingNFLGames = async () => {
 
     // map through each event to extract home and away team names
     // into the games array
+    // DO NOT DELETE THE COMMAND TO DISABLE THE ANY TYPE
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const games: Game[] = events.map((event: any)  => {
 
         // extract home and away team names

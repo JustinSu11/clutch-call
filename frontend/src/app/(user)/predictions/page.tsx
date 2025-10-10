@@ -132,9 +132,9 @@ const SportsFilter: React.FC<{
                 onClick={() => setActiveSport(sport)}
                 className={`px-4 py-2 text-sm text-text-primary font-medium rounded-md whitespace-nowrap ${
                     activeSport === sport
-                        ? 'bg-accent text-text-primary'
-                        : 'hover:bg-accent text-text-primary'
-                }`}
+                        ? 'bg-secondary text-text-primary'
+                        : 'hover:text-primary'
+                } cursor-pointer`}
             >
                 {sport}
             </button>
@@ -217,9 +217,9 @@ export default function PredictionsScreen() {
                     <p className="text-text-primary mb-4">AI-powered predictions for upcoming sports matches.</p>
                 </div>
                 <SportsFilter sports={sports} activeSport={activeSport} setActiveSport={setActiveSport} />
-                <div className="bg-white shadow-md rounded-lg overflow-hidden">
-                    <div className="overflow-x-auto">
-                        <table className="min-w-full divide-y divide-gray-200">
+                <div className= "rounded-lg overflow-hidden">
+                    <div className="overflow-x-hidden">
+                        <table className="min-w-full divide-y divide-secondary">
                             <thead className="bg-secondary-background rounded-xl shadow-sm">
                                 <tr>
                                     <th className="px-6 py-4 text-sm font-semibold text-text-secondary uppercase tracking-wider">Match</th>
@@ -228,7 +228,7 @@ export default function PredictionsScreen() {
                                     <th className="px-6 py-4 text-sm font-semibold text-text-secondary uppercase tracking-wider">AI Analysis</th>
                                 </tr>
                             </thead>
-                            <tbody className="bg-white divide-y divide-gray-200">
+                            <tbody className="divide-y divide-secondary">
                                 {loading ? (
                                     <tr>
                                         <td colSpan={4} className="text-center py-10 text-text-primary bg-secondary-background">

@@ -67,6 +67,7 @@ export const ROUTES = {
 };
 
 //method to make a post or get request to the backend using axiom
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const makeBackendRequest = async (method: 'GET' | 'POST', route: string, data?: any) => {
     try {
         const response = await fetch(route, {
