@@ -44,3 +44,10 @@ next-env.d.ts
 *.pyc
 *.pyo
 *.pyd
+
+#ml
+/nba_ml_data
+
+*.log
+
+/backend/nba_ml_data
