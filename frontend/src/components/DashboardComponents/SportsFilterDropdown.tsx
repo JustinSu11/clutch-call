@@ -11,7 +11,8 @@ import {
     DropdownMenuLabel,
     DropdownMenuPortal,
     DropdownMenuTrigger,
-    DropdownMenuCheckboxItem
+    DropdownMenuCheckboxItem,
+    DropdownMenuSeparator,
 } from "../ui/dropdown-menu"
 import { Button } from "../ui/button"
 import { ChevronDown } from "lucide-react"
@@ -33,8 +34,9 @@ const SportsFilterDropdown = (props: any) => {
                 <DropdownMenuContent align="start" className="flex flex-col bg-background border-0 text-text-primary">
                     {/*Makes a item for each league in the imported availableLeagues array */}
                     <DropdownMenuLabel>Leagues</DropdownMenuLabel>
+                    <DropdownMenuSeparator className="bg-text-primary mx-1"/>
                         {availableLeagues.map((league) => (
-                            <DropdownMenuCheckboxItem checked={props.selectedLeagues.includes(league)} key={league} onCheckedChange={() => props.handleLeagueSelection(league)}>
+                            <DropdownMenuCheckboxItem checked={props.selectedLeagues.includes(league)} key={league} onCheckedChange={() => props.handleLeagueSelection(league)} onSelect={(event) => event.preventDefault()}>
                                 {league}
                             </DropdownMenuCheckboxItem>
                         ))}
