@@ -17,7 +17,7 @@ export default function CallToActionSection() {
                 <p className="mx-auto mb-8 max-w-3xl text-lg text-text-secondary">
                     Try ClutchCall today and start making informed decisions with out AI-powered predictions.
                 </p>
-                <Link href="user/dashboard">
+                <Link href="/dashboard">
                     <Button size="lg" className="h-14 px-8 bg-red-500 hover:bg-red-600 text-white">
                         Try now
                     </Button>

@@ -3,14 +3,30 @@
     Created: 09/19/2025 
     Author: CJ Quintero
 
-    Last Updated: 09/26/2025 by Justin Nguyen
+    Last Updated: 10/01/2025 by CJ Quintero
 
     Description: This file has the code for the sidebar component in the dashboard.
 */
-
+"use client"
 import { ThemeToggle } from "@/components/ui/ThemeToggle"
-import { Home } from "lucide-react"
-import { ArrowLeftRight } from "lucide-react"
+import { Home, ChartScatter, AlignJustify, X } from "lucide-react"
+import { usePathname } from "next/navigation"
+import Link from "next/link"
+import { useState } from "react"
+import { Button } from "@/components/ui/button"
+
+const navItems = [
+    {
+        title: 'Home',
+        href: '/dashboard',
+        icon: Home,
+    },
+    {
+        title: 'Predictions',
+        href: '/predictions',
+        icon: ChartScatter,
+    }
+]
 
 export default function Sidebar() {
     /*
@@ -21,35 +37,49 @@ export default function Sidebar() {
         Returns:
         A JSX element representing the sidebar component.
     */
+
+    //This is used in the className for the links that get generated for each nav item. if currentTitle (title of the nav item whose href matches the path in the url) matches with the title of the nav item then that nav item will have classes applied to it that make it look like its selected
+    const pathname = usePathname()
+    const currentTitle = navItems.find(item => pathname?.startsWith(item.href))?.title
+
+    const [isSideBarOpen, setIsSideBarOpen] = useState(false)
+
+    function handleSideBarOpenClose() {
+        setIsSideBarOpen(!isSideBarOpen)
+    }
+
     return (
         <div>
-            {/* <aside> defines a secondary component like sidebars. It's considered secondary content for the page*/}
-            <aside className="sticky flex flex-col w-64 h-[100vh] bg-secondary-background p-6">
+            <aside className={`sticky top-0 self-start flex flex-col ${isSideBarOpen ? "w-64" : "w-16"} h-[100vh] bg-secondary-background py-6 px-1 transition-[width] duration-300 ease-in-out overflow-hidden`}>
                 <div className="flex flex-col h-full">
                     {/* The header for the sidebar */}
-                    <h1 className="flex justify-center text-4xl font-bold text-text-primary mb-8">ClutchCall</h1>
+                    <div className="flex text-3xl font-bold text-text-primary gap-3">
+                        <Button variant="ghost" className="mb-8 ml-1 text-text-primary hover:text-primary hover:bg-secondary transition-transform duration-300" onClick={handleSideBarOpenClose}>
+                             <span className="relative inline-block w-4 h-6">
+                                <AlignJustify size={24} className={`absolute inset-0 m-auto transition-all duration-300 will-change-transform ${isSideBarOpen ? "opacity-0 -rotate-90 scale-75" : "opacity-100 rotate-0 scale-100"}`}/>
+                                <X size={20} className={`absolute inset-0 m-auto transition-all duration-300 will-change-transform ${isSideBarOpen ? "opacity-100 rotate-0 scale-100" : "opacity-0 rotate-90 scale-75"}`}/>
+                            </span>
+                        </Button>
+                        <span className={`whitespace-nowrap transition-all duration-200 ${isSideBarOpen ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-2 pointer-events-none"}`}>
+                            ClutchCall
+                        </span>
+                    </div>
                     {/* <nav> groups links together */}
                     <nav className="flex flex-col gap-2">
-                        {/* Each <a> tag is a link in the sidebar.
-                            The href="#" is used as a placeholder that doesn't link to an actual page, it
-                            just takes you back to the top of the page.
-                        */}
-                        <a className="flex items-center gap-3 px-4 py-3 rounded-lg bg-secondary text-primary font-medium" href="#">
-                            {/* <svg> is used to insert an inline SVG icon. This one displays a house for the Home tab on the sidebar*/}
-                            <Home />
-                            {/* The text label for the tab */}
-                            <span>Home</span>
-                        </a>
-                        <a className="flex items-center gap-3 px-4 py-3 rounded-lg text-primary font-medium hover:bg-secondary" href="/user/team-comparison">
-                            {<ArrowLeftRight />}
-                            <span>Team Comparison</span>
-                        </a>
+                        {
+                            navItems.map((item) => (
+                                <Link className={` flex items-center gap-3 px-4 py-3 rounded-lg text-text-primary font-medium hover:text-primary  ${item.title === currentTitle ? "bg-secondary text-primary" : "text-text-primary"} `} href={item.href} id={item.title} key={item.title}>
+                                    <item.icon className="flex-shrink-0 transition-transform duration-200" />
+                                    {/*label for the nav item*/}
+                                    { isSideBarOpen && (<span className="opacity-100 translate-x-0">{item.title}</span>) }
+                                </Link>
+                            ))
+                        }
                     </nav>
                 </div>
                 <div className="mx-auto">
                     <ThemeToggle />
                 </div>
-                
             </aside>
         </div>
     )

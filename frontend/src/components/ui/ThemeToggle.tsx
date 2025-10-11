@@ -35,11 +35,28 @@ export const ThemeToggle = () => {
         <button onClick={toggleTheme} className={cn("max-sm:hidden top-4 z-50 p-2 rounded-full transition-colors duration-300 cursor-pointer",
             "focus:outline-hidden"
         )}> 
-            {isDarkMode ? ( 
-                <Sun className='h-6 w-6 text-yellow-300'/> 
-                ) : ( 
-                <Moon className='h-6 w-6 text-text-primary'/> 
-            )} 
+            <span className="relative inline-flex w-6 h-6">
+                {/* Sun (visible in dark mode) */}
+                <Sun
+                    size={20}
+                    className={cn(
+                        "absolute inset-0 m-auto transition-all duration-300 will-change-transform",
+                        isDarkMode
+                            ? "opacity-100 rotate-0 scale-100 text-yellow-300"
+                            : "opacity-0 -rotate-90 scale-75 text-yellow-300"
+                    )}
+                />
+                {/* Moon (visible in light mode) */}
+                <Moon
+                    size={20}
+                    className={cn(
+                        "absolute inset-0 m-auto transition-all duration-300 will-change-transform",
+                        isDarkMode
+                            ? "opacity-0 rotate-90 scale-75 text-text-primary"
+                            : "opacity-100 rotate-0 scale-100 text-text-primary"
+                    )}
+                />
+            </span>
         </button>
     )
 }
