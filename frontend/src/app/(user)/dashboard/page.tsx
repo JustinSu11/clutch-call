@@ -33,7 +33,7 @@ export default function DashboardMain() {
     return (
         <>
             <div className="mb-8">
-                    <div className="flex text-3xl font-bold text-text-primary mb-4 items-center">
+                    <div className="flex text-3xl font-bold text-text-primary mb-4 items-center gap-7">
                         Dashboard
                         <SportsFilterDropdown handleLeagueSelection={handleLeagueSelection} selectedLeagues={selectedLeagues} />
                     </div>
