@@ -150,3 +150,50 @@ export const parseNFLTeamStats = async (teamName: string) => {
     return { wins, losses, ties, totalGames};
 };
 
+export const parseNFLTeamLogo = async (teamName: string) => {
+    /*
+        parseNFLTeamLogo:
+        This method gets a team's logo and returns the url
+
+        params:
+            teamName: String - the name of the team to get the logo for.
+
+        returns:
+            logoUrl: String - the url of the team's logo
+    */
+
+    // makes the local date in YYYY-MM-DD using the local timezone
+    const todaysDateLocal = (() => {
+        const d = new Date();
+        const yyyy = d.getFullYear();
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const dd = String(d.getDate()).padStart(2, '0');
+        return `${yyyy}-${mm}-${dd}`;
+    })();
+
+    // await the response from the backend method
+    const responseData = await sports_stats_methods.getHistoricalNFLTeamByName(teamName, {
+        startDate: `${seasonStartDate}`,              
+        endDate: `${todaysDateLocal}`,             
+    });
+
+    // for the logo url, we just have to check 1 game
+    const gameData = responseData['data']['events'][0];
+
+    // the team logo we want varies if the team is home or away
+    // so we have to check both teams for a matching name
+    const team0 = gameData['competitions'][0]['competitors'][0]['team']['displayName'];
+    const team1 = gameData['competitions'][0]['competitors'][1]['team']['displayName'];
+
+    // check the first team, then the second for a name match. Else, log the error
+    if (team0 === teamName) {
+        return gameData['competitions'][0]['competitors'][0]['team']['logo'];
+    } 
+    else if (team1 === teamName) {
+        return gameData['competitions'][0]['competitors'][1]['team']['logo'];
+    }
+    else {
+        console.log(`[ERROR]::Logo for team: ${teamName} could not be found.`);
+        return '';
+    }
+};
