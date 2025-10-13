@@ -3,13 +3,13 @@
     Created: 09/19/2025 
     Author: CJ Quintero
 
-    Last Updated: 10/01/2025 by CJ Quintero
+    Last Updated: 10/13/2025 by CJ Quintero
 
     Description: This file has the code for the sidebar component in the dashboard.
 */
 "use client"
 import { ThemeToggle } from "@/components/ui/ThemeToggle"
-import { Home, ChartScatter, AlignJustify, X } from "lucide-react"
+import { Home, ChartScatter, AlignJustify, X, Trophy } from "lucide-react"
 import { usePathname } from "next/navigation"
 import Link from "next/link"
 import { useState } from "react"
@@ -25,6 +25,11 @@ const navItems = [
         title: 'Predictions',
         href: '/predictions',
         icon: ChartScatter,
+    },
+    {
+        title: 'Team Comparisons',
+        href: '/team-comparisons',
+        icon: Trophy,
     }
 ]
 
