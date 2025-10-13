@@ -1,0 +1,1 @@
+When running locally just run run_server.py, dont have to worry about routing, this only applies to the public server where the backend is hosted.

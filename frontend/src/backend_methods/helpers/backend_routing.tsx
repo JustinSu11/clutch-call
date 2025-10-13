@@ -4,7 +4,22 @@ File: backend_routing.tsx
 Description: This file contains the routes and methods to make requests to the backend.
 */
 
-const BASE_URL = "http://127.0.0.1:8000/api/v1";
+// Dynamic base URL based on production environment
+const getBaseUrl = (): string => {
+    const isProduction = process.env.NEXT_PUBLIC_PRODUCTION === 'true';
+    const baseUrl = isProduction 
+        ? "https://clutch-call.onrender.com/api/v1"
+        : "http://127.0.0.1:8000/api/v1";
+    
+    // Log the environment for debugging (only in development)
+    if (!isProduction) {
+        console.log(`Backend URL: ${baseUrl} (Production: ${isProduction})`);
+    }
+    
+    return baseUrl;
+};
+
+const BASE_URL = getBaseUrl();
 
 export const ROUTES = {
     // Health check
@@ -33,6 +48,26 @@ export const ROUTES = {
     historical_soccer_games: `${BASE_URL}/historical/soccer`,
     statistical_trends: `${BASE_URL}/historical/trends`,
     
+    // New Historical Routes for All Teams
+    historical_nba_all_teams: `${BASE_URL}/historical/nba/all-teams`,
+    historical_nfl_all_teams: `${BASE_URL}/historical/nfl/all-teams`,
+    historical_soccer_all_teams: `${BASE_URL}/historical/soccer/all-teams`,
+    
+    // Historical Routes for Specific Teams by Name
+    historical_nba_team_by_name: (teamName: string) => `${BASE_URL}/historical/nba/team/${encodeURIComponent(teamName)}`,
+    historical_nfl_team_by_name: (teamName: string) => `${BASE_URL}/historical/nfl/team/${encodeURIComponent(teamName)}`,
+    historical_soccer_team_by_name: (teamName: string) => `${BASE_URL}/historical/soccer/team/${encodeURIComponent(teamName)}`,
+    
+    // Season-Specific Historical Routes
+    historical_nba_season: (season: string) => `${BASE_URL}/historical/nba/season/${encodeURIComponent(season)}`,
+    historical_nfl_season: (season: string) => `${BASE_URL}/historical/nfl/season/${encodeURIComponent(season)}`,
+    historical_soccer_season: (season: string) => `${BASE_URL}/historical/soccer/season/${encodeURIComponent(season)}`,
+    
+    // Team Stats and Performance Routes
+    historical_nba_team_stats: `${BASE_URL}/historical/nba/team-stats`,
+    historical_nfl_team_stats: `${BASE_URL}/historical/nfl/team-stats`,
+    historical_soccer_team_stats: `${BASE_URL}/historical/soccer/team-stats`,
+    
     // Individual League Routes (existing)
     nba_games: `${BASE_URL}/nba/games`,
     specific_nba_game_details: (gameId: string) => `${BASE_URL}/nba/game/${gameId}`,
@@ -52,6 +87,7 @@ export const ROUTES = {
 };
 
 //method to make a post or get request to the backend using axiom
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const makeBackendRequest = async (method: 'GET' | 'POST', route: string, data?: any) => {
     try {
         const response = await fetch(route, {
@@ -70,4 +106,23 @@ export const makeBackendRequest = async (method: 'GET' | 'POST', route: string, 
 
 export const checkBackendHealth = async () => {
     return makeBackendRequest('GET', ROUTES.health);
+}
+
+// Utility function to check current environment
+export const getCurrentEnvironment = () => {
+    return {
+        isProduction: process.env.NEXT_PUBLIC_PRODUCTION === 'true',
+        baseUrl: BASE_URL
+    };
+}
+
+// Utility function to get environment info for debugging
+export const getEnvironmentInfo = () => {
+    const env = getCurrentEnvironment();
+    console.log('Environment Info:', {
+        isProduction: env.isProduction,
+        baseUrl: env.baseUrl,
+        environmentVariable: process.env.NEXT_PUBLIC_PRODUCTION
+    });
+    return env;
 }

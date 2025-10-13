@@ -1,5 +1,5 @@
 /*
-    File: src/app/dashboard/layout.tsx 
+    File: src/app/user/layout.tsx 
     Author: CJ Quintero
 
     Last Updated: 09/24/2025 by Justin Nguyen
@@ -28,17 +28,17 @@ export async function DashboardLayout({
     const cookieStore = await cookies()
     const defaultOpen = cookieStore.get("sidebar_state")?.value === "true"
     return (
-        <div className="relative flex size-full min-h-screen flex-col group/design-root overflow-x-hidden">
-        <div className="flex h-full grow">
-            {/* All pages under /dashboard will have this sidebar */}
-            <Sidebar />
-            {/* Main Content Area */}
-            <main className="flex-1 p-8">
-            <div className="max-w-7xl mx-auto">
-                {children}
+        <div className="flex size-full min-h-screen flex-col group/design-root">
+            <div className="flex h-full grow">
+                {/* All pages under /dashboard will have this sidebar */}
+                <Sidebar />
+                {/* Main Content Area */}
+                <main className="flex-1 p-8 overflow-x-hidden">
+                    <div className="max-w-7xl mx-auto">
+                        {children}
+                    </div>
+                </main>
             </div>
-            </main>
-        </div>
         </div>
   )
 }
