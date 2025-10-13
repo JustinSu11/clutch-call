@@ -28,7 +28,7 @@ export default function DashboardMain() {
                 ? prev.filter((league) => league !== key) // remove league from selectedleagues array
                 : [...prev, key] // add league to selectedLeagues array
         )
-    } 
+    }
 
     return (
         <>
