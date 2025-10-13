@@ -19,6 +19,7 @@ type UpcomingMatch = {
     date: Date
 }
 
+//returns the upcoming matches as arrays of the UpcomingMatch type
 const fetchAllMatches = async (): Promise<UpcomingMatch[]> => {
     const [nba, nfl, mls] = await Promise.all([
         parseUpcomingNBAGames().catch(() => []),
@@ -41,6 +42,7 @@ const fetchAllMatches = async (): Promise<UpcomingMatch[]> => {
 export default function MatchCarousel() {
     const [upcomingMatchesToday, setUpcomingMatchesToday] = useState<UpcomingMatch[]>([])
 
+    //timer to know when midnight passes
     const timerRef = useRef<number | null>(null)
 
     function isSameLocalDay(a: Date, b: Date) {
@@ -48,7 +50,7 @@ export default function MatchCarousel() {
             a.getDate() === b.getDate()
         )
     }
-
+    //function to re-fetch matches every night at midnight
     function scheduleMidnightRefresh(recalc: () => void) {
         if(timerRef.current) {
             window.clearTimeout(timerRef.current)
@@ -66,7 +68,7 @@ export default function MatchCarousel() {
             scheduleMidnightRefresh(recalc)
         }, msUntil)
     }
-
+    //This fetches the matches and filters them to only keep the matches that are happening in the current day
     useEffect(() => {
         let mounted = true
 
