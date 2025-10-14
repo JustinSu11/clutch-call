@@ -5,7 +5,7 @@
     Created: 09/22/2025
     Author: Maaz Haque
 
-    Description: Testing page for all backend methods to retrieve sports data
+    Description: Testing page for all backend methods to retrieve sports statistics and game data
 */
 
 import { useState } from 'react';
@@ -28,10 +28,35 @@ import {
     getSpecificSoccerMatchBoxscore,
     getUpcomingSoccerMatches
 } from '@/backend_methods/soccer_methods';
+import {
+    getTodayAllGames,
+    getTodayNBAGames,
+    getTodayNFLGames,
+    getTodaySoccerGames,
+    getWeeklyAllGames,
+    getWeeklyNBAGames,
+    getWeeklyNFLGames,
+    getWeeklySoccerGames,
+    getLiveAllGames,
+    getLiveNBAGames,
+    getLiveNFLGames,
+    getLiveSoccerGames,
+    getLiveGamesStatus,
+    getHistoricalAllGames,
+    getHistoricalNBAGames,
+    getHistoricalNFLGames,
+    getHistoricalSoccerGames,
+    refreshLiveData,
+    getDashboardData,
+    type HistoricalGameFilters,
+    type StatisticalTrendsFilters,
+    getStatisticalTrends
+} from '@/backend_methods/sports_stats_methods';
 
 interface TestResult {
     method: string;
     success: boolean;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     data?: any;
     error?: string;
     timestamp: Date;
@@ -44,9 +69,19 @@ export default function TestingPage() {
         nflGameId: '',
         nbaGameId: '',
         nbaTeamId: '',
-        soccerMatchId: ''
+        soccerMatchId: '',
+        soccerLeague: 'MLS',
+        days: '7',
+        startDate: '',
+        endDate: '',
+        season: '',
+        teamId: '',
+        league: '',
+        page: '1',
+        perPage: '25',
+        betType: 'all'
     });
-
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const addResult = (method: string, success: boolean, data?: any, error?: string) => {
         const result: TestResult = {
             method,
@@ -57,7 +92,7 @@ export default function TestingPage() {
         };
         setResults(prev => [result, ...prev]);
     };
-
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const handleTest = async (methodName: string, method: () => Promise<any>) => {
         setLoading(methodName);
         try {
@@ -72,6 +107,7 @@ export default function TestingPage() {
 
     const handleTestWithParam = async (
         methodName: string,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         method: (param: string) => Promise<any>,
         param: string,
         paramName: string
@@ -99,9 +135,9 @@ export default function TestingPage() {
         <div className="min-h-screen bg-gray-50 p-8">
             <div className="max-w-7xl mx-auto">
                 <div className="mb-8">
-                    <h1 className="text-4xl font-bold text-gray-900 mb-4">Backend Methods Testing</h1>
+                    <h1 className="text-4xl font-bold text-gray-900 mb-4">Sports Statistics API Testing</h1>
                     <p className="text-lg text-gray-600">
-                        Test all backend methods for retrieving sports data from the API.
+                        Test all backend methods for retrieving sports statistics, game data, and performance metrics from the API.
                     </p>
                     <button
                         onClick={clearResults}
@@ -283,6 +319,339 @@ export default function TestingPage() {
                                 className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 disabled:bg-teal-400 transition-colors"
                             >
                                 {loading === 'getSpecificSoccerMatchBoxscore' ? 'Loading...' : 'Get Soccer Match Boxscore'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Sports Statistics Analysis Methods */}
+                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8">
+                    <h2 className="text-2xl font-bold text-gray-900 mb-6">Sports Statistics Analysis Methods</h2>
+                    
+                    {/* Today's Games Section */}
+                    <div className="mb-8">
+                        <h3 className="text-lg font-semibold text-gray-800 mb-4">Today&apos;s Games</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                            <button
+                                onClick={() => handleTest('getTodayAllGames', () => getTodayAllGames(true, ['MLS', 'EPL', 'LaLiga']))}
+                                disabled={loading === 'getTodayAllGames'}
+                                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-blue-400 transition-colors"
+                            >
+                                {loading === 'getTodayAllGames' ? 'Loading...' : 'Today All Games'}
+                            </button>
+                            <button
+                                onClick={() => handleTest('getTodayNBAGames', getTodayNBAGames)}
+                                disabled={loading === 'getTodayNBAGames'}
+                                className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:bg-purple-400 transition-colors"
+                            >
+                                {loading === 'getTodayNBAGames' ? 'Loading...' : 'Today NBA Games'}
+                            </button>
+                            <button
+                                onClick={() => handleTest('getTodayNFLGames', getTodayNFLGames)}
+                                disabled={loading === 'getTodayNFLGames'}
+                                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-green-400 transition-colors"
+                            >
+                                {loading === 'getTodayNFLGames' ? 'Loading...' : 'Today NFL Games'}
+                            </button>
+                            <button
+                                onClick={() => handleTest('getTodaySoccerGames', () => getTodaySoccerGames(inputs.soccerLeague))}
+                                disabled={loading === 'getTodaySoccerGames'}
+                                className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:bg-emerald-400 transition-colors"
+                            >
+                                {loading === 'getTodaySoccerGames' ? 'Loading...' : 'Today Soccer Games'}
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Weekly Games Section */}
+                    <div className="mb-8">
+                        <h3 className="text-lg font-semibold text-gray-800 mb-4">Weekly Games</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Days Ahead</label>
+                                <input
+                                    type="number"
+                                    value={inputs.days}
+                                    onChange={(e) => setInputs(prev => ({ ...prev, days: e.target.value }))}
+                                    placeholder="Days ahead (default: 7)"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Soccer League</label>
+                                <select
+                                    value={inputs.soccerLeague}
+                                    onChange={(e) => setInputs(prev => ({ ...prev, soccerLeague: e.target.value }))}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                >
+                                    <option value="MLS">MLS</option>
+                                    <option value="EPL">EPL</option>
+                                    <option value="LaLiga">LaLiga</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                            <button
+                                onClick={() => handleTest('getWeeklyAllGames', () => getWeeklyAllGames(parseInt(inputs.days) || 7, ['MLS', 'EPL', 'LaLiga']))}
+                                disabled={loading === 'getWeeklyAllGames'}
+                                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-blue-400 transition-colors"
+                            >
+                                {loading === 'getWeeklyAllGames' ? 'Loading...' : 'Weekly All Games'}
+                            </button>
+                            <button
+                                onClick={() => handleTest('getWeeklyNBAGames', () => getWeeklyNBAGames(parseInt(inputs.days) || 7))}
+                                disabled={loading === 'getWeeklyNBAGames'}
+                                className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:bg-purple-400 transition-colors"
+                            >
+                                {loading === 'getWeeklyNBAGames' ? 'Loading...' : 'Weekly NBA Games'}
+                            </button>
+                            <button
+                                onClick={() => handleTest('getWeeklyNFLGames', () => getWeeklyNFLGames(parseInt(inputs.days) || 7))}
+                                disabled={loading === 'getWeeklyNFLGames'}
+                                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-green-400 transition-colors"
+                            >
+                                {loading === 'getWeeklyNFLGames' ? 'Loading...' : 'Weekly NFL Games'}
+                            </button>
+                            <button
+                                onClick={() => handleTest('getWeeklySoccerGames', () => getWeeklySoccerGames(parseInt(inputs.days) || 7, [inputs.soccerLeague]))}
+                                disabled={loading === 'getWeeklySoccerGames'}
+                                className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:bg-emerald-400 transition-colors"
+                            >
+                                {loading === 'getWeeklySoccerGames' ? 'Loading...' : 'Weekly Soccer Games'}
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Live Games Section */}
+                    <div className="mb-8">
+                        <h3 className="text-lg font-semibold text-gray-800 mb-4">Live Games</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                            <button
+                                onClick={() => handleTest('getLiveAllGames', () => getLiveAllGames(['MLS', 'EPL', 'LaLiga']))}
+                                disabled={loading === 'getLiveAllGames'}
+                                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:bg-red-400 transition-colors"
+                            >
+                                {loading === 'getLiveAllGames' ? 'Loading...' : 'Live All Games'}
+                            </button>
+                            <button
+                                onClick={() => handleTest('getLiveNBAGames', getLiveNBAGames)}
+                                disabled={loading === 'getLiveNBAGames'}
+                                className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:bg-purple-400 transition-colors"
+                            >
+                                {loading === 'getLiveNBAGames' ? 'Loading...' : 'Live NBA Games'}
+                            </button>
+                            <button
+                                onClick={() => handleTest('getLiveNFLGames', getLiveNFLGames)}
+                                disabled={loading === 'getLiveNFLGames'}
+                                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-green-400 transition-colors"
+                            >
+                                {loading === 'getLiveNFLGames' ? 'Loading...' : 'Live NFL Games'}
+                            </button>
+                            <button
+                                onClick={() => handleTest('getLiveSoccerGames', () => getLiveSoccerGames([inputs.soccerLeague]))}
+                                disabled={loading === 'getLiveSoccerGames'}
+                                className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:bg-emerald-400 transition-colors"
+                            >
+                                {loading === 'getLiveSoccerGames' ? 'Loading...' : 'Live Soccer Games'}
+                            </button>
+                            <button
+                                onClick={() => handleTest('getLiveGamesStatus', getLiveGamesStatus)}
+                                disabled={loading === 'getLiveGamesStatus'}
+                                className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:bg-orange-400 transition-colors"
+                            >
+                                {loading === 'getLiveGamesStatus' ? 'Loading...' : 'Live Status'}
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Historical Data Section */}
+                    <div className="mb-8">
+                        <h3 className="text-lg font-semibold text-gray-800 mb-4">Historical Data</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Start Date</label>
+                                <input
+                                    type="date"
+                                    value={inputs.startDate}
+                                    onChange={(e) => setInputs(prev => ({ ...prev, startDate: e.target.value }))}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">End Date</label>
+                                <input
+                                    type="date"
+                                    value={inputs.endDate}
+                                    onChange={(e) => setInputs(prev => ({ ...prev, endDate: e.target.value }))}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Season</label>
+                                <input
+                                    type="text"
+                                    value={inputs.season}
+                                    onChange={(e) => setInputs(prev => ({ ...prev, season: e.target.value }))}
+                                    placeholder="e.g., 2024, 2023-24"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Team ID</label>
+                                <input
+                                    type="text"
+                                    value={inputs.teamId}
+                                    onChange={(e) => setInputs(prev => ({ ...prev, teamId: e.target.value }))}
+                                    placeholder="Filter by team ID"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">League</label>
+                                <select
+                                    value={inputs.league}
+                                    onChange={(e) => setInputs(prev => ({ ...prev, league: e.target.value }))}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                >
+                                    <option value="">All Leagues</option>
+                                    <option value="NBA">NBA</option>
+                                    <option value="NFL">NFL</option>
+                                    <option value="Soccer">Soccer</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Per Page</label>
+                                <input
+                                    type="number"
+                                    value={inputs.perPage}
+                                    onChange={(e) => setInputs(prev => ({ ...prev, perPage: e.target.value }))}
+                                    placeholder="Items per page"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                />
+                            </div>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                            <button
+                                onClick={() => handleTest('getHistoricalAllGames', () => {
+                                    const filters: HistoricalGameFilters = {
+                                        startDate: inputs.startDate || undefined,
+                                        endDate: inputs.endDate || undefined,
+                                        season: inputs.season || undefined,
+                                        teamId: inputs.teamId || undefined,
+                                        league: inputs.league || undefined,
+                                        page: parseInt(inputs.page) || 1,
+                                        perPage: parseInt(inputs.perPage) || 25,
+                                        soccerLeagues: ['MLS', 'EPL', 'LaLiga']
+                                    };
+                                    return getHistoricalAllGames(filters);
+                                })}
+                                disabled={loading === 'getHistoricalAllGames'}
+                                className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:bg-indigo-400 transition-colors"
+                            >
+                                {loading === 'getHistoricalAllGames' ? 'Loading...' : 'Historical All Games'}
+                            </button>
+                            <button
+                                onClick={() => handleTest('getHistoricalNBAGames', () => {
+                                    const filters: HistoricalGameFilters = {
+                                        startDate: inputs.startDate || undefined,
+                                        endDate: inputs.endDate || undefined,
+                                        season: inputs.season || undefined,
+                                        teamId: inputs.teamId || undefined,
+                                        page: parseInt(inputs.page) || 1,
+                                        perPage: parseInt(inputs.perPage) || 25
+                                    };
+                                    return getHistoricalNBAGames(filters);
+                                })}
+                                disabled={loading === 'getHistoricalNBAGames'}
+                                className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:bg-purple-400 transition-colors"
+                            >
+                                {loading === 'getHistoricalNBAGames' ? 'Loading...' : 'Historical NBA Games'}
+                            </button>
+                            <button
+                                onClick={() => handleTest('getHistoricalNFLGames', () => {
+                                    const filters: HistoricalGameFilters = {
+                                        startDate: inputs.startDate || undefined,
+                                        endDate: inputs.endDate || undefined,
+                                        season: inputs.season || undefined,
+                                        teamId: inputs.teamId || undefined,
+                                        page: parseInt(inputs.page) || 1,
+                                        perPage: parseInt(inputs.perPage) || 25
+                                    };
+                                    return getHistoricalNFLGames(filters);
+                                })}
+                                disabled={loading === 'getHistoricalNFLGames'}
+                                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-green-400 transition-colors"
+                            >
+                                {loading === 'getHistoricalNFLGames' ? 'Loading...' : 'Historical NFL Games'}
+                            </button>
+                            <button
+                                onClick={() => handleTest('getHistoricalSoccerGames', () => {
+                                    const filters: HistoricalGameFilters = {
+                                        startDate: inputs.startDate || undefined,
+                                        endDate: inputs.endDate || undefined,
+                                        teamId: inputs.teamId || undefined,
+                                        page: parseInt(inputs.page) || 1,
+                                        perPage: parseInt(inputs.perPage) || 25,
+                                        soccerLeagues: [inputs.soccerLeague]
+                                    };
+                                    return getHistoricalSoccerGames(filters);
+                                })}
+                                disabled={loading === 'getHistoricalSoccerGames'}
+                                className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:bg-emerald-400 transition-colors"
+                            >
+                                {loading === 'getHistoricalSoccerGames' ? 'Loading...' : 'Historical Soccer Games'}
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Statistical Trends & Utility Section */}
+                    <div className="mb-8">
+                        <h3 className="text-lg font-semibold text-gray-800 mb-4">Statistical Trends & Utilities</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Statistical Type</label>
+                                <select
+                                    value={inputs.betType}
+                                    onChange={(e) => setInputs(prev => ({ ...prev, betType: e.target.value }))}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                >
+                                    <option value="all">All Statistics</option>
+                                    <option value="scoring">Scoring</option>
+                                    <option value="defensive">Defensive</option>
+                                    <option value="team_performance">Team Performance</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                            <button
+                                onClick={() => handleTest('getStatisticalTrends', () => {
+                                    const filters: StatisticalTrendsFilters = {
+                                        league: inputs.league || undefined,
+                                        teamId: inputs.teamId || undefined,
+                                        startDate: inputs.startDate || undefined,
+                                        endDate: inputs.endDate || undefined,
+                                        statType: inputs.betType
+                                    };
+                                    return getStatisticalTrends(filters);
+                                })}
+                                disabled={loading === 'getStatisticalTrends'}
+                                className="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 disabled:bg-yellow-400 transition-colors"
+                            >
+                                {loading === 'getStatisticalTrends' ? 'Loading...' : 'Statistical Trends'}
+                            </button>
+                            <button
+                                onClick={() => handleTest('refreshLiveData', refreshLiveData)}
+                                disabled={loading === 'refreshLiveData'}
+                                className="px-4 py-2 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 disabled:bg-cyan-400 transition-colors"
+                            >
+                                {loading === 'refreshLiveData' ? 'Loading...' : 'Refresh Live Data'}
+                            </button>
+                            <button
+                                onClick={() => handleTest('getDashboardData', getDashboardData)}
+                                disabled={loading === 'getDashboardData'}
+                                className="px-4 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-700 disabled:bg-slate-400 transition-colors"
+                            >
+                                {loading === 'getDashboardData' ? 'Loading...' : 'Dashboard Data'}
                             </button>
                         </div>
                     </div>

@@ -44,6 +44,9 @@ def create_app() -> Flask:
     from .routes.nfl import bp as nfl_bp
     from .routes.soccer import bp as soccer_bp
     from .routes.today import bp as today_bp
+    from .routes.weekly import bp as weekly_bp
+    from .routes.live import bp as live_bp
+    from .routes.historical import bp as historical_bp
 
     prefix = app.config["API_PREFIX"]
     # Mount each blueprint under the desired subpath
@@ -52,6 +55,9 @@ def create_app() -> Flask:
     app.register_blueprint(nfl_bp, url_prefix=f"{prefix}/nfl")
     app.register_blueprint(soccer_bp, url_prefix=f"{prefix}/soccer")
     app.register_blueprint(today_bp, url_prefix=f"{prefix}/today")
+    app.register_blueprint(weekly_bp, url_prefix=f"{prefix}/weekly")
+    app.register_blueprint(live_bp, url_prefix=f"{prefix}/live")
+    app.register_blueprint(historical_bp, url_prefix=f"{prefix}/historical")
 
     # Error handlers for consistent JSON responses
     @app.errorhandler(404)
@@ -68,11 +74,15 @@ def create_app() -> Flask:
     def _root():
         """Simple root endpoint to enumerate key routes and confirm the app is running."""
         return {
-            "name": "Clutch Call Backend",
+            "name": "Clutch Call Backend - Sports Statistics",
             "status": "ok",
             "prefix": prefix,
             "routes": [
                 f"{prefix}/health",
+                f"{prefix}/today",
+                f"{prefix}/weekly",
+                f"{prefix}/live",
+                f"{prefix}/historical",
                 f"{prefix}/nba/games",
                 f"{prefix}/nba/game/<game_id>",
                 f"{prefix}/nba/game/<game_id>/boxscore",
@@ -87,6 +97,12 @@ def create_app() -> Flask:
                 f"{prefix}/soccer/game/<event_id>/boxscore",
                 f"{prefix}/soccer/upcoming",
             ],
+            "stats_features": [
+                "Daily games with comprehensive statistics",
+                "Weekly upcoming games analysis",
+                "Live games with real-time updates",
+                "Historical data for statistical analysis"
+            ]
         }
 
     return app

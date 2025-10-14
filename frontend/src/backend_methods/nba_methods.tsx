@@ -54,3 +54,16 @@ export const getUpcomingNBAGames = async () => {
     }
 };
 
+export const getTodayNBAGames = async () => {
+    try{
+        await checkBackendHealth();
+        return makeBackendRequest('GET', ROUTES.today_nba_games);
+    } catch (error) {
+        console.error("Error fetching today's NBA games:", error);
+        throw error;
+    }
+};
+
+// Note: For comprehensive sports betting analysis across all leagues, 
+// use the methods in sports_betting_methods.tsx
+

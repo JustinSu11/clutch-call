@@ -3,7 +3,7 @@
  * Author: Maaz Haque
  * Purpose: Groups and displays games by league with error handling
  */
-
+/*
 import { GameData } from '@/lib/api/sports';
 import GameCard from './GameCard';
 
@@ -51,7 +51,8 @@ export default function LeagueSection({ leagueName, games, error, isLoading }: L
           </h2>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {/* Loading skeletons */}
+          {/* Loading skeletons *///}
+          /*
           {[1, 2, 3].map((i) => (
             <div key={i} className="bg-gray-200 rounded-lg p-4 animate-pulse">
               <div className="h-4 bg-gray-300 rounded mb-2"></div>
@@ -110,3 +111,4 @@ export default function LeagueSection({ leagueName, games, error, isLoading }: L
     </div>
   );
 }
+  */
