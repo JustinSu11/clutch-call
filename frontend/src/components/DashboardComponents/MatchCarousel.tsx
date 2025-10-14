@@ -9,9 +9,10 @@ import { parseUpcomingNBAGames } from "@/utils/nba_parser"
 import { parseUpcomingNFLGames } from "@/utils/nfl_parser"
 import { parseUpcomingMLSGames } from "@/utils/mls_parser"
 import React, { useState, useRef, useEffect } from "react"
-import "slick-carousel/slick/slick.css";
-import "slick-carousel/slick/slick-theme.css";
 import Slider from "react-slick"
+import "slick-carousel/slick/slick.css"
+import "slick-carousel/slick/slick-theme.css"
+import MatchCard from "../MatchCard"
 
 type UpcomingMatch = {
     away: string
@@ -31,7 +32,7 @@ const fetchAllMatches = async (): Promise<UpcomingMatch[]> => {
     const normalize = (arr: any[]) => (arr || []).map((match: any) => ({
         away: match.awayTeam,
         home: match.homeTeam,
-        date: match.date
+        date: new Date(match.date)
     }))
 
     return [...normalize(nba), ...normalize(nfl), ...normalize(mls)]
@@ -45,10 +46,9 @@ export default function MatchCarousel() {
     //timer to know when midnight passes
     const timerRef = useRef<number | null>(null)
 
-    function isSameLocalDay(a: Date, b: Date) {
-        return(
-            a.getDate() === b.getDate()
-        )
+    function upcomingMatchesWithinXDays(a: Date, b: Date, daysAhead = 7) {
+        const diff = a.getTime() - b.getTime()
+        return diff >= 0 && diff <= daysAhead * 24 * 60 * 60 * 1000
     }
     //function to re-fetch matches every night at midnight
     function scheduleMidnightRefresh(recalc: () => void) {
@@ -78,7 +78,7 @@ export default function MatchCarousel() {
                 return
             }
             const today = new Date()
-            const todayMatches = all.filter((match) => isSameLocalDay(match.date, today))
+            const todayMatches = all.filter((match) => upcomingMatchesWithinXDays(match.date, today))
             setUpcomingMatchesToday(todayMatches)
         }
 
@@ -90,7 +90,7 @@ export default function MatchCarousel() {
                     return
                 }
                 const today = new Date()
-                const todayMatches = all.filter((match) => isSameLocalDay(match.date, today))
+                const todayMatches = all.filter((match) => upcomingMatchesWithinXDays(match.date, today))
                 setUpcomingMatchesToday(todayMatches)
             })
         })
@@ -113,8 +113,8 @@ export default function MatchCarousel() {
     }
 
     return (
-        <Slider {...settings}>
-            <div>
+        <div className="block w-full">
+            <Slider {...settings}>
                 {upcomingMatchesToday.length === 0 ? (
                     <div className="text-sm text-text-secondary">No Matches today</div>
                 ) : (
@@ -122,7 +122,7 @@ export default function MatchCarousel() {
                         <MatchCard key={`${match.away}versus${match.home}`} matchDate={match.date} awayTeam={match.away} homeTeam={match.home}/>
                     ))
                 )}
-            </div>
-        </Slider>
+            </Slider>
+        </div>
     );
 }

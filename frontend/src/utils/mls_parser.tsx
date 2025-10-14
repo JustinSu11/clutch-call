@@ -12,6 +12,7 @@
     without the extra validation step.
 */
 import * as mls_methods from '../backend_methods/soccer_methods';
+import formatDate from './date-formatter-for-matches';
 
 
 export const parseUpcomingMLSGames = async () => {
@@ -34,13 +35,16 @@ export const parseUpcomingMLSGames = async () => {
     // declare the Game type
     // each game will have a home team and an away team
     type Game = {
-    homeTeam: string;
-    awayTeam: string;
+        homeTeam: string;
+        awayTeam: string;
+        date: Date;
+        league: string;
     };
 
     // map through each event to extract home and away team names
     // into the games array. 
     // DO NOT DELETE THE COMMAND TO DISABLE THE ANY TYPE
+    // IF YOU DO, YOUR COMPUTER WILL EXPLODE
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const games: Game[] = events.map((event: any)  => {
 
@@ -51,13 +55,19 @@ export const parseUpcomingMLSGames = async () => {
         // the official game name for reference
         const officialGameName = event['name'];
 
+        // extract date of match
+        const date = event['competitions']['date']
+
+        //categorize into a league
+        const league = "MLS"
+
         // sanity check to ensure the extracted team names match the official game name
         // ex) "awayTeam at homeTeam" such as "Dallas Cowboys at New York Jets"
         if (`${awayTeam} at ${homeTeam}` !== officialGameName) {
             console.warn(`${awayTeam} at ${homeTeam} does not equal the official game name. officialGameName = ${officialGameName}`);
         }
 
-        return { homeTeam, awayTeam };
+        return { homeTeam, awayTeam, date, league };
     });
 
     return games;

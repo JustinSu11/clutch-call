@@ -38,11 +38,13 @@ export const parseUpcomingNFLGames = async () => {
     homeTeam: string;
     awayTeam: string;
     date: Date;
+    league: string;
     };
 
     // map through each event to extract home and away team names
     // into the games array
     // DO NOT DELETE THE COMMAND TO DISABLE THE ANY TYPE
+    // IF YOU DO, YOUR COMPUTER WILL EXPLODE
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const games: Game[] = events.map((event: any)  => {
 
@@ -51,10 +53,13 @@ export const parseUpcomingNFLGames = async () => {
         const awayTeam = event['competitions'][0]['competitors'][1]['team']['displayName'];
 
         // extract date of match
-        const date = formatDate(event['date'])
+        const date = event['date']
 
         // the official game name for reference
         const officialGameName = event['name'];
+
+        //categorize into a league
+        const league = "NFL"
 
         // sanity check to ensure the extracted team names match the official game name
         // ex) "awayTeam at homeTeam" such as "Dallas Cowboys at New York Jets"
@@ -62,7 +67,7 @@ export const parseUpcomingNFLGames = async () => {
             console.warn(`${awayTeam} at ${homeTeam} does not equal the official game name. officialGameName = ${officialGameName}`);
         }
 
-        return { homeTeam, awayTeam, date };
+        return { homeTeam, awayTeam, date, league };
     });
 
     return games;

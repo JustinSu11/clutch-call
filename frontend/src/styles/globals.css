@@ -46,4 +46,37 @@ Purpose: Landing page for ClutchCall, explaining what it is and its features
         @apply bg-background text-primary transition-colors duration-300;
         font-family: 'Inter', sans-serif;
     }
+
+    /*MatchCard Overlays*/
+    .team-gradient-overlay::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        background-image: linear-gradient(
+            to right,
+            var(--away-team-color, #00338d),
+            transparent 50%,
+            var(--home-team-color, #c60c30)
+        );
+        opacity: 0.7;
+        border-radius: inherit;
+    }
+
+    .vignette-overlay::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        background-image: radial-gradient(
+            ellipse at center,
+            rgba(0, 0, 0, 0) 40%,
+            rgba(0 ,0, 0, 0.8) 100%
+        );
+        border-radius: inherit;
+    }
 }
