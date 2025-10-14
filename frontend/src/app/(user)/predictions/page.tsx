@@ -1,30 +1,30 @@
 /*
     File: frontend/src/app/predictions/page.tsx
     Created: 09/29/2025 by Michael Tajchman
-    Last Updated: 09/30/2025 by CJ Quintero
+    Last Updated: 10/13/2025 by CJ Quintero
 
     Description: This file contains the main React component for the Predictions screen of the ClutchCall web application.
     It includes a header with navigation, a filterable list of sports, and a table displaying AI-powered match predictions.
 */
 "use client";
 import React, { useState, useEffect } from 'react';
-import { parseUpcomingNFLGames } from '@/utils/nfl_parser';
-import { parseUpcomingNBAGames } from '@/utils/nba_parser';
-import { parseUpcomingMLSGames } from '@/utils/mls_parser';
+import { parseUpcomingNFLGames, parseNFLTeamStats, parseNFLTeamLogo } from '@/utils/nfl_parser';
+import { parseUpcomingNBAGames, parseNBATeamStats } from '@/utils/nba_parser';
+import { parseUpcomingMLSGames, parseMLSTeamStats } from '@/utils/mls_parser';
+import { UpcomingGame } from '@/utils/data_class';
+import { get } from 'http';
+import { urlToHttpOptions } from 'url';
+import MatchDialog, { TeamStats } from '@/components/DashboardComponents/Dialog';
+
 
 // declare data types
 type SportKey = 'All Sports' | 'NFL' | 'NBA' | 'MLS';
 
-type Game = {
-    homeTeam: string;
-    awayTeam: string;
-};
-
 type Prediction = {
     match: string;          // gets built from homeTeam and awayTeam 
+    date: string;           // MM-DD-YYYY
     prediction: string;     // the eventual prediction text
     confidence: number;     // a number between 0 and 100 showing how confident the AI prediction is
-    analysis: string;       // the AI explanation for the prediction
     sport: SportKey;        // the sport this prediction belongs to used for filtering (NFL, NBA, MLS)
 };
 
@@ -41,9 +41,9 @@ const buildNFLPredictions = async (): Promise<Prediction[]> => {
     // map each game to a Prediction object
     return upcomingNFLGames.map((game) => ({
         match: `${game.awayTeam} at ${game.homeTeam}`,
+        date: `${game.gameDate}`,
         prediction: `${game.homeTeam} predicted to win`,
         confidence: 100,
-        analysis: `Based on recent performance and home field advantage, ${game.homeTeam} is favored over ${game.awayTeam}.`,
         sport: 'NFL'
     }));
 };
@@ -61,9 +61,9 @@ const buildMLSPredictions = async (): Promise<Prediction[]> => {
     // map each game to a Prediction object
     return upcomingMLSGames.map((game) => ({
         match: `${game.awayTeam} at ${game.homeTeam}`,
+        date: `${game.gameDate}`,
         prediction: `${game.homeTeam} predicted to win`,
         confidence: 100,
-        analysis: `Based on recent performance and home field advantage, ${game.homeTeam} is favored over ${game.awayTeam}.`,
         sport: 'MLS'
     }));
 }
@@ -81,9 +81,9 @@ const buildNBAPredictions = async (): Promise<Prediction[]> => {
     // map each game to a Prediction object
     return upcomingNBAGames.map((game) => ({
         match: `${game.awayTeam} at ${game.homeTeam}`,
+        date: `${game.gameDate}`,
         prediction: `${game.homeTeam} predicted to win`,
         confidence: 100,
-        analysis: `Based on recent performance and home field advantage, ${game.homeTeam} is favored over ${game.awayTeam}.`,
         sport: 'NBA'
     }));
 }
@@ -106,21 +106,59 @@ const getConfidenceStyle = (confidence: number) => {
     return { backgroundColor: `hsl(${hue}, 90%, 45%)` };
 };
 
+const getNFLTeamStats = async (teamName: string) => {
+    /*
+        getTeamStats:
+        This method gets the current season stats for a given NFL team.
+        
+        params:
+            teamName: string - the full display name of the team (e.g., "Dallas Cowboys")
+        returns:
+            stats: dict - an object containing wins, losses, ties, and totalGames
+
+    */
+   
+    const stats = await parseNFLTeamStats(`${teamName}`);
+
+    return stats;
+}
+
+const getMLSTeamStats = async (teamName: string) => {
+    /*
+        getTeamStats:
+        This method gets the current season stats for a given MLS team.
+        
+        params:
+            teamName: string - the full display name of the team (e.g., "LA Galaxy")
+        returns:
+            stats: dict - an object containing wins, losses, ties, and totalGames
+    */
+   
+    const stats = await parseMLSTeamStats(`${teamName}`);
+
+    return stats;
+}
+
+const getNBATeamStats = async (teamName: string) => {
+    /*
+        getTeamStats:
+        This method gets the current season stats for a given NBA team.
+        
+        params:
+            teamName: string - the full display name of the team (e.g., "Los Angeles Lakers")
+        returns:
+            stats: dict - an object containing wins, losses, ties, and totalGames
+
+    */
+   
+    const stats = await parseNBATeamStats(`${teamName}`);
+
+    return stats;
+}
+
 
 // --- Components ---
 const SportsFilter: React.FC<{
-    /*
-    SportsFilter:
-    This component renders a horizontal list of sports as filter buttons.
-
-    params:
-    sports: an array of sport keys (e.g., ['All Sports', 'NFL', 'NBA', 'MLS']) to select from
-    activeSport: the currently selected sport key on the filter
-    setActiveSport: a function to update the activeSport state when a sport is selected
-
-    returns:
-    a horizontal list of buttons for each sport, highlighting the active sport
-    */
     sports: SportKey[];
     activeSport: SportKey;
     setActiveSport: (sport: SportKey) => void;
@@ -134,7 +172,7 @@ const SportsFilter: React.FC<{
                     activeSport === sport
                         ? 'bg-secondary text-text-primary'
                         : 'hover:text-primary'
-                } cursor-pointer`}
+                } cursor-pointer mr-2`}
             >
                 {sport}
             </button>
@@ -142,26 +180,19 @@ const SportsFilter: React.FC<{
     </div>
 );
 
-const PredictionRow: React.FC<{ item: Prediction }> = ({ item }) => (
-    /*
-        PredictionRow:
-        This component renders a single row in the predictions table.
-
-        params:
-        item: a Prediction object containing id, match, prediction, confidence, and analysis
-
-        returns:
-        a table row displaying the prediction details, including a confidence bar
-    */
-    <tr className="bg-secondary-background">
-        <td className="px-6 py-4 whitespace-nowrap">
+const PredictionRow: React.FC<{ item: Prediction; onClick?: () => void }> = ({ item, onClick }) => (
+    <tr onClick={onClick} className="bg-secondary-background hover:bg-secondary cursor-pointer">
+        <td className="text-center px-6 py-4 whitespace-nowrap">
             <div className="text-md font-medium text-text-primary">{item.match}</div>
         </td>
-        <td className="px-6 py-4 whitespace-nowrap">
+        <td className="text-center px-6 py-4 whitespace-nowrap">
+            <div className="text-md font-medium text-text-primary">{item.date}</div>
+        </td>
+        <td className="text-center px-6 py-4 whitespace-nowrap">
             <div className="text-md font-medium text-text-primary">{item.prediction}</div>
         </td>
-        <td className="px-6 py-4 whitespace-nowrap">
-            <div className="flex items-center">
+        <td className="text-center px-6 py-4 whitespace-nowrap">
+            <div className="flex items-center justify-center">
                 <div className="w-24 bg-gray-200 rounded-full h-2.5 mr-3">
                     <div
                         className="h-2.5 rounded-full"
@@ -170,9 +201,6 @@ const PredictionRow: React.FC<{ item: Prediction }> = ({ item }) => (
                 </div>
                 <span className="text-md font-medium text-text-primary">{item.confidence}%</span>
             </div>
-        </td>
-        <td className="px-6 py-4">
-            <div className="text-md font-medium text-text-primary">{item.analysis}</div>
         </td>
     </tr>
 );
@@ -184,6 +212,70 @@ export default function PredictionsScreen() {
     const [predictions, setPredictions] = useState<Prediction[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [dialogOpen, setDialogOpen] = useState(false);
+    const [dialogLoading, setDialogLoading] = useState(false);
+    const [selectedHome, setSelectedHome] = useState<string | undefined>(undefined);
+    const [selectedAway, setSelectedAway] = useState<string | undefined>(undefined);
+    const [homeStats, setHomeStats] = useState<TeamStats | null>(null);
+    const [awayStats, setAwayStats] = useState<TeamStats | null>(null);
+    const [homeLogo, setHomeLogo] = useState<string>('');
+    const [awayLogo, setAwayLogo] = useState<string>('');
+
+    const openMatchDialog = async (homeTeam: string, awayTeam: string, sport: SportKey) => {
+        setSelectedHome(homeTeam);
+        setSelectedAway(awayTeam);
+        setDialogOpen(true);
+        setDialogLoading(true);
+        setHomeStats(null);
+        setAwayStats(null);
+        setHomeLogo('');
+        setAwayLogo('');
+
+        // fetch team stats based on sport
+        try {
+            let home = { wins: 0, losses: 0, ties: 0, totalGames: 0 };
+            let away = { wins: 0, losses: 0, ties: 0, totalGames: 0 };
+            let homeLogo = '';
+            let awayLogo = '';
+            if (sport === 'NFL') {
+                home = await getNFLTeamStats(homeTeam);
+                away = await getNFLTeamStats(awayTeam);
+                homeLogo = await parseNFLTeamLogo(homeTeam);
+                awayLogo = await parseNFLTeamLogo(awayTeam);
+            }
+            else if (sport === 'MLS') {
+                home = await getMLSTeamStats(homeTeam);
+                away = await getMLSTeamStats(awayTeam);
+            }
+            else if (sport === 'NBA') {
+                home = await getNBATeamStats(homeTeam);
+                away = await getNBATeamStats(awayTeam);
+            }
+            setHomeStats({
+                wins: home.wins,
+                losses: home.losses,
+                ties: home.ties,
+                totalGames: home.totalGames,
+            });
+            setAwayStats({
+                wins: away.wins,
+                losses: away.losses,
+                ties: away.ties,
+                totalGames: away.totalGames,
+            });
+
+            // set logos if available
+            setHomeLogo(homeLogo ?? '');
+            setAwayLogo(awayLogo ?? '');
+        } catch {
+            setHomeStats(null);
+            setAwayStats(null);
+            setHomeLogo('');
+            setAwayLogo('');
+        } finally {
+            setDialogLoading(false);
+        }
+    };
 
     // on component mount, fetch predictions for all sports
     useEffect(() => {
@@ -192,7 +284,7 @@ export default function PredictionsScreen() {
 
         Promise.all([
             buildNFLPredictions(),
-            //buildNBAPredictions(),
+            // buildNBAPredictions(),
             buildMLSPredictions(),
         ])
             .then(results => setPredictions(results.flat()))
@@ -200,16 +292,14 @@ export default function PredictionsScreen() {
             .finally(() => setLoading(false));
     }, []);
 
-    // filter predictions based on activeSport
     const filteredPredictions = activeSport === 'All Sports'
-    ? predictions
-    : predictions.filter(p => p.sport === activeSport);
+        ? predictions
+        : predictions.filter(p => p.sport === activeSport);
 
     return (
         <div className="overflow-x-auto">
-            {/* Header Navigation */}
             <header className="">
-                {/* ...header code... */}
+                {/* header code */}
             </header>
             <main className="">
                 <div className="mb-8">
@@ -217,15 +307,15 @@ export default function PredictionsScreen() {
                     <p className="text-text-primary mb-4">AI-powered predictions for upcoming sports matches.</p>
                 </div>
                 <SportsFilter sports={sports} activeSport={activeSport} setActiveSport={setActiveSport} />
-                <div className= "rounded-lg overflow-hidden">
+                <div className="rounded-lg overflow-hidden">
                     <div className="overflow-x-hidden">
                         <table className="min-w-full divide-y divide-secondary">
                             <thead className="bg-secondary-background rounded-xl shadow-sm">
                                 <tr>
-                                    <th className="px-6 py-4 text-sm font-semibold text-text-secondary uppercase tracking-wider">Match</th>
-                                    <th className="px-6 py-4 text-sm font-semibold text-text-secondary uppercase tracking-wider">Prediction</th>
-                                    <th className="px-6 py-4 text-sm font-semibold text-text-secondary uppercase tracking-wider">Confidence</th>
-                                    <th className="px-6 py-4 text-sm font-semibold text-text-secondary uppercase tracking-wider">AI Analysis</th>
+                                    <th className="px-6 py-4 text-sm font-semibold text-text-secondary uppercase tracking-wider text-center">Match</th>
+                                    <th className="px-6 py-4 text-sm font-semibold text-text-secondary uppercase tracking-wider text-center">Date</th>
+                                    <th className="px-6 py-4 text-sm font-semibold text-text-secondary uppercase tracking-wider text-center">Prediction</th>
+                                    <th className="px-6 py-4 text-sm font-semibold text-text-secondary uppercase tracking-wider text-center">Confidence</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-secondary">
@@ -242,9 +332,16 @@ export default function PredictionsScreen() {
                                         </td>
                                     </tr>
                                 ) : filteredPredictions.length > 0 ? (
-                                    filteredPredictions.map((item, idx) => (
-                                        <PredictionRow key={idx} item={item} />
-                                    ))
+                                    filteredPredictions.map((item, idx) => {
+                                        const [awayTeam, homeTeam] = item.match.split(' at ');
+                                        return (
+                                            <PredictionRow
+                                                key={idx}
+                                                item={item}
+                                                onClick={() => openMatchDialog(homeTeam ?? '', awayTeam ?? '', item.sport)}
+                                            />
+                                        );
+                                    })
                                 ) : (
                                     <tr>
                                         <td colSpan={4} className="text-center py-10 text-text-primary bg-secondary-background">
@@ -257,6 +354,18 @@ export default function PredictionsScreen() {
                     </div>
                 </div>
             </main>
+
+            <MatchDialog
+                open={dialogOpen}
+                onClose={() => setDialogOpen(false)}
+                homeTeam={selectedHome}
+                awayTeam={selectedAway}
+                homeStats={homeStats}
+                awayStats={awayStats}
+                loading={dialogLoading}
+                homeLogo={homeLogo}
+                awayLogo={awayLogo}
+            />
         </div>
     );
 }
