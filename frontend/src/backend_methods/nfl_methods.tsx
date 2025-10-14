@@ -34,6 +34,7 @@ export const getSpecificNFLGameBoxscore = async (gameId: string) => {
         throw error;
     }
 };
+
 export const getUpcomingNFLGames = async () => {
     try{
         await checkBackendHealth();
@@ -45,3 +46,25 @@ export const getUpcomingNFLGames = async () => {
     }
 };
 
+/**
+ * Gets a prediction for a specific NFL game.
+ * @param {string} gameId The ESPN event ID for the game.
+ * @returns {Promise<any>} The prediction data from the AI model.
+ */
+export const getNFLPrediction = async (gameId: string) => {
+    try {
+        await checkBackendHealth();
+        
+        // --- THIS IS THE FIX ---
+        // Construct the correct path to match the backend's route.
+        const route = `/nfl/predict/${gameId}`;
+        
+        // You should also update your ROUTES.specific_nfl_prediction helper
+        // to produce this correct path.
+        
+        return makeBackendRequest('GET', route);
+    } catch (error) {
+        console.error(`Error fetching NFL prediction for gameId ${gameId}:`, error);
+        throw error;
+    }
+};

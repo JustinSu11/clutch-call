@@ -13,10 +13,19 @@ from ..services.nfl_service import (
     get_box_score,
     get_upcoming_games,
     get_today_games,
+    generate_prediction_for_game,  # <--- 1. IMPORT THE PREDICTION FUNCTION
 )
 
 # Blueprint for NFL routes; mounted at /api/v1/nfl
 bp = Blueprint("nfl", __name__)
+
+
+# --- PREDICTION ENDPOINT ---
+@bp.get("/predict/<event_id>")  # <--- 2. ADD THE PREDICTION ROUTE
+def nfl_predict_game(event_id: str):
+    """Generate a prediction for a single game by its ESPN event ID."""
+    return generate_prediction_for_game(event_id)
+# -----------------------------
 
 
 @bp.get("/games")

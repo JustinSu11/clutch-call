@@ -17,8 +17,8 @@ from flask import Flask
 from flask_cors import CORS
 
 # --- UPDATE START ---
-# Import all your sport blueprints
-from app.routes import nba, nfl, soccer, today, health
+# Import only the nfl blueprint
+from app.routes import nfl
 # --- UPDATE END ---
 
 def create_app():
@@ -33,12 +33,10 @@ def create_app():
     # 2. Register your blueprints
     api_prefix = os.getenv("API_PREFIX", "/api/v1")
     
-    # Register each blueprint with its own URL prefix
-    app.register_blueprint(nba.bp, url_prefix=f"{api_prefix}/nba")
+    # --- UPDATE START ---
+    # Register only the nfl blueprint
     app.register_blueprint(nfl.bp, url_prefix=f"{api_prefix}/nfl")
-    app.register_blueprint(soccer.bp, url_prefix=f"{api_prefix}/soccer")
-    app.register_blueprint(today.bp, url_prefix=f"{api_prefix}/today")
-    app.register_blueprint(health.bp, url_prefix=f"{api_prefix}/health")
+    # --- UPDATE END ---
     
 
     # A simple root endpoint to verify the app is running
