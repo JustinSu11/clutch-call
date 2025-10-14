@@ -76,7 +76,7 @@ export default function Sidebar() {
                                 <Link className={` flex items-center gap-3 px-4 py-3 rounded-lg text-text-primary font-medium hover:text-primary  ${item.title === currentTitle ? "bg-secondary text-primary" : "text-text-primary"} `} href={item.href} id={item.title} key={item.title}>
                                     <item.icon className="flex-shrink-0 transition-transform duration-200" />
                                     {/*label for the nav item*/}
-                                    { isSideBarOpen && (<span className="opacity-100 translate-x-0">{item.title}</span>) }
+                                    { isSideBarOpen && (<span className="opacity-100 translate-x-0 whitespace-nowrap overflow-hidden">{item.title}</span>) }
                                 </Link>
                             ))
                         }
