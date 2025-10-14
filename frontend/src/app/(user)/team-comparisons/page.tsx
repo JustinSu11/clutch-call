@@ -47,7 +47,7 @@ function TeamSelector({ teams, selectedTeam1, selectedTeam2, onTeam1Change, onTe
         <select 
           value={selectedTeam1} 
           onChange={onTeam1Change}
-          className="form-select w-full appearance-none bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg h-12 px-4 text-gray-800 dark:text-gray-200 focus:ring-primary focus:border-primary"
+          className="form-select w-full appearance-none bg-secondary-background rounded-lg h-12 px-4 text-text-primary shadow-sm"
         >
           {teamOptions}
         </select>
@@ -56,7 +56,7 @@ function TeamSelector({ teams, selectedTeam1, selectedTeam2, onTeam1Change, onTe
         <select 
           value={selectedTeam2}
           onChange={onTeam2Change}
-          className="form-select w-full appearance-none bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg h-12 px-4 text-gray-800 dark:text-gray-200 focus:ring-primary focus:border-primary"
+          className="form-select w-full appearance-none bg-secondary-background rounded-lg h-12 px-4 text-text-primary shadow-sm"
         >
           {teamOptions}
         </select>
@@ -77,26 +77,26 @@ function TeamMatchup({ team1, team2 }: TeamMatchupProps) {
     <div className="mt-8 grid grid-cols-11 gap-8">
       {/* Team 1 Info */}
       <div className="col-span-5">
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 flex items-center">
+        <div className="bg-secondary-background rounded-xl shadow-sm p-6 flex items-center">
           <img alt={`${team1.name} Logo`} className="h-16 w-16 mr-6" src={team1.logo} />
           <div>
-            <h3 className="text-2xl font-bold text-gray-900 dark:text-white">{team1.name}</h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400">{team1.form}</p>
+            <h3 className="text-2xl font-bold text-text-primary">{team1.name}</h3>
+            <p className="text-sm text-text-secondary">{team1.form}</p>
           </div>
         </div>
       </div>
 
       {/* "VS" Divider */}
       <div className="col-span-1 flex items-center justify-center">
-        <div className="w-16 h-16 bg-primary rounded-full flex items-center justify-center text-white font-black text-2xl shadow-lg"> VS </div>
+        <div className="w-16 h-16 bg-primary rounded-full flex items-center justify-center text-text-primary font-bold text-2xl shadow-lg"> VS </div>
       </div>
 
       {/* Team 2 Info */}
       <div className="col-span-5">
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 flex items-center justify-end text-right">
+        <div className="bg-secondary-background rounded-xl shadow-sm p-6 flex items-center justify-end text-right">
           <div>
-            <h3 className="text-2xl font-bold text-gray-900 dark:text-white">{team2.name}</h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400">{team2.form}</p>
+            <h3 className="text-2xl font-bold text-text-primary">{team2.name}</h3>
+            <p className="text-sm text-gray-500">{team2.form}</p>
           </div>
           <img alt={`${team2.name} Logo`} className="h-16 w-16 ml-6" src={team2.logo} />
         </div>
@@ -129,18 +129,18 @@ function StatBar({ label, value1, value2, diff1, isLowerBetter = false }: StatBa
 
     return (
         <div className="flex items-center gap-4">
-            <span className="font-semibold text-gray-900 dark:text-white w-28 text-right">
+            <span className="font-semibold text-text-primary w-28 text-right">
                 {value1}{label.includes('Rate') ? '%' : ''}
                 {diff1 && <span className={`text-xs font-bold ml-1 ${diff1Color}`}>({diff1})</span>}
             </span>
-            <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3">
+            <div className="w-full bg-secondary rounded-full h-3">
                 <div className={`${team1Color} h-3 rounded-full`} style={{ width: `${width1}%` }}></div>
             </div>
-            <span className="text-sm text-gray-500 dark:text-gray-400 text-center w-40">{label}</span>
-            <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3">
+            <span className="text-sm text-text-secondary text-center w-40">{label}</span>
+            <div className="w-full bg-secondary rounded-full h-3">
                 <div className={`${team2Color} h-3 rounded-full`} style={{ width: `${width2}%` }}></div>
             </div>
-            <span className="font-semibold text-gray-900 dark:text-white w-28 text-left">{value2}{label.includes('Rate') ? '%' : ''}</span>
+            <span className="font-semibold text-text-primary w-28 text-left">{value2}{label.includes('Rate') ? '%' : ''}</span>
         </div>
     );
 }
@@ -154,8 +154,8 @@ type StatsComparisonProps = {
 // Component for the detailed statistics breakdown
 function StatsComparison({ team1, team2 }: StatsComparisonProps) {
     return (
-        <div className="mt-8 bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">
-            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-6 text-center">Team Statistics Comparison</h3>
+        <div className="mt-8 bg-secondary-background rounded-xl shadow-sm p-6">
+            <h3 className="text-xl font-bold text-text-primary mb-6 text-center">Team Statistics Comparison</h3>
             <div className="space-y-6">
                 <StatBar label="Win Rate" value1={team1.stats.winRate} value2={team2.stats.winRate} />
                 <StatBar label="Avg. Points Scored" value1={team1.stats.avgPointsScored} value2={team2.stats.avgPointsScored} diff1={team1.stats.avgPointsScoredDiff} />
@@ -176,15 +176,15 @@ type InsightCardProps = {
 // A reusable card for displaying analysis for one team.
 function InsightCard({ teamName, analysis, winProbability, probabilityColor }: InsightCardProps) {
     return (
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">
-            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">{teamName} Analysis</h3>
-            <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
+        <div className="bg-secondary-background rounded-xl shadow-sm p-6">
+            <h3 className="text-lg font-bold text-text-primary mb-4">{teamName} Analysis</h3>
+            <p className="text-sm text-text-secondary leading-relaxed">
                 {analysis}
             </p>
             <div className="mt-6">
-                <h4 className="text-md font-semibold text-gray-800 dark:text-gray-200 mb-2">Win Probability</h4>
-                <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-6">
-                    <div className={`${probabilityColor} h-6 rounded-full flex items-center justify-center text-white font-bold`} style={{ width: `${winProbability}%` }}>
+                <h4 className="text-md font-semibold text-text-primary mb-2">Win Probability</h4>
+                <div className="w-full bg-secondary rounded-full h-6">
+                    <div className={`${probabilityColor} h-6 rounded-full flex items-center justify-center text-text-primary font-bold`} style={{ width: `${winProbability}%` }}>
                         {winProbability}%
                     </div>
                 </div>
@@ -203,7 +203,7 @@ type AiInsightsProps = {
 function AiInsights({ team1, team2 }: AiInsightsProps) {
   return (
     <div className="mt-12">
-      <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-6 text-center">AI Insights &amp; Predictions</h2>
+      <h2 className="text-3xl font-bold text-text-primary mb-6 text-center">AI Insights &amp; Predictions</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         <InsightCard 
             teamName={team1.name}
@@ -260,8 +260,8 @@ function HistoricalChart({ team1Data, team2Data, team1Name, team2Name }: Histori
 
     return (
         <div className="mt-16">
-            <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-6 text-center">Historical Head-to-Head Performance</h2>
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">
+            <h2 className="text-3xl font-bold text-text-primary mb-6 text-center">Historical Head-to-Head Performance</h2>
+            <div className="bg-secondary-background rounded-xl shadow-sm p-6">
                 <div className="h-80">
                     <svg className="w-full h-full" fill="none" preserveAspectRatio="none" viewBox={`-3 0 ${viewBoxWidth + 6} ${viewBoxHeight}`} xmlns="http://www.w3.org/2000/svg">
                         <defs>
@@ -283,11 +283,11 @@ function HistoricalChart({ team1Data, team2Data, team1Name, team2Name }: Histori
                 <div className="flex justify-center mt-4 gap-8">
                     <div className="flex items-center gap-2">
                         <div className="w-4 h-4 rounded-full bg-green-500"></div>
-                        <span className="text-sm font-medium text-gray-600 dark:text-gray-300">{team1Name} Performance</span>
+                        <span className="text-sm font-medium text-text-primary">{team1Name} Performance</span>
                     </div>
                     <div className="flex items-center gap-2">
                         <div className="w-4 h-4 rounded-full bg-red-500"></div>
-                        <span className="text-sm font-medium text-gray-600 dark:text-gray-300">{team2Name} Performance</span>
+                        <span className="text-sm font-medium text-text-primary">{team2Name} Performance</span>
                     </div>
                 </div>
             </div>
@@ -354,9 +354,9 @@ function App() {
   const team2 = teamData[selectedTeam2Key];
 
   return (
-    <main className="flex-grow container mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12 bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200">
+    <main className="flex-grow container mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12 bg-background text-text-primary">
       <div className="max-w-7xl mx-auto">
-        <h2 className="text-4xl font-bold text-gray-900 dark:text-white mb-8">Team Comparison</h2>
+        <h2 className="text-4xl font-bold text-text-primary mb-8">Team Comparison</h2>
         
         <TeamSelector 
           teams={teamData}
