@@ -1,7 +1,7 @@
 /*
     File: frontend/src/utils/nfl_parser.tsx
     Created: 09/30/2025 by CJ Quintero
-    Last Updated: 10/08/2025 by CJ Quintero
+    Last Updated: 10/13/2025 by Justin Nguyen
 
     Description: This file contains methods 
     to parse each response from the nfl backend methods provided

@@ -1,7 +1,7 @@
 /*
     File: frontend/src/utils/nba_parser.tsx
     Created: 09/30/2025 by CJ Quintero
-    Last Updated: 10/08/2025 by CJ Quintero
+    Last Updated: 10/13/2025 by Justin Nguyen
 
     Description: This file contains methods 
     to parse each response from the nba backend methods provided
@@ -82,7 +82,8 @@ export const parseUpcomingNBAGames = async () => {
         const year = gameDate.split('-')[0];
         const formattedGameDate = `${month}-${day}-${year}`;
 
-        return { homeTeam, awayTeam, gameDate: formattedGameDate };
+        // return { homeTeam, awayTeam, gameDate: formattedGameDate };
+        return { homeTeam, awayTeam, date, league };
     });
 
     return games;

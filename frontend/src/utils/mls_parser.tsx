@@ -1,7 +1,7 @@
 /*
     File: frontend/src/utils/mls_parser.tsx
     Created: 09/30/2025 by CJ Quintero
-    Last Updated: 10/08/2025 by CJ Quintero
+    Last Updated: 10/13/2025 by Justin Nguyen
 
     Description: This file contains methods 
     to parse each response from the mls backend methods provided
@@ -73,6 +73,12 @@ export const parseUpcomingMLSGames = async () => {
             console.warn(`${awayTeam} at ${homeTeam} does not equal the official game name. officialGameName = ${officialGameName}`);
         }
 
+        const month = gameDate.split('-')[1];
+        const day = gameDate.split('-')[2];
+        const year = gameDate.split('-')[0];
+        const formattedGameDate = `${month}-${day}-${year}`;
+
+        // return { homeTeam, awayTeam, gameDate: formattedGameDate };
         return { homeTeam, awayTeam, date, league };
     });
 
