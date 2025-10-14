@@ -15,7 +15,7 @@ import { ClassDictionary } from 'clsx';
 import * as nfl_methods from '../backend_methods/nfl_methods';
 import * as sports_stats_methods from '../backend_methods/sports_stats_methods';
 import { HistoricalGameFilters } from '../backend_methods/sports_stats_methods';
-import { UpcomingGame } from './data_class';
+import { UpcomingGame, Team } from './data_class';
 import formatDate from './date-formatter-for-matches';
 
 // globals
@@ -55,12 +55,17 @@ export const parseUpcomingNFLGames = async () => {
     const games: UpcomingGame[] = events.map((event: any)  => {
 
         // extract home and away team names
-        const homeTeam = event['competitions'][0]['competitors'][0]['team']['displayName'];
-        const awayTeam = event['competitions'][0]['competitors'][1]['team']['displayName'];
+        const homeTeam:Team = {
+            abbreviation: event['competitions'][0]['competitors'][0]['team']['abbreviation'],
+            color: event['competitions'][0]['competitors'][0]['team']['color'],
+            alternateColor: event['competitions'][0]['competitors'][0]['team']['alternateColor'],
+            displayName: event['competitions'][0]['competitors'][0]['team']['displayName'],
+        };
+        const awayTeam:Team = event['competitions'][0]['competitors'][1]['team'];
 
         // extract date of match
-        const date = event['date']
         const gameDate = event['date'].split('T')[0]; // extract date only, ignore time
+        const dateAndTime = event['date']
 
         // the official game name for reference
         const officialGameName = event['name'];
@@ -81,7 +86,7 @@ export const parseUpcomingNFLGames = async () => {
         const formattedGameDate = `${month}-${day}-${year}`;
 
         // return { homeTeam, awayTeam, gameDate: formattedGameDate};
-        return { homeTeam, awayTeam, date, league };
+        return { homeTeam, awayTeam, gameDate: dateAndTime, league };
     });
 
     return games;

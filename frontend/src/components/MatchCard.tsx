@@ -3,14 +3,14 @@ Author: Justin Nguyen
 Last Updated: 10/13/2025 by Justin Nguyen
 Purpose: Displays a single match card for upcoming or live games
 */
-import Image from "next/image"
 import "@/styles/globals.css"
 import formatDate from "@/utils/date-formatter-for-matches"
-import { parseNFLTeamLogo } from "@/utils/nfl_parser"
+import { Team } from "@/utils/data_class"
+import createTeamLogo from "@/utils/create-team-logo"
 
 type MatchCardProps = {
-    awayTeam: string
-    homeTeam: string
+    awayTeam: Team
+    homeTeam: Team
     matchDate: Date
 }
 
@@ -28,12 +28,17 @@ export default function MatchCard({ awayTeam, homeTeam, matchDate }: MatchCardPr
     }
 
     const timeLeft = calculateTimeLeft()
-    const awayTeamLogo = parseNFLTeamLogo(awayTeam)
-    const homeTeamLogo = parseNFLTeamLogo(homeTeam)
+    const awayTeamLogo = createTeamLogo(awayTeam)
+    const homeTeamLogo = createTeamLogo(homeTeam)
 
     return (
         <div className="flex items-center justify-center p-4">
-            <div className="relative w-full rounded-xl overflow-hidden shadow-lg group">
+            <div className="relative w-full rounded-xl overflow-hidden shadow-lg group" style={{
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                ['--away-team-color' as any]: `#${awayTeam.color}`,
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                ['--home-team-color' as any]: `#${homeTeam.color}`,
+            }}>
                 {/*Background image*/}
                 <div className="absolute inset-0 bg-center bg-cover" style={{backgroundImage: "url('https://lh3.googleusercontent.com/aida-public/AB6AXuAwR5oTbhPonHKnDQo8cpHRl9bPTIaQp_QST7ln7G1cl_Mq0bzCrvkT3HFUmZ0qEyEHEVjDuaJxeTHRozIMAZaiHRWMKrrwVkIFekjNhJepLEf3ig1EEnBCFjZ46ylVRS2OJDDyd4OhVcp3B3WmuhE4tsof5TpnLE1sW5M-ZraMjO44krCGl94fuq9FjrYG94twy-sslQhMisgaqZGMoi0qNloCor1tstwBwYXvXHYsyM2oPaunyZdxBeHu_iZjqzrjQHHIE7cdMzqW')"}} />
                 {/*Team gradient and vignette overlays */}
@@ -43,16 +48,16 @@ export default function MatchCard({ awayTeam, homeTeam, matchDate }: MatchCardPr
                         <div className="flex items-center justify-around w-full mb-6">
                             {/*Away team*/}
                             <div className="flex flex-col items-center gap-3 w-1/3">
-                                <Image src={awayTeamLogo} alt={`${awayTeam} Logo`} className="h-16 w-16 sm:h-24 sm:w-24 object-contain" width={96} height={96}/>
-                                <span className="font-bold text-lg sm:text-xl tracking-tight">{awayTeam}</span>
+                                {awayTeamLogo}
+                                <span className="font-bold text-lg sm:text-xl tracking-tight">{awayTeam.displayName}</span>
                             </div>
 
                             <div className="font-black text-2xl sm:text-4xl text-text-primary">VS.</div>
 
                             {/*Home team*/}
                             <div className="flex flex-col items-center gap-3 w-1/3">
-                                <Image src={homeTeamLogo} alt={`${homeTeam} Logo`} className="h-16 w-16 sm:h-24 sm:w-24 object-contain" width={96} height={96}/>
-                                <span className="font-bold text-lg sm:text-xl tracking-tight">{homeTeam}</span>
+                                {homeTeamLogo}
+                                <span className="font-bold text-lg sm:text-xl tracking-tight">{homeTeam.displayName}</span>
                             </div>
                         </div>
                         {/*Match time and countdown*/}

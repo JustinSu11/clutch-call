@@ -13,15 +13,10 @@ import Slider from "react-slick"
 import "slick-carousel/slick/slick.css"
 import "slick-carousel/slick/slick-theme.css"
 import MatchCard from "../MatchCard"
-
-type UpcomingMatch = {
-    away: string
-    home: string
-    date: Date
-}
+import { UpcomingGame } from "@/utils/data_class"
 
 //returns the upcoming matches as arrays of the UpcomingMatch type
-const fetchAllMatches = async (): Promise<UpcomingMatch[]> => {
+const fetchAllMatches = async (): Promise<UpcomingGame[]> => {
     const [nba, nfl, mls] = await Promise.all([
         parseUpcomingNBAGames().catch(() => []),
         parseUpcomingNFLGames().catch(() => []),
@@ -29,10 +24,10 @@ const fetchAllMatches = async (): Promise<UpcomingMatch[]> => {
     ])
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const normalize = (arr: any[]) => (arr || []).map((match: any) => ({
-        away: match.awayTeam,
-        home: match.homeTeam,
-        date: new Date(match.date)
+    const normalize = (arr: any[]) => (arr || []).map((game: any) => ({
+        awayTeam: game.awayTeam,
+        homeTeam: game.homeTeam,
+        gameDate: new Date(game.gameDate)
     }))
 
     return [...normalize(nba), ...normalize(nfl), ...normalize(mls)]
@@ -41,7 +36,7 @@ const fetchAllMatches = async (): Promise<UpcomingMatch[]> => {
 
 
 export default function MatchCarousel() {
-    const [upcomingMatchesToday, setUpcomingMatchesToday] = useState<UpcomingMatch[]>([])
+    const [upcomingMatchesToday, setUpcomingMatchesToday] = useState<UpcomingGame[]>([])
 
     //timer to know when midnight passes
     const timerRef = useRef<number | null>(null)
@@ -78,7 +73,7 @@ export default function MatchCarousel() {
                 return
             }
             const today = new Date()
-            const todayMatches = all.filter((match) => upcomingMatchesWithinXDays(match.date, today))
+            const todayMatches = all.filter((game) => upcomingMatchesWithinXDays(game.gameDate, today))
             setUpcomingMatchesToday(todayMatches)
         }
 
@@ -90,7 +85,7 @@ export default function MatchCarousel() {
                     return
                 }
                 const today = new Date()
-                const todayMatches = all.filter((match) => upcomingMatchesWithinXDays(match.date, today))
+                const todayMatches = all.filter((game) => upcomingMatchesWithinXDays(game.gameDate, today))
                 setUpcomingMatchesToday(todayMatches)
             })
         })
@@ -118,9 +113,8 @@ export default function MatchCarousel() {
                 {upcomingMatchesToday.length === 0 ? (
                     <div className="text-sm text-text-secondary">No Matches today</div>
                 ) : (
-                    upcomingMatchesToday.map((match) => (
-                        
-                        <MatchCard key={`${match.away}versus${match.home}`} matchDate={match.date} awayTeam={match.away} homeTeam={match.home}/>
+                    upcomingMatchesToday.map((game) => (
+                        <MatchCard key={`${game.awayTeam.displayName}versus${game.homeTeam.displayName}`} matchDate={game.gameDate} awayTeam={game.awayTeam} homeTeam={game.homeTeam}/>
                     ))
                 )}
             </Slider>
