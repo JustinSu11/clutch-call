@@ -6,6 +6,7 @@ Purpose: Displays a single match card for upcoming or live games
 import Image from "next/image"
 import "@/styles/globals.css"
 import formatDate from "@/utils/date-formatter-for-matches"
+import { parseNFLTeamLogo } from "@/utils/nfl_parser"
 
 type MatchCardProps = {
     awayTeam: string
@@ -27,6 +28,8 @@ export default function MatchCard({ awayTeam, homeTeam, matchDate }: MatchCardPr
     }
 
     const timeLeft = calculateTimeLeft()
+    const awayTeamLogo = parseNFLTeamLogo(awayTeam)
+    const homeTeamLogo = parseNFLTeamLogo(homeTeam)
 
     return (
         <div className="flex items-center justify-center p-4">
@@ -40,7 +43,7 @@ export default function MatchCard({ awayTeam, homeTeam, matchDate }: MatchCardPr
                         <div className="flex items-center justify-around w-full mb-6">
                             {/*Away team*/}
                             <div className="flex flex-col items-center gap-3 w-1/3">
-                                <Image src="https://upload.wikimedia.org/wikipedia/en/6/6b/New_York_Jets_logo.svg" alt={`${awayTeam} Logo`} className="h-16 w-16 sm:h-24 sm:w-24 object-contain" width={96} height={96}/>
+                                <Image src={awayTeamLogo} alt={`${awayTeam} Logo`} className="h-16 w-16 sm:h-24 sm:w-24 object-contain" width={96} height={96}/>
                                 <span className="font-bold text-lg sm:text-xl tracking-tight">{awayTeam}</span>
                             </div>
 
@@ -48,7 +51,7 @@ export default function MatchCard({ awayTeam, homeTeam, matchDate }: MatchCardPr
 
                             {/*Home team*/}
                             <div className="flex flex-col items-center gap-3 w-1/3">
-                                <Image src="https://upload.wikimedia.org/wikipedia/en/6/6b/New_York_Jets_logo.svg" alt={`${homeTeam} Logo`} className="h-16 w-16 sm:h-24 sm:w-24 object-contain" width={96} height={96}/>
+                                <Image src={homeTeamLogo} alt={`${homeTeam} Logo`} className="h-16 w-16 sm:h-24 sm:w-24 object-contain" width={96} height={96}/>
                                 <span className="font-bold text-lg sm:text-xl tracking-tight">{homeTeam}</span>
                             </div>
                         </div>
