@@ -180,7 +180,8 @@ def nba_game_predictions():
                 "predicted_winner": game.get('predicted_winner'),
                 "confidence": round(game.get('confidence', 0), 3),
                 "home_win_probability": round(game.get('home_team_win_probability', 0), 3),
-                "away_win_probability": round(game.get('away_team_win_probability', 0), 3)
+                "away_win_probability": round(game.get('away_team_win_probability', 0), 3),
+                "decision_factors": game.get('decision_factors', [])
             }
             
             if include_details:
@@ -253,7 +254,8 @@ def nba_player_predictions():
                     "position": player.get('position'),
                     "predicted_points": round(player.get('predicted_points', 0), 1),
                     "predicted_assists": round(player.get('predicted_assists', 0), 1),
-                    "predicted_rebounds": round(player.get('predicted_rebounds', 0), 1)
+                    "predicted_rebounds": round(player.get('predicted_rebounds', 0), 1),
+                    "decision_factors": player.get('decision_factors', {})
                 }
                 all_player_predictions.append(player_data)
             
@@ -268,7 +270,8 @@ def nba_player_predictions():
                     "position": player.get('position'),
                     "predicted_points": round(player.get('predicted_points', 0), 1),
                     "predicted_assists": round(player.get('predicted_assists', 0), 1),
-                    "predicted_rebounds": round(player.get('predicted_rebounds', 0), 1)
+                    "predicted_rebounds": round(player.get('predicted_rebounds', 0), 1),
+                    "decision_factors": player.get('decision_factors', {})
                 }
                 all_player_predictions.append(player_data)
         
@@ -356,7 +359,8 @@ def nba_game_prediction_detail(game_id: str):
                 "predicted_winner": game_outcome.get('predicted_winner'),
                 "confidence": round(game_outcome.get('confidence', 0), 3),
                 "home_win_probability": round(game_outcome.get('home_team_win_probability', 0), 3),
-                "away_win_probability": round(game_outcome.get('away_team_win_probability', 0), 3)
+                "away_win_probability": round(game_outcome.get('away_team_win_probability', 0), 3),
+                "decision_factors": game_outcome.get('decision_factors', [])
             },
             "player_predictions": {
                 "home_team": game_players.get('home_team_predictions', []),
