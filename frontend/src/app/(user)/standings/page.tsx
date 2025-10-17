@@ -36,6 +36,7 @@ type NFLTeam = {
     team_abbreviation: string;
     team_logo: string;
     conference: string;
+    division: string | null;
     wins: number;
     losses: number;
     ties: number;
@@ -212,8 +213,6 @@ const NBAStandingsDisplay: React.FC<{ standings: { eastern_conference: NBATeam[]
 
 const NFLStandingsDisplay: React.FC<{ standings: { afc_standings: NFLTeam[], nfc_standings: NFLTeam[] } }> = ({ standings }) => {
     const renderConference = (teams: NFLTeam[], conferenceName: string) => {
-        const playoffCutoff = 7; // Top 7 teams make playoffs
-        
         if (!teams || teams.length === 0) {
             return (
                 <div className="mb-8">
@@ -228,81 +227,154 @@ const NFLStandingsDisplay: React.FC<{ standings: { afc_standings: NFLTeam[], nfc
             );
         }
         
+        // Group teams by division
+        const divisions: { [key: string]: NFLTeam[] } = {};
+        teams.forEach(team => {
+            const divisionName = team.division || 'Unknown';
+            if (!divisions[divisionName]) {
+                divisions[divisionName] = [];
+            }
+            divisions[divisionName].push(team);
+        });
+        
+        // Sort each division by wins and win percentage
+        Object.keys(divisions).forEach(divName => {
+            divisions[divName].sort((a, b) => {
+                if (b.wins !== a.wins) return b.wins - a.wins;
+                return b.win_pct - a.win_pct;
+            });
+        });
+        
+        // Calculate playoff seeds: top 4 are division winners, 5-7 are wild cards
+        // Sort all teams by record to determine overall conference ranking
+        const sortedTeams = [...teams].sort((a, b) => {
+            if (b.wins !== a.wins) return b.wins - a.wins;
+            return b.win_pct - a.win_pct;
+        });
+        
+        // Get division winners (first place in each division)
+        const divisionWinners: NFLTeam[] = [];
+        Object.keys(divisions).forEach(divName => {
+            if (divisions[divName].length > 0) {
+                divisionWinners.push(divisions[divName][0]);
+            }
+        });
+        
+        // Sort division winners by record for seeds 1-4
+        divisionWinners.sort((a, b) => {
+            if (b.wins !== a.wins) return b.wins - a.wins;
+            return b.win_pct - a.win_pct;
+        });
+        
+        // Get wild card teams (best 3 non-division winners)
+        const wildCardTeams = sortedTeams
+            .filter(team => !divisionWinners.includes(team))
+            .slice(0, 3);
+        
+        // Create playoff seed map
+        const playoffSeeds = new Map<string, number>();
+        divisionWinners.forEach((team, idx) => {
+            playoffSeeds.set(team.team_id, idx + 1);
+        });
+        wildCardTeams.forEach((team, idx) => {
+            playoffSeeds.set(team.team_id, idx + 5);
+        });
+        
         return (
             <div className="mb-8">
                 <div className="flex items-center gap-3 mb-4">
                     <h3 className="text-2xl font-bold text-text-primary">{conferenceName}</h3>
                     <div className="h-1 flex-grow bg-gradient-to-r from-primary to-transparent rounded"></div>
                 </div>
-                <div className="bg-secondary-background rounded-xl overflow-hidden shadow-lg">
-                    <div className="overflow-x-auto">
-                        <table className="w-full min-w-[800px]">
-                            <thead className="bg-secondary text-text-secondary">
-                                <tr>
-                                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">#</th>
-                                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">Team</th>
-                                    <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider">W</th>
-                                    <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider">L</th>
-                                    <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider">T</th>
-                                    <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider">PCT</th>
-                                    <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider hidden md:table-cell">PF</th>
-                                    <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider hidden md:table-cell">PA</th>
-                                    <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider hidden lg:table-cell">Diff</th>
-                                    <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider">Streak</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-secondary">
-                                {teams.map((team, idx) => {
-                                    const isPlayoffTeam = idx < playoffCutoff;
-                                    
-                                    return (
-                                        <tr 
-                                            key={team.team_id}
-                                            className={`hover:bg-secondary transition-colors ${
-                                                isPlayoffTeam ? 'border-l-4 border-l-green-500' : ''
-                                            }`}
-                                        >
-                                            <td className="px-4 py-4 text-center">
-                                                <div className="flex items-center gap-2">
-                                                    {isPlayoffTeam && <Trophy size={16} className="text-green-500" />}
-                                                    <span className="font-bold text-text-primary">{idx + 1}</span>
-                                                </div>
-                                            </td>
-                                            <td className="px-4 py-4">
-                                                <div className="flex items-center gap-3">
-                                                    {team.team_logo && (
-                                                        <img src={team.team_logo} alt={team.team_name} className="w-8 h-8 object-contain" />
-                                                    )}
-                                                    <div>
-                                                        <div className="font-semibold text-text-primary">{team.team_name}</div>
-                                                        <div className="text-xs text-text-secondary">{team.team_abbreviation}</div>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td className="px-4 py-4 text-center font-bold text-green-400">{team.wins}</td>
-                                            <td className="px-4 py-4 text-center font-bold text-red-400">{team.losses}</td>
-                                            <td className="px-4 py-4 text-center text-text-secondary">{team.ties}</td>
-                                            <td className="px-4 py-4 text-center text-text-primary font-semibold">{team.win_pct.toFixed(3)}</td>
-                                            <td className="px-4 py-4 text-center text-text-secondary text-sm hidden md:table-cell">{team.points_for}</td>
-                                            <td className="px-4 py-4 text-center text-text-secondary text-sm hidden md:table-cell">{team.points_against}</td>
-                                            <td className={`px-4 py-4 text-center font-semibold hidden lg:table-cell ${team.point_differential > 0 ? 'text-green-400' : 'text-red-400'}`}>
-                                                {team.point_differential > 0 ? '+' : ''}{team.point_differential}
-                                            </td>
-                                            <td className="px-4 py-4 text-center">
-                                                <StreakIndicator streak={team.streak} />
-                                            </td>
+                
+                {/* Render each division */}
+                {Object.keys(divisions).sort().map(divisionName => (
+                    <div key={divisionName} className="mb-6">
+                        <h4 className="text-lg font-semibold text-text-primary mb-2 px-2">{divisionName}</h4>
+                        <div className="bg-secondary-background rounded-xl overflow-hidden shadow-lg">
+                            <div className="overflow-x-auto">
+                                <table className="w-full min-w-[800px]">
+                                    <thead className="bg-secondary text-text-secondary">
+                                        <tr>
+                                            <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">Seed</th>
+                                            <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">Team</th>
+                                            <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider">W</th>
+                                            <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider">L</th>
+                                            <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider">T</th>
+                                            <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider">PCT</th>
+                                            <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider hidden md:table-cell">PF</th>
+                                            <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider hidden md:table-cell">PA</th>
+                                            <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider hidden lg:table-cell">Diff</th>
+                                            <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider">Streak</th>
                                         </tr>
-                                    );
-                                })}
-                            </tbody>
-                        </table>
+                                    </thead>
+                                    <tbody className="divide-y divide-secondary">
+                                        {divisions[divisionName].map((team, divIdx) => {
+                                            const playoffSeed = playoffSeeds.get(team.team_id);
+                                            const isPlayoffTeam = playoffSeed !== undefined;
+                                            const isDivisionWinner = divIdx === 0;
+                                            
+                                            return (
+                                                <tr 
+                                                    key={team.team_id}
+                                                    className={`hover:bg-secondary transition-colors ${
+                                                        isPlayoffTeam ? 'border-l-4 border-l-green-500' : ''
+                                                    }`}
+                                                >
+                                                    <td className="px-4 py-4 text-center">
+                                                        <div className="flex items-center gap-2 justify-center">
+                                                            {isPlayoffTeam && <Trophy size={16} className="text-green-500" />}
+                                                            <span className={`font-bold ${isPlayoffTeam ? 'text-green-500' : 'text-text-secondary'}`}>
+                                                                {playoffSeed || '-'}
+                                                            </span>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-4 py-4">
+                                                        <div className="flex items-center gap-3">
+                                                            {team.team_logo && (
+                                                                <img src={team.team_logo} alt={team.team_name} className="w-8 h-8 object-contain" />
+                                                            )}
+                                                            <div>
+                                                                <div className="font-semibold text-text-primary flex items-center gap-2">
+                                                                    {team.team_name}
+                                                                    {isDivisionWinner && <span className="text-xs bg-blue-500 text-white px-1.5 py-0.5 rounded">DIV</span>}
+                                                                </div>
+                                                                <div className="text-xs text-text-secondary">{team.team_abbreviation}</div>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-4 py-4 text-center font-bold text-green-400">{team.wins}</td>
+                                                    <td className="px-4 py-4 text-center font-bold text-red-400">{team.losses}</td>
+                                                    <td className="px-4 py-4 text-center text-text-secondary">{team.ties}</td>
+                                                    <td className="px-4 py-4 text-center text-text-primary font-semibold">{team.win_pct.toFixed(3)}</td>
+                                                    <td className="px-4 py-4 text-center text-text-secondary text-sm hidden md:table-cell">{team.points_for}</td>
+                                                    <td className="px-4 py-4 text-center text-text-secondary text-sm hidden md:table-cell">{team.points_against}</td>
+                                                    <td className={`px-4 py-4 text-center font-semibold hidden lg:table-cell ${team.point_differential > 0 ? 'text-green-400' : 'text-red-400'}`}>
+                                                        {team.point_differential > 0 ? '+' : ''}{team.point_differential}
+                                                    </td>
+                                                    <td className="px-4 py-4 text-center">
+                                                        <StreakIndicator streak={team.streak} />
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
-                </div>
+                ))}
                 
                 {/* Playoff Legend */}
-                <div className="flex items-center gap-2 mt-4 text-sm">
-                    <div className="w-4 h-4 bg-green-500 rounded"></div>
-                    <span className="text-text-secondary">Playoff Teams (Top 7)</span>
+                <div className="flex flex-wrap gap-4 mt-4 text-sm">
+                    <div className="flex items-center gap-2">
+                        <div className="w-4 h-4 bg-green-500 rounded"></div>
+                        <span className="text-text-secondary">Playoff Teams (Seeds 1-7)</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <span className="text-xs bg-blue-500 text-white px-2 py-1 rounded">DIV</span>
+                        <span className="text-text-secondary">Division Winner (Seeds 1-4)</span>
+                    </div>
                 </div>
             </div>
         );

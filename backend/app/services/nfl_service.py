@@ -213,12 +213,19 @@ def get_standings(season: Optional[str] = None):
                     stat_name = stat.get("name", "").lower().replace(" ", "_")
                     stats_dict[stat_name] = stat.get("value")
                 
+                # Extract division name from team data
+                division_name = None
+                location = team.get("location", "")
+                # ESPN doesn't always provide division directly, so we'll infer from team
+                # Or check if there's a division field in the response
+                
                 team_data = {
                     "team_id": team.get("id"),
                     "team_name": team.get("displayName"),
                     "team_abbreviation": team.get("abbreviation"),
                     "team_logo": team.get("logos", [{}])[0].get("href") if team.get("logos") else None,
                     "conference": conference_name,
+                    "division": team.get("division", {}).get("name") if isinstance(team.get("division"), dict) else None,
                     "wins": stats_dict.get("wins", 0),
                     "losses": stats_dict.get("losses", 0),
                     "ties": stats_dict.get("ties", 0),
