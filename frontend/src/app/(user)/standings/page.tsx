@@ -16,6 +16,8 @@ type NBATeam = {
     team_id: number;
     team_name: string;
     team_city: string;
+    team_abbreviation: string;
+    team_logo: string;
     conference: string;
     division: string;
     wins: number;
@@ -157,8 +159,15 @@ const NBAStandingsDisplay: React.FC<{ standings: { eastern_conference: NBATeam[]
                                                 </div>
                                             </td>
                                             <td className="px-4 py-4">
-                                                <div className="font-semibold text-text-primary">{team.team_city} {team.team_name}</div>
-                                                <div className="text-xs text-text-secondary">{team.division}</div>
+                                                <div className="flex items-center gap-3">
+                                                    {team.team_logo && (
+                                                        <img src={team.team_logo} alt={`${team.team_city} ${team.team_name}`} className="w-8 h-8 object-contain" />
+                                                    )}
+                                                    <div>
+                                                        <div className="font-semibold text-text-primary">{team.team_city} {team.team_name}</div>
+                                                        <div className="text-xs text-text-secondary">{team.division}</div>
+                                                    </div>
+                                                </div>
                                             </td>
                                             <td className="px-4 py-4 text-center font-bold text-green-400">{team.wins}</td>
                                             <td className="px-4 py-4 text-center font-bold text-red-400">{team.losses}</td>

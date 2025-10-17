@@ -244,10 +244,16 @@ def get_standings(season: Optional[str] = None):
         western_conf = []
         
         for team in standings:
+            team_abbreviation = team.get("TeamAbbreviation") or team.get("TeamSlug", "").upper()
+            # Construct ESPN logo URL using team abbreviation
+            team_logo = f"https://a.espncdn.com/i/teamlogos/nba/500/{team_abbreviation.lower()}.png" if team_abbreviation else None
+            
             team_data = {
                 "team_id": team.get("TeamID"),
                 "team_name": team.get("TeamName"),
                 "team_city": team.get("TeamCity"),
+                "team_abbreviation": team_abbreviation,
+                "team_logo": team_logo,
                 "team_slug": team.get("TeamSlug"),
                 "conference": team.get("Conference"),
                 "division": team.get("Division"),
