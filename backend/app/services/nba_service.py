@@ -222,42 +222,79 @@ def get_historical_games(start_date=None, end_date=None, season=None, team_id=No
 
 
 def _get_nba_team_logos():
-    """Fetch NBA team logos from ESPN API.
+    """Get NBA team logos mapping.
     
+    Returns static mapping since ESPN API may not be accessible from backend.
     Returns:
-        Dictionary mapping team abbreviations and slugs to logo URLs
+        Dictionary mapping team slugs to logo URLs
     """
-    try:
-        url = "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams"
-        response = requests.get(url, timeout=10)
-        response.raise_for_status()
-        data = response.json()
-        
-        logo_map = {}
-        sports = data.get("sports", [])
-        for sport in sports:
-            leagues = sport.get("leagues", [])
-            for league in leagues:
-                teams = league.get("teams", [])
-                for team_obj in teams:
-                    team = team_obj.get("team", {})
-                    abbreviation = team.get("abbreviation", "")
-                    slug = team.get("slug", "")
-                    logos = team.get("logos", [])
-                    if logos:
-                        # Get the first logo URL
-                        logo_url = logos[0].get("href", "")
-                        if logo_url:
-                            # Map both abbreviation and slug to the same logo
-                            if abbreviation:
-                                logo_map[abbreviation] = logo_url
-                            if slug:
-                                logo_map[slug] = logo_url
-        
-        return logo_map
-    except Exception as e:
-        print(f"Error fetching NBA team logos: {e}")
-        return {}
+    # Static mapping of team slugs to ESPN logo URLs
+    logo_map = {
+        "atlanta-hawks": "https://a.espncdn.com/i/teamlogos/nba/500/atl.png",
+        "boston-celtics": "https://a.espncdn.com/i/teamlogos/nba/500/bos.png",
+        "brooklyn-nets": "https://a.espncdn.com/i/teamlogos/nba/500/bkn.png",
+        "charlotte-hornets": "https://a.espncdn.com/i/teamlogos/nba/500/cha.png",
+        "chicago-bulls": "https://a.espncdn.com/i/teamlogos/nba/500/chi.png",
+        "cleveland-cavaliers": "https://a.espncdn.com/i/teamlogos/nba/500/cle.png",
+        "dallas-mavericks": "https://a.espncdn.com/i/teamlogos/nba/500/dal.png",
+        "denver-nuggets": "https://a.espncdn.com/i/teamlogos/nba/500/den.png",
+        "detroit-pistons": "https://a.espncdn.com/i/teamlogos/nba/500/det.png",
+        "golden-state-warriors": "https://a.espncdn.com/i/teamlogos/nba/500/gs.png",
+        "houston-rockets": "https://a.espncdn.com/i/teamlogos/nba/500/hou.png",
+        "indiana-pacers": "https://a.espncdn.com/i/teamlogos/nba/500/ind.png",
+        "la-clippers": "https://a.espncdn.com/i/teamlogos/nba/500/lac.png",
+        "los-angeles-lakers": "https://a.espncdn.com/i/teamlogos/nba/500/lal.png",
+        "memphis-grizzlies": "https://a.espncdn.com/i/teamlogos/nba/500/mem.png",
+        "miami-heat": "https://a.espncdn.com/i/teamlogos/nba/500/mia.png",
+        "milwaukee-bucks": "https://a.espncdn.com/i/teamlogos/nba/500/mil.png",
+        "minnesota-timberwolves": "https://a.espncdn.com/i/teamlogos/nba/500/min.png",
+        "new-orleans-pelicans": "https://a.espncdn.com/i/teamlogos/nba/500/no.png",
+        "new-york-knicks": "https://a.espncdn.com/i/teamlogos/nba/500/ny.png",
+        "oklahoma-city-thunder": "https://a.espncdn.com/i/teamlogos/nba/500/okc.png",
+        "orlando-magic": "https://a.espncdn.com/i/teamlogos/nba/500/orl.png",
+        "philadelphia-76ers": "https://a.espncdn.com/i/teamlogos/nba/500/phi.png",
+        "phoenix-suns": "https://a.espncdn.com/i/teamlogos/nba/500/phx.png",
+        "portland-trail-blazers": "https://a.espncdn.com/i/teamlogos/nba/500/por.png",
+        "sacramento-kings": "https://a.espncdn.com/i/teamlogos/nba/500/sac.png",
+        "san-antonio-spurs": "https://a.espncdn.com/i/teamlogos/nba/500/sa.png",
+        "toronto-raptors": "https://a.espncdn.com/i/teamlogos/nba/500/tor.png",
+        "utah-jazz": "https://a.espncdn.com/i/teamlogos/nba/500/utah.png",
+        "washington-wizards": "https://a.espncdn.com/i/teamlogos/nba/500/wsh.png",
+        # Also add lowercase slug versions
+        "hawks": "https://a.espncdn.com/i/teamlogos/nba/500/atl.png",
+        "celtics": "https://a.espncdn.com/i/teamlogos/nba/500/bos.png",
+        "nets": "https://a.espncdn.com/i/teamlogos/nba/500/bkn.png",
+        "hornets": "https://a.espncdn.com/i/teamlogos/nba/500/cha.png",
+        "bulls": "https://a.espncdn.com/i/teamlogos/nba/500/chi.png",
+        "cavaliers": "https://a.espncdn.com/i/teamlogos/nba/500/cle.png",
+        "mavericks": "https://a.espncdn.com/i/teamlogos/nba/500/dal.png",
+        "nuggets": "https://a.espncdn.com/i/teamlogos/nba/500/den.png",
+        "pistons": "https://a.espncdn.com/i/teamlogos/nba/500/det.png",
+        "warriors": "https://a.espncdn.com/i/teamlogos/nba/500/gs.png",
+        "rockets": "https://a.espncdn.com/i/teamlogos/nba/500/hou.png",
+        "pacers": "https://a.espncdn.com/i/teamlogos/nba/500/ind.png",
+        "clippers": "https://a.espncdn.com/i/teamlogos/nba/500/lac.png",
+        "lakers": "https://a.espncdn.com/i/teamlogos/nba/500/lal.png",
+        "grizzlies": "https://a.espncdn.com/i/teamlogos/nba/500/mem.png",
+        "heat": "https://a.espncdn.com/i/teamlogos/nba/500/mia.png",
+        "bucks": "https://a.espncdn.com/i/teamlogos/nba/500/mil.png",
+        "timberwolves": "https://a.espncdn.com/i/teamlogos/nba/500/min.png",
+        "pelicans": "https://a.espncdn.com/i/teamlogos/nba/500/no.png",
+        "knicks": "https://a.espncdn.com/i/teamlogos/nba/500/ny.png",
+        "thunder": "https://a.espncdn.com/i/teamlogos/nba/500/okc.png",
+        "magic": "https://a.espncdn.com/i/teamlogos/nba/500/orl.png",
+        "76ers": "https://a.espncdn.com/i/teamlogos/nba/500/phi.png",
+        "suns": "https://a.espncdn.com/i/teamlogos/nba/500/phx.png",
+        "trail-blazers": "https://a.espncdn.com/i/teamlogos/nba/500/por.png",
+        "blazers": "https://a.espncdn.com/i/teamlogos/nba/500/por.png",
+        "kings": "https://a.espncdn.com/i/teamlogos/nba/500/sac.png",
+        "spurs": "https://a.espncdn.com/i/teamlogos/nba/500/sa.png",
+        "raptors": "https://a.espncdn.com/i/teamlogos/nba/500/tor.png",
+        "jazz": "https://a.espncdn.com/i/teamlogos/nba/500/utah.png",
+        "wizards": "https://a.espncdn.com/i/teamlogos/nba/500/wsh.png",
+    }
+    
+    return logo_map
 
 
 def get_standings(season: Optional[str] = None):
@@ -289,8 +326,15 @@ def get_standings(season: Optional[str] = None):
         for team in standings:
             team_abbreviation = team.get("TeamAbbreviation") or team.get("TeamSlug", "").upper()
             team_slug = team.get("TeamSlug", "")
-            # Get logo from ESPN API - try abbreviation first, then slug
-            team_logo = logo_map.get(team_abbreviation) or logo_map.get(team_slug) or logo_map.get(team_slug.lower())
+            # Get logo from ESPN API - try multiple variations
+            team_logo = (logo_map.get(team_abbreviation) or 
+                        logo_map.get(team_abbreviation.lower()) or
+                        logo_map.get(team_slug) or 
+                        logo_map.get(team_slug.lower()) or
+                        logo_map.get(team_slug.upper()))
+            
+            if not team_logo:
+                print(f"No logo found for team: {team.get('TeamCity')} {team.get('TeamName')} (abbr: {team_abbreviation}, slug: {team_slug})")
             
             team_data = {
                 "team_id": team.get("TeamID"),
