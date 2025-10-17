@@ -8,6 +8,7 @@ Purpose: Thin service layer for NBA data using the python package `nba_api` (whi
 
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
+import requests
 
 from nba_api.stats.endpoints import (
     boxscoretraditionalv2,
@@ -220,6 +221,40 @@ def get_historical_games(start_date=None, end_date=None, season=None, team_id=No
         return {"error": str(e), "data": [], "meta": {"page": page, "per_page": per_page, "total": 0}}
 
 
+def _get_nba_team_logos():
+    """Fetch NBA team logos from ESPN API.
+    
+    Returns:
+        Dictionary mapping team abbreviations to logo URLs
+    """
+    try:
+        url = "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams"
+        response = requests.get(url, timeout=10)
+        response.raise_for_status()
+        data = response.json()
+        
+        logo_map = {}
+        sports = data.get("sports", [])
+        for sport in sports:
+            leagues = sport.get("leagues", [])
+            for league in leagues:
+                teams = league.get("teams", [])
+                for team_obj in teams:
+                    team = team_obj.get("team", {})
+                    abbreviation = team.get("abbreviation", "")
+                    logos = team.get("logos", [])
+                    if abbreviation and logos:
+                        # Get the first logo URL
+                        logo_url = logos[0].get("href", "")
+                        if logo_url:
+                            logo_map[abbreviation] = logo_url
+        
+        return logo_map
+    except Exception as e:
+        print(f"Error fetching NBA team logos: {e}")
+        return {}
+
+
 def get_standings(season: Optional[str] = None):
     """Fetch NBA standings using LeagueStandingsV3.
     
@@ -239,14 +274,17 @@ def get_standings(season: Optional[str] = None):
         
         standings = standings_data.get("Standings", [])
         
+        # Fetch team logos from ESPN
+        logo_map = _get_nba_team_logos()
+        
         # Organize by conference and division
         eastern_conf = []
         western_conf = []
         
         for team in standings:
             team_abbreviation = team.get("TeamAbbreviation") or team.get("TeamSlug", "").upper()
-            # Construct ESPN logo URL using team abbreviation
-            team_logo = f"https://a.espncdn.com/i/teamlogos/nba/500/{team_abbreviation.lower()}.png" if team_abbreviation else None
+            # Get logo from ESPN API
+            team_logo = logo_map.get(team_abbreviation, None)
             
             team_data = {
                 "team_id": team.get("TeamID"),
