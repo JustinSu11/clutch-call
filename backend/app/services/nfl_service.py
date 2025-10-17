@@ -13,6 +13,7 @@ import requests
 # ESPN public API endpoints (undocumented but widely used and publicly accessible)
 SCOREBOARD = "https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard"
 EVENT = "https://site.api.espn.com/apis/site/v2/sports/football/nfl/summary"
+STANDINGS = "https://site.api.espn.com/apis/v2/sports/football/nfl/standings"
 
 
 def _get(url: str, params: Optional[Dict[str, Any]] = None):
@@ -165,3 +166,78 @@ def get_historical_games(start_date=None, end_date=None, season=None, team_id=No
         
     except Exception as e:
         return {"error": str(e), "events": [], "meta": {"page": page, "per_page": per_page, "total": 0}}
+
+
+def get_standings(season: Optional[str] = None):
+    """Fetch NFL standings from ESPN API.
+    
+    Args:
+        season: Optional season year (e.g., '2024')
+    
+    Returns:
+        Dictionary containing standings data organized by conference and division
+    """
+    try:
+        params = {}
+        if season:
+            params["season"] = season
+            
+        data = _get(STANDINGS, params)
+        
+        # ESPN standings typically come as an array of entries
+        standings_entries = data.get("children", [])
+        
+        afc_standings = []
+        nfc_standings = []
+        
+        for conference_group in standings_entries:
+            conference_name = conference_group.get("name", "")
+            standings = conference_group.get("standings", {}).get("entries", [])
+            
+            for entry in standings:
+                team = entry.get("team", {})
+                stats = entry.get("stats", [])
+                
+                # Parse stats array into a dictionary
+                stats_dict = {}
+                for stat in stats:
+                    stat_name = stat.get("name", "").lower().replace(" ", "_")
+                    stats_dict[stat_name] = stat.get("value")
+                
+                team_data = {
+                    "team_id": team.get("id"),
+                    "team_name": team.get("displayName"),
+                    "team_abbreviation": team.get("abbreviation"),
+                    "team_logo": team.get("logos", [{}])[0].get("href") if team.get("logos") else None,
+                    "conference": conference_name,
+                    "wins": stats_dict.get("wins", 0),
+                    "losses": stats_dict.get("losses", 0),
+                    "ties": stats_dict.get("ties", 0),
+                    "win_pct": stats_dict.get("winpercent", 0),
+                    "points_for": stats_dict.get("pointsfor", 0),
+                    "points_against": stats_dict.get("pointsagainst", 0),
+                    "point_differential": stats_dict.get("pointdifferential", 0),
+                    "streak": stats_dict.get("streak"),
+                    "division_rank": stats_dict.get("divisionrank", 0),
+                    "conference_rank": stats_dict.get("conferencerank", 0),
+                    "playoff_seed": stats_dict.get("playoffseed", 0)
+                }
+                
+                if "AFC" in conference_name:
+                    afc_standings.append(team_data)
+                elif "NFC" in conference_name:
+                    nfc_standings.append(team_data)
+        
+        return {
+            "league": "NFL",
+            "season": season if season else str(datetime.utcnow().year),
+            "afc_standings": afc_standings,
+            "nfc_standings": nfc_standings
+        }
+    except Exception as e:
+        return {
+            "error": str(e),
+            "league": "NFL",
+            "afc_standings": [],
+            "nfc_standings": []
+        }

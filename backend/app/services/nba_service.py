@@ -13,6 +13,7 @@ from nba_api.stats.endpoints import (
     boxscoretraditionalv2,
     boxscoresummaryv2,
     leaguegamelog,
+    leaguestandingsv3,
     scoreboardv2,
     teamgamelog,
 )
@@ -217,3 +218,70 @@ def get_historical_games(start_date=None, end_date=None, season=None, team_id=No
         return data
     except Exception as e:
         return {"error": str(e), "data": [], "meta": {"page": page, "per_page": per_page, "total": 0}}
+
+
+def get_standings(season: Optional[str] = None):
+    """Fetch NBA standings using LeagueStandingsV3.
+    
+    Args:
+        season: Optional season string (e.g., '2024' or '2024-25')
+    
+    Returns:
+        Dictionary containing standings data organized by conference and division
+    """
+    try:
+        season_fmt = _season_to_nba_format(season)
+        standings_data = leaguestandingsv3.LeagueStandingsV3(
+            league_id="00",
+            season=season_fmt if season_fmt else "2024-25",
+            season_type="Regular Season"
+        ).get_normalized_dict()
+        
+        standings = standings_data.get("Standings", [])
+        
+        # Organize by conference and division
+        eastern_conf = []
+        western_conf = []
+        
+        for team in standings:
+            team_data = {
+                "team_id": team.get("TeamID"),
+                "team_name": team.get("TeamName"),
+                "team_city": team.get("TeamCity"),
+                "team_slug": team.get("TeamSlug"),
+                "conference": team.get("Conference"),
+                "division": team.get("Division"),
+                "wins": team.get("WINS"),
+                "losses": team.get("LOSSES"),
+                "win_pct": team.get("WinPCT"),
+                "conference_rank": team.get("ConferenceRecord"),
+                "division_rank": team.get("DivisionRank"),
+                "home_record": team.get("HOME"),
+                "road_record": team.get("ROAD"),
+                "last_10": team.get("L10"),
+                "streak": team.get("CurrentStreak"),
+                "games_back": team.get("ConferenceGamesBack")
+            }
+            
+            if team.get("Conference") == "East":
+                eastern_conf.append(team_data)
+            else:
+                western_conf.append(team_data)
+        
+        # Sort by wins descending
+        eastern_conf.sort(key=lambda x: (x["wins"], x["win_pct"]), reverse=True)
+        western_conf.sort(key=lambda x: (x["wins"], x["win_pct"]), reverse=True)
+        
+        return {
+            "league": "NBA",
+            "season": season_fmt if season_fmt else "2024-25",
+            "eastern_conference": eastern_conf,
+            "western_conference": western_conf
+        }
+    except Exception as e:
+        return {
+            "error": str(e),
+            "league": "NBA",
+            "eastern_conference": [],
+            "western_conference": []
+        }
