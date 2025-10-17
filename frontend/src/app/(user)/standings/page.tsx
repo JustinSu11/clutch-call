@@ -352,9 +352,9 @@ const SoccerStandingsDisplay: React.FC<{ standings: SoccerTeam[], league: string
 export default function StandingsPage() {
     const sports: SportKey[] = ['NBA', 'NFL', 'MLS'];
     const [activeSport, setActiveSport] = useState<SportKey>('NBA');
-    const [nbaStandings, setNbaStandings] = useState<any>(null);
-    const [nflStandings, setNflStandings] = useState<any>(null);
-    const [soccerStandings, setSoccerStandings] = useState<any>(null);
+    const [nbaStandings, setNbaStandings] = useState<{ eastern_conference: NBATeam[], western_conference: NBATeam[] } | null>(null);
+    const [nflStandings, setNflStandings] = useState<{ afc_standings: NFLTeam[], nfc_standings: NFLTeam[] } | null>(null);
+    const [soccerStandings, setSoccerStandings] = useState<{ standings: SoccerTeam[] } | null>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
