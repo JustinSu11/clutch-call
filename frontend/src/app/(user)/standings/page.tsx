@@ -281,17 +281,19 @@ const NFLStandingsDisplay: React.FC<{ standings: { afc_standings: NFLTeam[], nfc
         });
         
         return (
-            <div className="mb-8">
-                <div className="flex items-center gap-3 mb-4">
+            <div className="mb-12">
+                <div className="flex items-center gap-3 mb-6">
                     <h3 className="text-2xl font-bold text-text-primary">{conferenceName}</h3>
                     <div className="h-1 flex-grow bg-gradient-to-r from-primary to-transparent rounded"></div>
                 </div>
                 
                 {/* Render each division */}
                 {Object.keys(divisions).sort().map(divisionName => (
-                    <div key={divisionName} className="mb-6">
-                        <h4 className="text-lg font-semibold text-text-primary mb-2 px-2">{divisionName}</h4>
-                        <div className="bg-secondary-background rounded-xl overflow-hidden shadow-lg">
+                    <div key={divisionName} className="mb-8">
+                        <div className="bg-gradient-to-r from-primary/20 to-transparent px-4 py-2 rounded-lg mb-3">
+                            <h4 className="text-xl font-bold text-text-primary">{divisionName}</h4>
+                        </div>
+                        <div className="bg-secondary-background rounded-xl overflow-hidden shadow-lg border border-secondary">
                             <div className="overflow-x-auto">
                                 <table className="w-full min-w-[800px]">
                                     <thead className="bg-secondary text-text-secondary">
