@@ -225,7 +225,7 @@ def _get_nba_team_logos():
     """Fetch NBA team logos from ESPN API.
     
     Returns:
-        Dictionary mapping team abbreviations to logo URLs
+        Dictionary mapping team abbreviations and slugs to logo URLs
     """
     try:
         url = "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams"
@@ -242,12 +242,17 @@ def _get_nba_team_logos():
                 for team_obj in teams:
                     team = team_obj.get("team", {})
                     abbreviation = team.get("abbreviation", "")
+                    slug = team.get("slug", "")
                     logos = team.get("logos", [])
-                    if abbreviation and logos:
+                    if logos:
                         # Get the first logo URL
                         logo_url = logos[0].get("href", "")
                         if logo_url:
-                            logo_map[abbreviation] = logo_url
+                            # Map both abbreviation and slug to the same logo
+                            if abbreviation:
+                                logo_map[abbreviation] = logo_url
+                            if slug:
+                                logo_map[slug] = logo_url
         
         return logo_map
     except Exception as e:
@@ -283,8 +288,9 @@ def get_standings(season: Optional[str] = None):
         
         for team in standings:
             team_abbreviation = team.get("TeamAbbreviation") or team.get("TeamSlug", "").upper()
-            # Get logo from ESPN API
-            team_logo = logo_map.get(team_abbreviation, None)
+            team_slug = team.get("TeamSlug", "")
+            # Get logo from ESPN API - try abbreviation first, then slug
+            team_logo = logo_map.get(team_abbreviation) or logo_map.get(team_slug) or logo_map.get(team_slug.lower())
             
             team_data = {
                 "team_id": team.get("TeamID"),
