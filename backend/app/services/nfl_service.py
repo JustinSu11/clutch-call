@@ -184,13 +184,37 @@ def get_standings(season: Optional[str] = None):
             
         data = _get(STANDINGS, params)
         
-        # ESPN standings typically come as an array of entries
-        standings_entries = data.get("children", [])
-        
+        # ESPN API returns data in a nested structure with seasons
         afc_standings = []
         nfc_standings = []
         
-        for conference_group in standings_entries:
+        # Navigate through the ESPN API structure
+        # The structure is: data -> seasons -> [0] -> types -> [0] -> children (conferences)
+        seasons = data.get("seasons", [])
+        if not seasons:
+            return {
+                "error": "No seasons data in API response",
+                "league": "NFL",
+                "afc_standings": [],
+                "nfc_standings": []
+            }
+        
+        # Get the first season (current season)
+        current_season = seasons[0]
+        types = current_season.get("types", [])
+        if not types:
+            return {
+                "error": "No types data in API response",
+                "league": "NFL",
+                "afc_standings": [],
+                "nfc_standings": []
+            }
+        
+        # Get the first type (typically regular season)
+        season_type = types[0]
+        children = season_type.get("children", [])
+        
+        for conference_group in children:
             conference_name = conference_group.get("name", "")
             standings = conference_group.get("standings", {}).get("entries", [])
             
