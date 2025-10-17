@@ -24,7 +24,7 @@ type NBATeam = {
     home_record: string;
     road_record: string;
     last_10: string;
-    streak: string;
+    streak: string | number | null;
     games_back: number;
 };
 
@@ -41,7 +41,7 @@ type NFLTeam = {
     points_for: number;
     points_against: number;
     point_differential: number;
-    streak: string;
+    streak: string | number | null;
     division_rank: number;
     conference_rank: number;
     playoff_seed: number;
@@ -86,11 +86,13 @@ const SportsFilter: React.FC<{
     </div>
 );
 
-const StreakIndicator: React.FC<{ streak: string }> = ({ streak }) => {
+const StreakIndicator: React.FC<{ streak: string | number | null | undefined }> = ({ streak }) => {
     if (!streak) return null;
     
-    const isWinStreak = streak.startsWith('W');
-    const isLoseStreak = streak.startsWith('L');
+    // Convert to string if it's not already
+    const streakStr = String(streak);
+    const isWinStreak = streakStr.startsWith('W');
+    const isLoseStreak = streakStr.startsWith('L');
     
     return (
         <span className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-bold ${
@@ -101,7 +103,7 @@ const StreakIndicator: React.FC<{ streak: string }> = ({ streak }) => {
             {isWinStreak && <TrendingUp size={12} />}
             {isLoseStreak && <TrendingDown size={12} />}
             {!isWinStreak && !isLoseStreak && <Minus size={12} />}
-            {streak}
+            {streakStr}
         </span>
     );
 };
