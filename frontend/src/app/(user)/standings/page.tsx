@@ -205,6 +205,20 @@ const NFLStandingsDisplay: React.FC<{ standings: { afc_standings: NFLTeam[], nfc
     const renderConference = (teams: NFLTeam[], conferenceName: string) => {
         const playoffCutoff = 7; // Top 7 teams make playoffs
         
+        if (!teams || teams.length === 0) {
+            return (
+                <div className="mb-8">
+                    <div className="flex items-center gap-3 mb-4">
+                        <h3 className="text-2xl font-bold text-text-primary">{conferenceName}</h3>
+                        <div className="h-1 flex-grow bg-gradient-to-r from-primary to-transparent rounded"></div>
+                    </div>
+                    <div className="bg-secondary-background rounded-xl p-8 text-center">
+                        <p className="text-text-secondary">No {conferenceName} standings data available</p>
+                    </div>
+                </div>
+            );
+        }
+        
         return (
             <div className="mb-8">
                 <div className="flex items-center gap-3 mb-4">
@@ -368,12 +382,21 @@ export default function StandingsPage() {
             try {
                 if (activeSport === 'NBA' && !nbaStandings) {
                     const data = await getNBAStandings();
+                    console.log('NBA Standings Data:', data);
                     setNbaStandings(data);
                 } else if (activeSport === 'NFL' && !nflStandings) {
                     const data = await getNFLStandings();
-                    setNflStandings(data);
+                    console.log('NFL Standings Data:', data);
+                    if (data.error) {
+                        setError(`NFL API Error: ${data.error}`);
+                    } else if (!data.afc_standings || data.afc_standings.length === 0) {
+                        setError('No NFL standings data available. The API may be temporarily unavailable.');
+                    } else {
+                        setNflStandings(data);
+                    }
                 } else if (activeSport === 'MLS' && !soccerStandings) {
                     const data = await getSoccerStandings('MLS');
+                    console.log('Soccer Standings Data:', data);
                     setSoccerStandings(data);
                 }
             } catch (err) {
