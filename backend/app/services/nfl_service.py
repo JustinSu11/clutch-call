@@ -184,35 +184,20 @@ def get_standings(season: Optional[str] = None):
             
         data = _get(STANDINGS, params)
         
-        # ESPN API returns data in a nested structure with seasons
+        # ESPN API returns data with children array directly at top level
         afc_standings = []
         nfc_standings = []
         
-        # Navigate through the ESPN API structure
-        # The structure is: data -> seasons -> [0] -> types -> [0] -> children (conferences)
-        seasons = data.get("seasons", [])
-        if not seasons:
+        # Get the children array (conferences)
+        children = data.get("children", [])
+        
+        if not children:
             return {
-                "error": "No seasons data in API response",
+                "error": "No children data in API response",
                 "league": "NFL",
                 "afc_standings": [],
                 "nfc_standings": []
             }
-        
-        # Get the first season (current season)
-        current_season = seasons[0]
-        types = current_season.get("types", [])
-        if not types:
-            return {
-                "error": "No types data in API response",
-                "league": "NFL",
-                "afc_standings": [],
-                "nfc_standings": []
-            }
-        
-        # Get the first type (typically regular season)
-        season_type = types[0]
-        children = season_type.get("children", [])
         
         for conference_group in children:
             conference_name = conference_group.get("name", "")
@@ -247,9 +232,9 @@ def get_standings(season: Optional[str] = None):
                     "playoff_seed": stats_dict.get("playoffseed", 0)
                 }
                 
-                if "AFC" in conference_name:
+                if "AFC" in conference_name or "American Football Conference" in conference_name:
                     afc_standings.append(team_data)
-                elif "NFC" in conference_name:
+                elif "NFC" in conference_name or "National Football Conference" in conference_name:
                     nfc_standings.append(team_data)
         
         return {
