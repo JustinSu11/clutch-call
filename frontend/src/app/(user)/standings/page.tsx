@@ -120,7 +120,7 @@ const NBAStandingsDisplay: React.FC<{ standings: { eastern_conference: NBATeam[]
                 </div>
                 <div className="bg-secondary-background rounded-xl overflow-hidden shadow-lg">
                     <div className="overflow-x-auto">
-                        <table className="w-full">
+                        <table className="w-full min-w-[800px]">
                             <thead className="bg-secondary text-text-secondary">
                                 <tr>
                                     <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">#</th>
@@ -129,9 +129,9 @@ const NBAStandingsDisplay: React.FC<{ standings: { eastern_conference: NBATeam[]
                                     <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider">L</th>
                                     <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider">PCT</th>
                                     <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider">GB</th>
-                                    <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider">Home</th>
-                                    <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider">Away</th>
-                                    <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider">L10</th>
+                                    <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider hidden md:table-cell">Home</th>
+                                    <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider hidden md:table-cell">Away</th>
+                                    <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider hidden lg:table-cell">L10</th>
                                     <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider">Streak</th>
                                 </tr>
                             </thead>
@@ -162,9 +162,9 @@ const NBAStandingsDisplay: React.FC<{ standings: { eastern_conference: NBATeam[]
                                             <td className="px-4 py-4 text-center font-bold text-red-400">{team.losses}</td>
                                             <td className="px-4 py-4 text-center text-text-primary font-semibold">{team.win_pct.toFixed(3)}</td>
                                             <td className="px-4 py-4 text-center text-text-secondary">{team.games_back || '-'}</td>
-                                            <td className="px-4 py-4 text-center text-text-secondary text-sm">{team.home_record}</td>
-                                            <td className="px-4 py-4 text-center text-text-secondary text-sm">{team.road_record}</td>
-                                            <td className="px-4 py-4 text-center text-text-secondary text-sm">{team.last_10}</td>
+                                            <td className="px-4 py-4 text-center text-text-secondary text-sm hidden md:table-cell">{team.home_record}</td>
+                                            <td className="px-4 py-4 text-center text-text-secondary text-sm hidden md:table-cell">{team.road_record}</td>
+                                            <td className="px-4 py-4 text-center text-text-secondary text-sm hidden lg:table-cell">{team.last_10}</td>
                                             <td className="px-4 py-4 text-center">
                                                 <StreakIndicator streak={team.streak} />
                                             </td>
@@ -177,7 +177,7 @@ const NBAStandingsDisplay: React.FC<{ standings: { eastern_conference: NBATeam[]
                 </div>
                 
                 {/* Playoff Legend */}
-                <div className="flex gap-4 mt-4 text-sm">
+                <div className="flex flex-wrap gap-4 mt-4 text-sm">
                     <div className="flex items-center gap-2">
                         <div className="w-4 h-4 bg-green-500 rounded"></div>
                         <span className="text-text-secondary">Playoff Teams (1-6)</span>
@@ -293,7 +293,7 @@ const SoccerStandingsDisplay: React.FC<{ standings: SoccerTeam[], league: string
             
             <div className="bg-secondary-background rounded-xl overflow-hidden shadow-lg">
                 <div className="overflow-x-auto">
-                    <table className="w-full">
+                    <table className="w-full min-w-[700px]">
                         <thead className="bg-secondary text-text-secondary">
                             <tr>
                                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">#</th>
@@ -302,8 +302,8 @@ const SoccerStandingsDisplay: React.FC<{ standings: SoccerTeam[], league: string
                                 <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider">W</th>
                                 <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider">D</th>
                                 <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider">L</th>
-                                <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider">GF</th>
-                                <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider">GA</th>
+                                <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider hidden md:table-cell">GF</th>
+                                <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider hidden md:table-cell">GA</th>
                                 <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider">GD</th>
                                 <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider">PTS</th>
                             </tr>
@@ -329,8 +329,8 @@ const SoccerStandingsDisplay: React.FC<{ standings: SoccerTeam[], league: string
                                     <td className="px-4 py-4 text-center font-bold text-green-400">{team.wins}</td>
                                     <td className="px-4 py-4 text-center font-bold text-yellow-400">{team.draws}</td>
                                     <td className="px-4 py-4 text-center font-bold text-red-400">{team.losses}</td>
-                                    <td className="px-4 py-4 text-center text-text-secondary">{team.goals_for}</td>
-                                    <td className="px-4 py-4 text-center text-text-secondary">{team.goals_against}</td>
+                                    <td className="px-4 py-4 text-center text-text-secondary hidden md:table-cell">{team.goals_for}</td>
+                                    <td className="px-4 py-4 text-center text-text-secondary hidden md:table-cell">{team.goals_against}</td>
                                     <td className="px-4 py-4 text-center">
                                         <span className={`font-semibold ${team.goal_differential > 0 ? 'text-green-400' : team.goal_differential < 0 ? 'text-red-400' : 'text-text-secondary'}`}>
                                             {team.goal_differential > 0 ? '+' : ''}{team.goal_differential}
