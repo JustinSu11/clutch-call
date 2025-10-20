@@ -189,9 +189,9 @@ def get_standings(season: Optional[str] = None):
         nfc_standings = []
         
         # Get the children array (conferences)
-        children = data.get("children", [])
+        conferences = data.get("children", [])
         
-        if not children:
+        if not conferences:
             return {
                 "error": "No children data in API response",
                 "league": "NFL",
@@ -199,50 +199,92 @@ def get_standings(season: Optional[str] = None):
                 "nfc_standings": []
             }
         
-        for conference_group in children:
-            conference_name = conference_group.get("name", "")
-            standings = conference_group.get("standings", {}).get("entries", [])
+        # Process each conference
+        for conference in conferences:
+            conference_name = conference.get("name", "")
+            conference_abbr = conference.get("abbreviation", "")
             
-            for entry in standings:
-                team = entry.get("team", {})
-                stats = entry.get("stats", [])
+            # Check if this conference has divisions as children
+            divisions = conference.get("children", [])
+            
+            if divisions:
+                # Process divisions within conference
+                for division in divisions:
+                    division_name = division.get("name", "")
+                    standings_entries = division.get("standings", {}).get("entries", [])
+                    
+                    for entry in standings_entries:
+                        team = entry.get("team", {})
+                        stats = entry.get("stats", [])
+                        
+                        # Parse stats array into a dictionary
+                        stats_dict = {}
+                        for stat in stats:
+                            stat_name = stat.get("name", "").lower().replace(" ", "_")
+                            stats_dict[stat_name] = stat.get("value")
+                        
+                        team_data = {
+                            "team_id": team.get("id"),
+                            "team_name": team.get("displayName"),
+                            "team_abbreviation": team.get("abbreviation"),
+                            "team_logo": team.get("logos", [{}])[0].get("href") if team.get("logos") else None,
+                            "conference": conference_name,
+                            "division": division_name,
+                            "wins": int(stats_dict.get("wins", 0)),
+                            "losses": int(stats_dict.get("losses", 0)),
+                            "ties": int(stats_dict.get("ties", 0)),
+                            "win_pct": float(stats_dict.get("winpercent", 0)),
+                            "points_for": float(stats_dict.get("pointsfor", 0)),
+                            "points_against": float(stats_dict.get("pointsagainst", 0)),
+                            "point_differential": float(stats_dict.get("pointdifferential", 0)),
+                            "streak": stats_dict.get("streak"),
+                            "division_rank": int(stats_dict.get("divisionrank", 0)),
+                            "conference_rank": int(stats_dict.get("conferencerank", 0)),
+                            "playoff_seed": int(stats_dict.get("playoffseed", 0))
+                        }
+                        
+                        if "AFC" in conference_name or "AFC" in conference_abbr:
+                            afc_standings.append(team_data)
+                        elif "NFC" in conference_name or "NFC" in conference_abbr:
+                            nfc_standings.append(team_data)
+            else:
+                # Fallback: process standings entries directly under conference
+                standings_entries = conference.get("standings", {}).get("entries", [])
                 
-                # Parse stats array into a dictionary
-                stats_dict = {}
-                for stat in stats:
-                    stat_name = stat.get("name", "").lower().replace(" ", "_")
-                    stats_dict[stat_name] = stat.get("value")
-                
-                # Extract division name from team data
-                division_name = None
-                location = team.get("location", "")
-                # ESPN doesn't always provide division directly, so we'll infer from team
-                # Or check if there's a division field in the response
-                
-                team_data = {
-                    "team_id": team.get("id"),
-                    "team_name": team.get("displayName"),
-                    "team_abbreviation": team.get("abbreviation"),
-                    "team_logo": team.get("logos", [{}])[0].get("href") if team.get("logos") else None,
-                    "conference": conference_name,
-                    "division": team.get("division", {}).get("name") if isinstance(team.get("division"), dict) else None,
-                    "wins": stats_dict.get("wins", 0),
-                    "losses": stats_dict.get("losses", 0),
-                    "ties": stats_dict.get("ties", 0),
-                    "win_pct": stats_dict.get("winpercent", 0),
-                    "points_for": stats_dict.get("pointsfor", 0),
-                    "points_against": stats_dict.get("pointsagainst", 0),
-                    "point_differential": stats_dict.get("pointdifferential", 0),
-                    "streak": stats_dict.get("streak"),
-                    "division_rank": stats_dict.get("divisionrank", 0),
-                    "conference_rank": stats_dict.get("conferencerank", 0),
-                    "playoff_seed": stats_dict.get("playoffseed", 0)
-                }
-                
-                if "AFC" in conference_name or "American Football Conference" in conference_name:
-                    afc_standings.append(team_data)
-                elif "NFC" in conference_name or "National Football Conference" in conference_name:
-                    nfc_standings.append(team_data)
+                for entry in standings_entries:
+                    team = entry.get("team", {})
+                    stats = entry.get("stats", [])
+                    
+                    # Parse stats array into a dictionary
+                    stats_dict = {}
+                    for stat in stats:
+                        stat_name = stat.get("name", "").lower().replace(" ", "_")
+                        stats_dict[stat_name] = stat.get("value")
+                    
+                    team_data = {
+                        "team_id": team.get("id"),
+                        "team_name": team.get("displayName"),
+                        "team_abbreviation": team.get("abbreviation"),
+                        "team_logo": team.get("logos", [{}])[0].get("href") if team.get("logos") else None,
+                        "conference": conference_name,
+                        "division": None,  # No division info available
+                        "wins": int(stats_dict.get("wins", 0)),
+                        "losses": int(stats_dict.get("losses", 0)),
+                        "ties": int(stats_dict.get("ties", 0)),
+                        "win_pct": float(stats_dict.get("winpercent", 0)),
+                        "points_for": float(stats_dict.get("pointsfor", 0)),
+                        "points_against": float(stats_dict.get("pointsagainst", 0)),
+                        "point_differential": float(stats_dict.get("pointdifferential", 0)),
+                        "streak": stats_dict.get("streak"),
+                        "division_rank": int(stats_dict.get("divisionrank", 0)),
+                        "conference_rank": int(stats_dict.get("conferencerank", 0)),
+                        "playoff_seed": int(stats_dict.get("playoffseed", 0))
+                    }
+                    
+                    if "AFC" in conference_name or "AFC" in conference_abbr:
+                        afc_standings.append(team_data)
+                    elif "NFC" in conference_name or "NFC" in conference_abbr:
+                        nfc_standings.append(team_data)
         
         return {
             "league": "NFL",
