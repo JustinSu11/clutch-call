@@ -1,7 +1,7 @@
 /*
     File: frontend/src/utils/mls_parser.tsx
     Created: 09/30/2025 by CJ Quintero
-    Last Updated: 10/13/2025 by Justin Nguyen
+    Last Updated: 10/22/2025 by CJ Quintero
 
     Description: This file contains methods 
     to parse each response from the mls backend methods provided
