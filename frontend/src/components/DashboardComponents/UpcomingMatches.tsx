@@ -12,14 +12,15 @@
 
 import MatchCarousel from "./MatchCarousel"
 
-export default function UpcomingMatches({ selectedLeagues }: { selectedLeagues: string[] }) {
+export default function UpcomingMatches() {
+
     return (
         <div>
             {/* Upcoming Matches Section */}
             <section>
                 <h2 className="text-3xl font-bold text-text-primary mb-4">Upcoming Matches</h2>
                 <div className="w-full">
-                    <MatchCarousel selectedLeagues={selectedLeagues} />
+                    <MatchCarousel />
                 </div>
             </section>
         </div>

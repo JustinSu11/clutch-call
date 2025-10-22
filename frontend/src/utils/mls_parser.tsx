@@ -13,7 +13,7 @@
 */
 import * as mls_methods from '../backend_methods/soccer_methods';
 import formatDate from './date-formatter-for-matches';
-import { UpcomingGame, Team } from './data_class';
+import { UpcomingGame } from './data_class';
 import * as sports_stats_methods from '../backend_methods/sports_stats_methods';
 
 // global
@@ -54,18 +54,8 @@ export const parseUpcomingMLSGames = async () => {
     const games: UpcomingGame[] = events.map((event: any)  => {
 
         // extract home and away team names
-        const homeTeam:Team = {
-            abbreviation: event['competitions'][0]['competitors'][0]['team']['abbreviation'],
-            color: event['competitions'][0]['competitors'][0]['team']['color'],
-            alternateColor: event['competitions'][0]['competitors'][0]['team']['alternateColor'],
-            displayName: event['competitions'][0]['competitors'][0]['team']['displayName'],
-        };
-        const awayTeam:Team = {
-            abbreviation: event['competitions'][0]['competitors'][1]['team']['abbreviation'],
-            color: event['competitions'][0]['competitors'][1]['team']['color'],
-            alternateColor: event['competitions'][0]['competitors'][1]['team']['alternateColor'],
-            displayName: event['competitions'][0]['competitors'][1]['team']['displayName'],
-        }
+        const homeTeam = event['competitions'][0]['competitors'][0]['team']['displayName'];
+        const awayTeam = event['competitions'][0]['competitors'][1]['team']['displayName'];
         const gameDate = event['date'].split('T')[0]; // extract date only, ignore time
 
         // the official game name for reference
@@ -89,7 +79,7 @@ export const parseUpcomingMLSGames = async () => {
         const formattedGameDate = `${month}-${day}-${year}`;
 
         // return { homeTeam, awayTeam, gameDate: formattedGameDate };
-        return { homeTeam, awayTeam, gameDate: formattedGameDate, date, league: league };
+        return { homeTeam, awayTeam, gameDate: formattedGameDate, date, league };
     });
 
     return games;

@@ -38,7 +38,7 @@ export default function DashboardMain() {
                         <SportsFilterDropdown handleLeagueSelection={handleLeagueSelection} selectedLeagues={selectedLeagues} />
                     </div>
             </div>
-            <UpcomingMatches selectedLeagues={selectedLeagues} />
+            <UpcomingMatches />
             <RecentPredictions />
         </>
     );

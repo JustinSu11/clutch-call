@@ -52,21 +52,6 @@ Purpose: Landing page for ClutchCall, explaining what it is and its features
         font-family: 'Inter', sans-serif;
     }
 
-    .slick-prev:before,
-    .slick-next:before {
-        color: var(--primary) !important;
-        font-size: 28px;
-    }
-
-    .slick-dots li button:before {
-        color: var(--primary) !important;
-        opacity: 0.6;
-    }
-    .slick-dots li.slick-active button:before {
-        color: var(--primary) !important;
-        opacity: 1;
-    }
-
     /*MatchCard Overlays*/
     .team-gradient-overlay::before {
         content: '';
