@@ -1,7 +1,11 @@
 /*
     File: frontend/src/utils/mls_parser.tsx
     Created: 09/30/2025 by CJ Quintero
+<<<<<<< HEAD
     Last Updated: 10/22/2025 by CJ Quintero
+=======
+    Last Updated: 10/13/2025 by Justin Nguyen
+>>>>>>> e1b0e37dc22face4b993fe618a5b8ef9bb0c9f84
 
     Description: This file contains methods 
     to parse each response from the mls backend methods provided
@@ -12,6 +16,7 @@
     without the extra validation step.
 */
 import * as mls_methods from '../backend_methods/soccer_methods';
+import formatDate from './date-formatter-for-matches';
 import { UpcomingGame } from './data_class';
 import * as sports_stats_methods from '../backend_methods/sports_stats_methods';
 import * as standings_methods from '../backend_methods/standings_methods';
@@ -37,9 +42,19 @@ export const parseUpcomingMLSGames = async () => {
     // parse major header
     const events = responseData["events"];
 
+    // declare the Game type
+    // each game will have a home team and an away team
+    type Game = {
+        homeTeam: string;
+        awayTeam: string;
+        date: Date;
+        league: string;
+    };
+
     // map through each event to extract home and away team names
     // into the games array. 
     // DO NOT DELETE THE COMMAND TO DISABLE THE ANY TYPE
+    // IF YOU DO, YOUR COMPUTER WILL EXPLODE
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const games: UpcomingGame[] = events.map((event: any)  => {
 
@@ -51,19 +66,25 @@ export const parseUpcomingMLSGames = async () => {
         // the official game name for reference
         const officialGameName = event['name'];
 
+        // extract date of match
+        const date = event['competitions']['date']
+
+        //categorize into a league
+        const league = "MLS"
+
         // sanity check to ensure the extracted team names match the official game name
         // ex) "awayTeam at homeTeam" such as "Dallas Cowboys at New York Jets"
         if (`${awayTeam} at ${homeTeam}` !== officialGameName) {
             console.warn(`${awayTeam} at ${homeTeam} does not equal the official game name. officialGameName = ${officialGameName}`);
         }
 
-        // change gameDate to MM-DD-YYY format
         const month = gameDate.split('-')[1];
         const day = gameDate.split('-')[2];
         const year = gameDate.split('-')[0];
         const formattedGameDate = `${month}-${day}-${year}`;
 
-        return { homeTeam, awayTeam, gameDate: formattedGameDate };
+        // return { homeTeam, awayTeam, gameDate: formattedGameDate };
+        return { homeTeam, awayTeam, gameDate: formattedGameDate, league };
     });
 
     return games;
