@@ -310,7 +310,7 @@ def get_standings(season: Optional[str] = None):
         season_fmt = _season_to_nba_format(season)
         standings_data = leaguestandingsv3.LeagueStandingsV3(
             league_id="00",
-            season=season_fmt if season_fmt else "2024-25",
+            season=season_fmt if season_fmt else "2025-26",
             season_type="Regular Season"
         ).get_normalized_dict()
         
@@ -368,7 +368,7 @@ def get_standings(season: Optional[str] = None):
         
         return {
             "league": "NBA",
-            "season": season_fmt if season_fmt else "2024-25",
+            "season": season_fmt if season_fmt else "2025-26",
             "eastern_conference": eastern_conf,
             "western_conference": western_conf
         }
