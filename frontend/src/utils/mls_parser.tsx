@@ -113,8 +113,6 @@ export const parseMLSTeamStats = async (teamName: string) => {
     // await the response from the backend method
     const responseData = await standings_methods.getSoccerStandings("2025");
 
-    console.log(responseData);
-
     // parse major header
     const standings = responseData["standings"];
 
