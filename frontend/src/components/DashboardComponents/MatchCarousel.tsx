@@ -87,6 +87,7 @@ export default function MatchCarousel() {
                 const today = new Date()
                 const todayMatches = all.filter((game) => upcomingMatchesWithinXDays(game.gameDate, today))
                 setUpcomingMatchesToday(todayMatches)
+                console.log(upcomingMatchesToday)
             })
         })
 
@@ -106,7 +107,6 @@ export default function MatchCarousel() {
         slidesToShow: 1,
         slidesToScroll: 1,
     }
-
     return (
         <div className="block w-full">
             <Slider {...settings}>
@@ -114,7 +114,7 @@ export default function MatchCarousel() {
                     <div className="text-sm text-text-secondary">No Matches today</div>
                 ) : (
                     upcomingMatchesToday.map((game) => (
-                        <MatchCard key={`${game.awayTeam.displayName}versus${game.homeTeam.displayName}`} matchDate={game.gameDate} awayTeam={game.awayTeam} homeTeam={game.homeTeam}/>
+                        <MatchCard key={`${game.awayTeam.displayName} versus ${game.homeTeam.displayName}`} matchDate={game.gameDate} awayTeam={game.awayTeam} homeTeam={game.homeTeam}/>
                     ))
                 )}
             </Slider>
