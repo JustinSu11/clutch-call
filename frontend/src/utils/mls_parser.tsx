@@ -1,11 +1,7 @@
 /*
     File: frontend/src/utils/mls_parser.tsx
     Created: 09/30/2025 by CJ Quintero
-<<<<<<< HEAD
     Last Updated: 10/22/2025 by CJ Quintero
-=======
-    Last Updated: 10/13/2025 by Justin Nguyen
->>>>>>> e1b0e37dc22face4b993fe618a5b8ef9bb0c9f84
 
     Description: This file contains methods 
     to parse each response from the mls backend methods provided
@@ -16,7 +12,7 @@
     without the extra validation step.
 */
 import * as mls_methods from '../backend_methods/soccer_methods';
-import formatDate from './date-formatter-for-matches';
+// import formatDate from './date-formatter-for-matches';
 import { UpcomingGame } from './data_class';
 import * as sports_stats_methods from '../backend_methods/sports_stats_methods';
 import * as standings_methods from '../backend_methods/standings_methods';
