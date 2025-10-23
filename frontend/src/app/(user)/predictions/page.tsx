@@ -11,11 +11,13 @@ import React, { useState, useEffect } from 'react';
 import { parseUpcomingNFLGames } from '@/utils/nfl_parser';
 import { parseUpcomingNBAGames } from '@/utils/nba_parser';
 import { parseUpcomingMLSGames } from '@/utils/mls_parser';
+import { getNFLPrediction } from '@/api/nfl_methods';
 
 // declare data types
 type SportKey = 'All Sports' | 'NFL' | 'NBA' | 'MLS';
 
 type Game = {
+    id: string;
     homeTeam: string;
     awayTeam: string;
 };
@@ -37,7 +39,8 @@ const buildNFLPredictions = async (): Promise<Prediction[]> => {
             predictions: an array of Prediction objects for each upcoming NFL game
     */
     const upcomingNFLGames = await parseUpcomingNFLGames();
-
+    
+    
     // map each game to a Prediction object
     return upcomingNFLGames.map((game) => ({
         match: `${game.awayTeam} at ${game.homeTeam}`,
