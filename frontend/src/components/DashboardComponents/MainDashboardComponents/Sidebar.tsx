@@ -15,6 +15,7 @@ import Link from "next/link"
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 
+
 const navItems = [
     {
         title: 'Home',
@@ -58,16 +59,20 @@ export default function Sidebar() {
         setIsSideBarOpen(!isSideBarOpen)
     }
 
+    function isSmallScreen() {
+        return window.innerWidth < 640
+    }
+
     useEffect(() => {
         // lock body scroll when mobile menu is open
-        document.body.style.overflow = isMobileMenuOpen ? "hidden" : ""
+        document.body.style.overflow = isSmallScreen() ? "hidden" : ""
         return () => { document.body.style.overflow = "" }
     }, [isMobileMenuOpen])
 
     return (
         <div>
             {/* Mobile: floating toggle button */}
-            {!(isSideBarOpen || isMobileMenuOpen) && (
+            {!(isMobileMenuOpen) && (
                 <Button
                     variant="ghost"
                    className="sm:hidden fixed top-2 left-1 z-50 text-text-primary hover:text-primary hover:bg-secondary transition-colors"
@@ -78,7 +83,7 @@ export default function Sidebar() {
                     {/* keep only the hamburger icon on mobile to avoid showing two X icons */}
                    <AlignJustify size={24} className="transition-transform duration-200" />
                </Button>
-           )}
+            )}
 
             {/* Desktop / tablet sidebar (hidden on small screens) */}
             <aside className={`hidden sm:flex sticky top-0 self-start flex flex-col ${isSideBarOpen ? "w-64" : "w-16"} h-[100vh] bg-secondary-background py-6 px-1 transition-[width] duration-300 ease-in-out overflow-hidden`}>
