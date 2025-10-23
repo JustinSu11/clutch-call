@@ -13,6 +13,7 @@ from ..services.soccer_service import (
     get_box_score,
     get_upcoming_games,
     get_today_games,
+    get_standings,
 )
 
 # Blueprint for Soccer routes; mounted at /api/v1/soccer
@@ -54,3 +55,16 @@ def soccer_today():
     """List soccer games for today for a specific league."""
     league = request.args.get("league", "MLS")
     return get_today_games(league=league)
+
+
+@bp.get("/standings")
+def soccer_standings():
+    """Get soccer standings for a given league.
+    
+    Query params:
+        league (str): League key (MLS, EPL, LaLiga) - default MLS
+        season (str): Optional season year (e.g., 2024)
+    """
+    league = request.args.get("league", "MLS")
+    season = request.args.get("season")
+    return get_standings(league=league, season=season)

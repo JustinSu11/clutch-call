@@ -30,7 +30,7 @@ export default function WelcomeHero() {
                 </p>
                 <div className="mt-8 flex justify-center">
                     <Link href="/predictions">
-                        <Button size="lg" className="h-14 px-8 bg-red-500 hover:bg-red-600 active:bg-red-700 cursor-pointer">
+                        <Button size="lg" className="h-14 px-8 bg-red-500 hover:bg-red-600 cursor-pointer">
                             Explore Predictions
                         </Button>
                     </Link>

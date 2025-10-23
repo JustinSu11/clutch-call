@@ -1,14 +1,14 @@
 /*
     File: frontend/src/app/predictions/page.tsx
     Created: 09/29/2025 by Michael Tajchman
-    Last Updated: 10/13/2025 by CJ Quintero
+    Last Updated: 10/09/2025 by CJ Quintero
 
     Description: This file contains the main React component for the Predictions screen of the ClutchCall web application.
     It includes a header with navigation, a filterable list of sports, and a table displaying AI-powered match predictions.
 */
 "use client";
 import React, { useState, useEffect } from 'react';
-import { parseUpcomingNFLGames, parseNFLTeamStats, parseNFLTeamLogo } from '@/utils/nfl_parser';
+import { parseUpcomingNFLGames, parseNFLTeamStats } from '@/utils/nfl_parser';
 import { parseUpcomingNBAGames, parseNBATeamStats } from '@/utils/nba_parser';
 import { parseUpcomingMLSGames, parseMLSTeamStats } from '@/utils/mls_parser';
 import { UpcomingGame } from '@/utils/data_class';
@@ -218,8 +218,6 @@ export default function PredictionsScreen() {
     const [selectedAway, setSelectedAway] = useState<string | undefined>(undefined);
     const [homeStats, setHomeStats] = useState<TeamStats | null>(null);
     const [awayStats, setAwayStats] = useState<TeamStats | null>(null);
-    const [homeLogo, setHomeLogo] = useState<string>('');
-    const [awayLogo, setAwayLogo] = useState<string>('');
 
     const openMatchDialog = async (homeTeam: string, awayTeam: string, sport: SportKey) => {
         setSelectedHome(homeTeam);
@@ -228,20 +226,12 @@ export default function PredictionsScreen() {
         setDialogLoading(true);
         setHomeStats(null);
         setAwayStats(null);
-        setHomeLogo('');
-        setAwayLogo('');
-
-        // fetch team stats based on sport
         try {
             let home = { wins: 0, losses: 0, ties: 0, totalGames: 0 };
             let away = { wins: 0, losses: 0, ties: 0, totalGames: 0 };
-            let homeLogo = '';
-            let awayLogo = '';
             if (sport === 'NFL') {
                 home = await getNFLTeamStats(homeTeam);
                 away = await getNFLTeamStats(awayTeam);
-                homeLogo = await parseNFLTeamLogo(homeTeam);
-                awayLogo = await parseNFLTeamLogo(awayTeam);
             }
             else if (sport === 'MLS') {
                 home = await getMLSTeamStats(homeTeam);
@@ -263,15 +253,9 @@ export default function PredictionsScreen() {
                 ties: away.ties,
                 totalGames: away.totalGames,
             });
-
-            // set logos if available
-            setHomeLogo(homeLogo ?? '');
-            setAwayLogo(awayLogo ?? '');
         } catch {
             setHomeStats(null);
             setAwayStats(null);
-            setHomeLogo('');
-            setAwayLogo('');
         } finally {
             setDialogLoading(false);
         }
@@ -363,8 +347,6 @@ export default function PredictionsScreen() {
                 homeStats={homeStats}
                 awayStats={awayStats}
                 loading={dialogLoading}
-                homeLogo={homeLogo}
-                awayLogo={awayLogo}
             />
         </div>
     );
