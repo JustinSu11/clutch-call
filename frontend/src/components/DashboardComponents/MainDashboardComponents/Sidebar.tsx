@@ -63,11 +63,33 @@ export default function Sidebar() {
         return window.innerWidth < 640
     }
 
+    // Lock scroll only while the mobile menu is open
     useEffect(() => {
-        // lock body scroll when mobile menu is open
-        document.body.style.overflow = isSmallScreen() ? "hidden" : ""
-        return () => { document.body.style.overflow = "" }
+        const lock = () => {
+            document.documentElement.style.overflow = "hidden"
+            document.body.style.overflow = "hidden"
+        }
+        const unlock = () => {
+            document.documentElement.style.overflow = ""
+            document.body.style.overflow = ""
+        }
+        if (isMobileMenuOpen) lock()
+        else unlock()
+        return () => unlock()
     }, [isMobileMenuOpen])
+
+    // On resize to desktop, ensure the menu is closed and scrolling is restored
+    useEffect(() => {
+        const onResize = () => {
+            if (window.innerWidth >= 640) {
+                setIsMobileMenuOpen(false)
+                document.documentElement.style.overflow = ""
+                document.body.style.overflow = ""
+            }
+        }
+        window.addEventListener("resize", onResize)
+        return () => window.removeEventListener("resize", onResize)
+    }, [])
 
     return (
         <div>
