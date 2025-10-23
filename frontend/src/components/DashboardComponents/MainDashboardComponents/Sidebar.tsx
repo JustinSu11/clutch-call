@@ -9,7 +9,7 @@
 */
 "use client"
 import { ThemeToggle } from "@/components/ui/ThemeToggle"
-import { Home, ChartScatter, AlignJustify, X, Trophy } from "lucide-react"
+import { Home, ChartScatter, AlignJustify, X, Trophy, Award } from "lucide-react"
 import { usePathname } from "next/navigation"
 import Link from "next/link"
 import { useState } from "react"
@@ -30,6 +30,11 @@ const navItems = [
         title: 'Team Comparisons',
         href: '/team-comparisons',
         icon: Trophy,
+    },
+    {
+        title: 'Standings',
+        href: '/standings',
+        icon: Award,
     }
 ]
 
