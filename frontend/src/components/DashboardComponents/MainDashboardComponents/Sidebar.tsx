@@ -3,7 +3,7 @@
     Created: 09/19/2025 
     Author: CJ Quintero
 
-    Last Updated: 10/13/2025 by CJ Quintero
+    Last Updated: 10/23/2025 by CJ Quintero
 
     Description: This file has the code for the sidebar component in the dashboard.
 */
@@ -149,8 +149,8 @@ export default function Sidebar() {
                         ))}
                     </nav>
 
-                    <div className="mt-6">
-                        <ThemeToggle />
+                    <div className="flex justify-center mt-6">
+                            <ThemeToggle />
                     </div>
                 </div>
             </div>
