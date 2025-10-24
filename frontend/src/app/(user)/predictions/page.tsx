@@ -11,19 +11,23 @@ import React, { useState, useEffect } from 'react';
 import { parseUpcomingNFLGames } from '@/utils/nfl_parser';
 import { parseUpcomingNBAGames } from '@/utils/nba_parser';
 import { parseUpcomingMLSGames } from '@/utils/mls_parser';
-import { getNFLPrediction } from '@/api/nfl_methods';
+
+// Import the method that calls your backend prediction API
+import { getNFLPrediction } from '@/backend_methods/nfl_methods';
+
 
 // declare data types
 type SportKey = 'All Sports' | 'NFL' | 'NBA' | 'MLS';
 
 type Game = {
-    id: string;
+    id: string; // Ensure the parsed game object includes an ID
     homeTeam: string;
     awayTeam: string;
+    date? : Date;
 };
 
 type Prediction = {
-    match: string;          // gets built from homeTeam and awayTeam 
+    match: string;          // gets built from homeTeam and awayTeam
     prediction: string;     // the eventual prediction text
     confidence: number;     // a number between 0 and 100 showing how confident the AI prediction is
     analysis: string;       // the AI explanation for the prediction
@@ -33,40 +37,61 @@ type Prediction = {
 const buildNFLPredictions = async (): Promise<Prediction[]> => {
     /*
         buildNFLPredictions:
-        This method builds a list of Prediction objects for upcoming NFL games.
-
-        returns:
-            predictions: an array of Prediction objects for each upcoming NFL game
+        This method builds a list of Prediction objects for upcoming NFL games
+        by calling the AI backend for each game.
     */
     const upcomingNFLGames = await parseUpcomingNFLGames();
-    
-    
-    // map each game to a Prediction object
-    return upcomingNFLGames.map((game) => ({
-        match: `${game.awayTeam} at ${game.homeTeam}`,
-        prediction: `${game.homeTeam} predicted to win`,
-        confidence: 100,
-        analysis: `Based on recent performance and home field advantage, ${game.homeTeam} is favored over ${game.awayTeam}.`,
-        sport: 'NFL'
-    }));
+
+    // Ensure we only process games that have a valid ID string
+    const validGames = upcomingNFLGames.filter(game => typeof game.id === 'string' && game.id.length > 0);
+
+    // Map over the validGames array
+    const predictionPromises = validGames.map(async (game) => {
+        // We know game.id is a string here
+        const aiPrediction = await getNFLPrediction(game.id);
+
+        if (aiPrediction.error) {
+            console.error(`Failed to get prediction for game ${game.id}:`, aiPrediction.error, aiPrediction.details);
+            return null; // Return null if a specific prediction fails
+        }
+
+        // Make sure confidence is a number
+        let confidenceValue = 0;
+        if (aiPrediction.confidence) {
+             confidenceValue = parseFloat(aiPrediction.confidence.replace('%', ''));
+        }
+
+        // Build the Prediction object with REAL data from your AI model
+        return {
+            match: `${game.awayTeam} at ${game.homeTeam}`,
+            prediction: `Predicted Winner: ${aiPrediction.predicted_winner}`,
+            confidence: isNaN(confidenceValue) ? 0 : confidenceValue, // Ensure it's a valid number
+            analysis: `AI analysis based on team performance metrics.`,
+            sport: 'NFL' as SportKey,
+        };
+    });
+
+    // Wait for all the API calls to complete
+    const predictions = await Promise.all(predictionPromises);
+
+    // Filter out any games that failed to get a prediction
+    return predictions.filter(p => p !== null) as Prediction[];
 };
+
 
 const buildMLSPredictions = async (): Promise<Prediction[]> => {
     /*
         buildMLSPredictions:
         This method builds a list of Prediction objects for upcoming MLS games.
-
-        returns:
-            predictions: an array of Prediction objects for each upcoming MLS game
     */
     const upcomingMLSGames = await parseUpcomingMLSGames();
 
     // map each game to a Prediction object
     return upcomingMLSGames.map((game) => ({
         match: `${game.awayTeam} at ${game.homeTeam}`,
-        prediction: `${game.homeTeam} predicted to win`,
-        confidence: 100,
-        analysis: `Based on recent performance and home field advantage, ${game.homeTeam} is favored over ${game.awayTeam}.`,
+        prediction: `${game.homeTeam} predicted to win`, // Placeholder
+        confidence: 100, // Placeholder
+        analysis: `Based on recent performance...`, // Placeholder
         sport: 'MLS'
     }));
 }
@@ -75,55 +100,31 @@ const buildNBAPredictions = async (): Promise<Prediction[]> => {
     /*
         buildNBAPredictions:
         This method builds a list of Prediction objects for upcoming NBA games.
-
-        returns:
-            predictions: an array of Prediction objects for each upcoming NBA game
     */
     const upcomingNBAGames = await parseUpcomingNBAGames();
 
     // map each game to a Prediction object
     return upcomingNBAGames.map((game) => ({
         match: `${game.awayTeam} at ${game.homeTeam}`,
-        prediction: `${game.homeTeam} predicted to win`,
-        confidence: 100,
-        analysis: `Based on recent performance and home field advantage, ${game.homeTeam} is favored over ${game.awayTeam}.`,
+        prediction: `${game.homeTeam} predicted to win`, // Placeholder
+        confidence: 100, // Placeholder
+        analysis: `Based on recent performance...`, // Placeholder
         sport: 'NBA'
     }));
 }
 
 const getConfidenceStyle = (confidence: number) => {
-    /* 
-       getConfidenceStyle:
-       This function returns a style object for the confidence bar based on the confidence percentage.
-       The color transitions from red (0%) to green (100%) using HSL color space.
-
-       params:
-       confidence: number - a number between 0 and 100
-
-       returns:
-       a style object with backgroundColor property
-    */ 
-
+    /* getConfidenceStyle:
+        This function returns a style object for the confidence bar based on the confidence percentage.
+    */
     const clampedConfidence = Math.max(0, Math.min(100, confidence));
-    const hue = (clampedConfidence / 100) * 100;
+    const hue = (clampedConfidence / 100) * 100; // Hue goes from 0 (red) to 100 (greenish)
     return { backgroundColor: `hsl(${hue}, 90%, 45%)` };
 };
 
 
 // --- Components ---
 const SportsFilter: React.FC<{
-    /*
-    SportsFilter:
-    This component renders a horizontal list of sports as filter buttons.
-
-    params:
-    sports: an array of sport keys (e.g., ['All Sports', 'NFL', 'NBA', 'MLS']) to select from
-    activeSport: the currently selected sport key on the filter
-    setActiveSport: a function to update the activeSport state when a sport is selected
-
-    returns:
-    a horizontal list of buttons for each sport, highlighting the active sport
-    */
     sports: SportKey[];
     activeSport: SportKey;
     setActiveSport: (sport: SportKey) => void;
@@ -146,16 +147,6 @@ const SportsFilter: React.FC<{
 );
 
 const PredictionRow: React.FC<{ item: Prediction }> = ({ item }) => (
-    /*
-        PredictionRow:
-        This component renders a single row in the predictions table.
-
-        params:
-        item: a Prediction object containing id, match, prediction, confidence, and analysis
-
-        returns:
-        a table row displaying the prediction details, including a confidence bar
-    */
     <tr className="bg-secondary-background">
         <td className="px-6 py-4 whitespace-nowrap">
             <div className="text-md font-medium text-text-primary">{item.match}</div>
@@ -171,7 +162,7 @@ const PredictionRow: React.FC<{ item: Prediction }> = ({ item }) => (
                         style={{ ...getConfidenceStyle(item.confidence), width: `${item.confidence}%` }}
                     ></div>
                 </div>
-                <span className="text-md font-medium text-text-primary">{item.confidence}%</span>
+                <span className="text-md font-medium text-text-primary">{item.confidence.toFixed(0)}%</span> {/* Show confidence as integer */}
             </div>
         </td>
         <td className="px-6 py-4">
@@ -188,29 +179,41 @@ export default function PredictionsScreen() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    // on component mount, fetch predictions for all sports
+    // --- UPDATED useEffect Hook ---
     useEffect(() => {
         setLoading(true);
         setError(null);
 
-        Promise.all([
-            buildNFLPredictions(),
-            //buildNBAPredictions(),
-            buildMLSPredictions(),
-        ])
-            .then(results => setPredictions(results.flat()))
-            .catch(() => setError('Failed to fetch predictions'))
-            .finally(() => setLoading(false));
-    }, []);
+        // Define an async function inside useEffect to handle fetching
+        const fetchAllPredictions = async () => {
+            try {
+                // Fetch predictions for all sports concurrently
+                const results = await Promise.all([
+                    buildNFLPredictions(),
+                    // buildNBAPredictions(), // Still using placeholder
+                    buildMLSPredictions(), // Still using placeholder
+                ]);
+                // Flatten the results array and update the state
+                setPredictions(results.flat());
+            } catch (err) {
+                console.error("Error fetching predictions:", err);
+                setError('Failed to fetch predictions');
+            } finally {
+                setLoading(false);
+            }
+        };
 
-    // filter predictions based on activeSport
+        fetchAllPredictions(); // Call the async function to fetch data
+
+    }, []); // Empty dependency array ensures this runs once on mount
+    // --- END UPDATED useEffect Hook ---
+
     const filteredPredictions = activeSport === 'All Sports'
     ? predictions
     : predictions.filter(p => p.sport === activeSport);
 
     return (
         <div className="overflow-x-auto">
-            {/* Header Navigation */}
             <header className="">
                 {/* ...header code... */}
             </header>

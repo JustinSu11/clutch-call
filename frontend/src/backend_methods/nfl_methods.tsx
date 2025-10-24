@@ -55,14 +55,9 @@ export const getNFLPrediction = async (gameId: string) => {
     try {
         await checkBackendHealth();
         
-        // --- THIS IS THE FIX ---
-        // Construct the correct path to match the backend's route.
-        const route = `/nfl/predict/${gameId}`;
+        // --- Use the ROUTES helper for consistency ---
+        return makeBackendRequest('GET', ROUTES.specific_nfl_prediction(gameId)); 
         
-        // You should also update your ROUTES.specific_nfl_prediction helper
-        // to produce this correct path.
-        
-        return makeBackendRequest('GET', route);
     } catch (error) {
         console.error(`Error fetching NFL prediction for gameId ${gameId}:`, error);
         throw error;

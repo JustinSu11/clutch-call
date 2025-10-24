@@ -22,48 +22,69 @@ export const parseUpcomingNFLGames = async () => {
         and parses the response to return the upcoming games.
 
         returns:
-            games: an array where each subscript has its own homeTeam and awayTeam
-
+            games: an array where each object has id, homeTeam, awayTeam, and date
     */
 
     // await the response from the backend method
     const responseData = await nfl_methods.getUpcomingNFLGames();
 
+    // Check if events array exists and is not empty
+    if (!responseData || !responseData.events || responseData.events.length === 0) {
+        console.warn("No upcoming NFL games found in the response.");
+        return []; // Return empty array if no events
+    }
+
     // parse major header
     const events = responseData["events"];
 
     // declare the Game type
-    // each game will have a home team and an away team
+    // --- UPDATE: Added the 'id' property ---
     type Game = {
-    homeTeam: string;
-    awayTeam: string;
-    date: Date;
+        id: string; // The ESPN event ID
+        homeTeam: string;
+        awayTeam: string;
+        date: Date;
     };
 
     // map through each event to extract home and away team names
     // into the games array
     // DO NOT DELETE THE COMMAND TO DISABLE THE ANY TYPE
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const games: Game[] = events.map((event: any)  => {
+    const games: Game[] = events.map((event: any): Game | null => {
 
-        // extract home and away team names
-        const homeTeam = event['competitions'][0]['competitors'][0]['team']['displayName'];
-        const awayTeam = event['competitions'][0]['competitors'][1]['team']['displayName'];
-
-        // extract date of match
-        const date = formatDate(event['date'])
-
-        // the official game name for reference
-        const officialGameName = event['name'];
-
-        // sanity check to ensure the extracted team names match the official game name
-        // ex) "awayTeam at homeTeam" such as "Dallas Cowboys at New York Jets"
-        if (`${awayTeam} at ${homeTeam}` !== officialGameName) {
-            console.warn(`${awayTeam} at ${homeTeam} does not equal the official game name. officialGameName = ${officialGameName}`);
+        // --- UPDATE: Extract the event ID ---
+        const eventId = event.id;
+        if (!eventId || typeof eventId !== 'string') {
+             console.warn("Event is missing a valid ID:", event);
+             return null; // Skip this event if ID is missing or invalid
         }
 
-        return { homeTeam, awayTeam, date };
-    });
+        const competition = event.competitions?.[0];
+        const competitors = competition?.competitors;
+        if (!competitors || competitors.length < 2) {
+            console.warn("Event is missing competitor data:", event);
+            return null; // Skip if competitor data is missing
+        }
+        
+        // Use find to be safer about home/away order
+        const homeTeamData = competitors.find((c: any) => c.homeAway === 'home');
+        const awayTeamData = competitors.find((c: any) => c.homeAway === 'away');
+
+        if (!homeTeamData || !awayTeamData) {
+             console.warn("Could not find both home and away team data:", event);
+             return null; // Skip if teams aren't found
+        }
+        
+        const homeTeam = homeTeamData.team?.displayName || 'TBD';
+        const awayTeam = awayTeamData.team?.displayName || 'TBD';
+        
+        // extract date of match
+        const date = formatDate(event.date);
+
+        // --- UPDATE: Include the 'id' in the returned object ---
+        return { id: eventId, homeTeam, awayTeam, date };
+
+    }).filter((game): game is Game => game !== null); // Filter out any null entries caused by errors
 
     return games;
 };
