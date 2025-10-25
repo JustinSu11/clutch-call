@@ -13,6 +13,7 @@ from ..services.nfl_service import (
     get_box_score,
     get_upcoming_games,
     get_today_games,
+    get_standings,
 )
 
 # Blueprint for NFL routes; mounted at /api/v1/nfl
@@ -50,3 +51,14 @@ def nfl_upcoming():
 def nfl_today():
     """List NFL games for today."""
     return get_today_games()
+
+
+@bp.get("/standings")
+def nfl_standings():
+    """Get NFL standings.
+    
+    Query params:
+        season (str): Optional season year (e.g., 2024)
+    """
+    season = request.args.get("season")
+    return get_standings(season=season)
