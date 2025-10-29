@@ -116,17 +116,29 @@ class NBADataCollector:
         try:
             # Get traditional box score
             traditional = boxscoretraditionalv2.BoxScoreTraditionalV2(game_id=game_id)
-            traditional_dfs = traditional.get_data_frames()
+            try:
+                traditional_dfs = traditional.get_data_frames()
+            except (KeyError, AttributeError, TypeError) as e:
+                logger.warning(f"Game {game_id}: Traditional box score unavailable (likely game hasn't started yet)")
+                return {}
             
             # Get advanced box score
             self.rate_limit()
             advanced = boxscoreadvancedv2.BoxScoreAdvancedV2(game_id=game_id)
-            advanced_dfs = advanced.get_data_frames()
+            try:
+                advanced_dfs = advanced.get_data_frames()
+            except (KeyError, AttributeError, TypeError) as e:
+                logger.warning(f"Game {game_id}: Advanced box score unavailable")
+                advanced_dfs = []
             
             # Get game summary
             self.rate_limit()
             summary = boxscoresummaryv2.BoxScoreSummaryV2(game_id=game_id)
-            summary_dfs = summary.get_data_frames()
+            try:
+                summary_dfs = summary.get_data_frames()
+            except (KeyError, AttributeError, TypeError) as e:
+                logger.warning(f"Game {game_id}: Game summary unavailable")
+                summary_dfs = []
             
             return {
                 'game_id': game_id,
