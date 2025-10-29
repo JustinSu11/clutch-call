@@ -420,7 +420,7 @@ class NBAMLPredictor:
         return predictions
     
     def get_player_roster(self, team_id: int, season: str = None) -> List[Dict]:
-        """Get current roster for a team"""
+        """Get current roster for a team - returns empty list if data not available"""
         try:
             # Try to get roster from processed data first
             processed_dir = os.path.join(self.data_dir, 'processed')
@@ -449,7 +449,7 @@ class NBAMLPredictor:
                             'minutes_avg': float(player.get('MIN', 25.0))
                         })
                     
-                    logger.info(f"Found {len(roster)} players for team {team_id}")
+                    logger.info(f"Found {len(roster)} players for team {team_id} from processed data")
                     return roster
             
             # Fallback to NBA API if no processed data (acceptable for roster lookup only)
@@ -486,16 +486,9 @@ class NBAMLPredictor:
         except Exception as e:
             logger.error(f"Error getting roster for team {team_id}: {e}")
         
-        # Fallback mock data with real-looking player IDs
-        mock_players = [
-            {'player_id': f'{team_id}001', 'player_name': 'Star Player', 'position': 'G', 'minutes_avg': 35.0},
-            {'player_id': f'{team_id}002', 'player_name': 'Key Forward', 'position': 'F', 'minutes_avg': 32.0},
-            {'player_id': f'{team_id}003', 'player_name': 'Center', 'position': 'C', 'minutes_avg': 28.0},
-            {'player_id': f'{team_id}004', 'player_name': 'Sixth Man', 'position': 'G', 'minutes_avg': 25.0},
-            {'player_id': f'{team_id}005', 'player_name': 'Role Player', 'position': 'F', 'minutes_avg': 22.0},
-        ]
-        logger.warning(f"Using fallback mock data for team {team_id}")
-        return mock_players
+        # No mock data - return empty list if real data not available
+        logger.warning(f"No player roster data available for team {team_id} - skipping player predictions")
+        return []
     
     def prepare_player_features(self, player_id: str, team_id: int) -> Dict:
         """Prepare features for player performance prediction - MUST match training feature set"""
@@ -707,6 +700,15 @@ class NBAMLPredictor:
                     
                     # Get roster (simplified)
                     roster = self.get_player_roster(team_id)
+                    
+                    # Skip player predictions if no roster data available
+                    if not roster:
+                        logger.info(f"Skipping player predictions for team {team_id} - no roster data available")
+                        if team_type == 'home':
+                            game_predictions['home_team_predictions'] = []
+                        else:
+                            game_predictions['away_team_predictions'] = []
+                        continue
                     
                     team_predictions = []
                     
