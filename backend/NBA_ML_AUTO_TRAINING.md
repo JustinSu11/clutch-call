@@ -163,6 +163,12 @@ Check the server logs for error messages. Common issues:
 - Insufficient disk space for model storage
 - Missing dependencies
 
+**Accessing Server Logs:**
+- **Development**: Logs are printed to console/stdout where the server is running
+- **Production (systemd)**: Use `journalctl -u your-service-name -f` to follow logs
+- **Production (Docker)**: Use `docker logs container-name -f`
+- **Production (file-based)**: Check the log file location configured in your deployment
+
 ### Scheduler Not Running
 
 Verify the scheduler is active:
@@ -183,7 +189,14 @@ The training process runs in the background and won't block the server. However,
 For production environments:
 
 1. **First Deployment**: Allow extra time for initial model training
-2. **Environment Variables**: Consider making training schedule configurable via environment variables
+2. **Environment Variables**: Make training schedule configurable (optional):
+   ```python
+   # Example implementation in nba_ml_scheduler.py:
+   import os
+   training_hour = int(os.getenv('NBA_TRAINING_HOUR', '4'))
+   training_minute = int(os.getenv('NBA_TRAINING_MINUTE', '0'))
+   timezone = os.getenv('NBA_TRAINING_TIMEZONE', 'America/Chicago')
+   ```
 3. **Monitoring**: Set up alerts for training failures
 4. **Resources**: Ensure sufficient CPU/memory for training (runs in background but still uses resources)
 5. **Data Storage**: Ensure persistent storage for `nba_ml_data/` directory
@@ -193,12 +206,20 @@ For production environments:
 Test the system with:
 
 ```bash
-# Test model manager
+# Test model manager (should print model detection status)
 python nba_ml_model_manager.py
+# Expected: Logs showing model check and training initiation if models are missing
 
-# Test scheduler (runs for 60 seconds then stops)
+# Test scheduler (runs for 60 seconds then stops with Ctrl+C)
 python nba_ml_scheduler.py
+# Expected: Scheduler starts, shows job scheduled for 4am CT, displays next run time
 ```
+
+**Success Criteria:**
+- Model manager should detect whether models exist
+- Scheduler should show job scheduled for 4:00 AM Central Time
+- Next run time should be calculated correctly
+- No error messages or exceptions
 
 ## Architecture Benefits
 
