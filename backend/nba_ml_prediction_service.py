@@ -218,6 +218,111 @@ class NBAMLPredictor:
         
         return features
     
+    def get_feature_importance(self) -> Dict[str, float]:
+        """Get feature importance from the game outcome model"""
+        if self.game_model is None:
+            return {}
+        
+        # Check if model has feature_importances_ attribute (tree-based models)
+        if hasattr(self.game_model, 'feature_importances_'):
+            base_feature_columns = [
+                'IS_HOME', 'TEAM_PPG', 'TEAM_FG_PCT', 'TEAM_FG3_PCT', 'TEAM_FT_PCT',
+                'TEAM_REB_PG', 'TEAM_AST_PG', 'TEAM_TOV_PG', 'TEAM_STL_PG', 'TEAM_BLK_PG',
+                'DAYS_REST', 'WIN_PCT_LAST_5', 'WIN_PCT_LAST_10', 'WIN_STREAK'
+            ]
+            
+            rolling_feature_columns = []
+            for window in [5, 10, 15]:
+                for base_feature in ['TEAM_PTS', 'TEAM_WIN', 'TEAM_FG_PCT']:
+                    rolling_feature_columns.append(f'{base_feature}_ROLL_{window}')
+            
+            feature_columns = base_feature_columns + rolling_feature_columns
+            importances = self.game_model.feature_importances_
+            
+            # Create feature importance dictionary
+            feature_importance = {}
+            for i, feature in enumerate(feature_columns):
+                if i < len(importances):
+                    feature_importance[feature] = float(importances[i])
+            
+            return feature_importance
+        
+        return {}
+    
+    def get_top_decision_factors(self, feature_values: Dict, top_n: int = 5) -> List[Dict]:
+        """Get top factors influencing a prediction based on feature importance and values"""
+        feature_importance = self.get_feature_importance()
+        
+        if not feature_importance:
+            return []
+        
+        # Calculate contribution scores (importance * normalized feature value)
+        contributions = []
+        for feature, importance in feature_importance.items():
+            if feature in feature_values:
+                value = feature_values[feature]
+                # Normalize value for contribution calculation
+                if 'PCT' in feature or 'WIN_PCT' in feature:
+                    # Already in 0-1 range
+                    normalized_value = value
+                elif 'PPG' in feature or 'PTS' in feature:
+                    # Points per game - normalize to ~0-1 (typical range 90-120)
+                    normalized_value = min(max((value - 90) / 30, 0), 1)
+                elif 'REB' in feature or 'AST' in feature:
+                    # Per game stats
+                    normalized_value = min(value / 50, 1)
+                elif 'IS_HOME' in feature:
+                    normalized_value = value
+                else:
+                    # Default normalization
+                    normalized_value = min(abs(value) / 10, 1)
+                
+                contribution_score = importance * normalized_value
+                
+                contributions.append({
+                    'factor': self._format_feature_name(feature),
+                    'importance': round(importance, 4),
+                    'value': round(value, 2),
+                    'contribution': round(contribution_score, 4)
+                })
+        
+        # Sort by contribution and return top N
+        contributions.sort(key=lambda x: x['contribution'], reverse=True)
+        return contributions[:top_n]
+    
+    def _format_feature_name(self, feature: str) -> str:
+        """Convert feature name to human-readable format"""
+        name_mapping = {
+            'IS_HOME': 'Home Court Advantage',
+            'TEAM_PPG': 'Points Per Game',
+            'TEAM_FG_PCT': 'Field Goal Percentage',
+            'TEAM_FG3_PCT': 'Three-Point Percentage',
+            'TEAM_FT_PCT': 'Free Throw Percentage',
+            'TEAM_REB_PG': 'Rebounds Per Game',
+            'TEAM_AST_PG': 'Assists Per Game',
+            'TEAM_TOV_PG': 'Turnovers Per Game',
+            'TEAM_STL_PG': 'Steals Per Game',
+            'TEAM_BLK_PG': 'Blocks Per Game',
+            'DAYS_REST': 'Days Rest',
+            'WIN_PCT_LAST_5': 'Win Rate (Last 5 Games)',
+            'WIN_PCT_LAST_10': 'Win Rate (Last 10 Games)',
+            'WIN_STREAK': 'Current Win Streak'
+        }
+        
+        # Handle rolling features
+        if '_ROLL_' in feature:
+            base = feature.split('_ROLL_')[0]
+            window = feature.split('_ROLL_')[1]
+            base_names = {
+                'TEAM_PTS': 'Points',
+                'TEAM_WIN': 'Win Rate',
+                'TEAM_FG_PCT': 'Field Goal %'
+            }
+            base_name = base_names.get(base, base)
+            return f'{base_name} (Rolling {window} games)'
+        
+        return name_mapping.get(feature, feature.replace('_', ' ').title())
+    
     def predict_game_outcomes(self, upcoming_games: pd.DataFrame) -> List[Dict]:
         """Predict outcomes for upcoming games"""
         logger.info("Predicting game outcomes...")
@@ -286,6 +391,12 @@ class NBAMLPredictor:
                 home_win_prob = win_probabilities[i]
                 away_win_prob = 1 - home_win_prob
                 
+                # Get feature values for this game
+                feature_values = {col: X.iloc[i][col] for col in feature_columns if col in X.columns}
+                
+                # Get top decision factors
+                decision_factors = self.get_top_decision_factors(feature_values, top_n=5)
+                
                 prediction = {
                     'game_id': game.get('game_id', f'game_{i}'),
                     'game_date': game.get('game_date', ''),
@@ -295,6 +406,7 @@ class NBAMLPredictor:
                     'away_team_win_probability': float(away_win_prob),
                     'predicted_winner': 'home' if home_win_prob > 0.5 else 'away',
                     'confidence': float(max(home_win_prob, away_win_prob)),
+                    'decision_factors': decision_factors,
                     'prediction_timestamp': datetime.now().isoformat()
                 }
                 
@@ -474,6 +586,99 @@ class NBAMLPredictor:
         }
         return defaults.get(column, 0.0)
     
+    def get_player_model_feature_importance(self, target: str) -> Dict[str, float]:
+        """Get feature importance from a player performance model"""
+        if target not in self.player_models:
+            return {}
+        
+        model = self.player_models[target]
+        
+        # Check if model has feature_importances_ attribute (tree-based models)
+        if hasattr(model, 'feature_importances_'):
+            essential_columns = [
+                'GP', 'MIN', 'FG_PCT', 'FG3_PCT', 'FT_PCT', 'REB', 'AST', 'PTS',
+                'PPG', 'RPG', 'APG', 'TS_PCT', 'EFG_PCT'
+            ]
+            
+            importances = model.feature_importances_
+            
+            # Create feature importance dictionary
+            feature_importance = {}
+            for i, feature in enumerate(essential_columns):
+                if i < len(importances):
+                    feature_importance[feature] = float(importances[i])
+            
+            return feature_importance
+        
+        return {}
+    
+    def get_player_decision_factors(self, target: str, feature_values: Dict, top_n: int = 3) -> List[Dict]:
+        """Get top factors influencing a player prediction"""
+        feature_importance = self.get_player_model_feature_importance(target)
+        
+        if not feature_importance:
+            return []
+        
+        # Calculate contribution scores
+        contributions = []
+        for feature, importance in feature_importance.items():
+            if feature in feature_values:
+                value = feature_values[feature]
+                
+                # Normalize value for contribution calculation
+                if 'PCT' in feature:
+                    # Already in 0-1 range
+                    normalized_value = value
+                elif feature in ['PPG', 'PTS']:
+                    # Points - normalize to ~0-1 (typical range 0-30)
+                    normalized_value = min(value / 30, 1)
+                elif feature in ['RPG', 'REB']:
+                    # Rebounds
+                    normalized_value = min(value / 15, 1)
+                elif feature in ['APG', 'AST']:
+                    # Assists
+                    normalized_value = min(value / 12, 1)
+                elif feature == 'MIN':
+                    # Minutes per game
+                    normalized_value = min(value / 40, 1)
+                elif feature == 'GP':
+                    # Games played
+                    normalized_value = min(value / 82, 1)
+                else:
+                    normalized_value = min(abs(value) / 10, 1)
+                
+                contribution_score = importance * normalized_value
+                
+                contributions.append({
+                    'factor': self._format_player_feature_name(feature),
+                    'importance': round(importance, 4),
+                    'value': round(value, 2),
+                    'contribution': round(contribution_score, 4)
+                })
+        
+        # Sort by contribution and return top N
+        contributions.sort(key=lambda x: x['contribution'], reverse=True)
+        return contributions[:top_n]
+    
+    def _format_player_feature_name(self, feature: str) -> str:
+        """Convert player feature name to human-readable format"""
+        name_mapping = {
+            'GP': 'Games Played',
+            'MIN': 'Minutes Per Game',
+            'FG_PCT': 'Field Goal Percentage',
+            'FG3_PCT': 'Three-Point Percentage',
+            'FT_PCT': 'Free Throw Percentage',
+            'REB': 'Total Rebounds',
+            'AST': 'Total Assists',
+            'PTS': 'Total Points',
+            'PPG': 'Points Per Game',
+            'RPG': 'Rebounds Per Game',
+            'APG': 'Assists Per Game',
+            'TS_PCT': 'True Shooting Percentage',
+            'EFG_PCT': 'Effective Field Goal Percentage'
+        }
+        return name_mapping.get(feature, feature.replace('_', ' ').title())
+    
     def predict_player_performance(self, upcoming_games: pd.DataFrame) -> List[Dict]:
         """Predict player performance for upcoming games"""
         logger.info("Predicting player performances...")
@@ -544,6 +749,9 @@ class NBAMLPredictor:
                         if games_played <= 0:
                             games_played = 72.0  # Safety check
                         
+                        # Store decision factors for each prediction
+                        all_decision_factors = {}
+                        
                         for target, model in self.player_models.items():
                             try:
                                 # Get season total prediction
@@ -565,11 +773,19 @@ class NBAMLPredictor:
                                 
                                 player_prediction[f'predicted_{target}'] = round(per_game_prediction, 1)
                                 
+                                # Get decision factors for this prediction
+                                decision_factors = self.get_player_decision_factors(target, player_features, top_n=3)
+                                all_decision_factors[target] = decision_factors
+                                
                             except Exception as e:
                                 logger.warning(f"Could not predict {target} for {player_name}: {e}")
                                 # Use historical per-game averages as fallback
                                 fallback_values = {'points': 12.0, 'assists': 3.0, 'rebounds': 5.0}
                                 player_prediction[f'predicted_{target}'] = fallback_values.get(target, 0)
+                                all_decision_factors[target] = []
+                        
+                        # Add decision factors to prediction
+                        player_prediction['decision_factors'] = all_decision_factors
                         
                         team_predictions.append(player_prediction)
                     
