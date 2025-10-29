@@ -168,6 +168,211 @@ export default function TestingPage() {
         setResults([]);
     };
 
+    // Helper function to render NBA prediction results with confidence and decision factors
+    const renderNBAPredictionResult = (result: TestResult): JSX.Element | null => {
+        // Check if this is an NBA prediction result
+        const isGamePrediction = result.method === 'getNBAGamePredictions' || result.method === 'getNBAGamePredictionDetail';
+        const isPlayerPrediction = result.method === 'getNBAPlayerPredictions' || result.method === 'getNBATopPerformers';
+        
+        if (!isGamePrediction && !isPlayerPrediction) {
+            return null;
+        }
+
+        const data = result.data;
+
+        // Render Game Predictions with Confidence and Decision Factors
+        if (isGamePrediction && data?.games) {
+            return (
+                <div className="mb-4 space-y-4">
+                    <h4 className="font-semibold text-blue-900 text-lg">🎯 Game Predictions with AI Insights</h4>
+                    {data.games.map((game: {
+                        game_id: string;
+                        game_date: string;
+                        confidence?: number;
+                        home_team_id: number;
+                        away_team_id: number;
+                        home_win_probability: number;
+                        away_win_probability: number;
+                        decision_factors?: Array<{
+                            factor: string;
+                            value: number;
+                            importance: number;
+                            contribution: number;
+                        }>;
+                    }, idx: number) => (
+                        <div key={idx} className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                            <div className="grid grid-cols-2 gap-4 mb-3">
+                                <div>
+                                    <p className="text-sm font-medium text-gray-700">Game ID</p>
+                                    <p className="text-lg font-bold text-blue-900">{game.game_id}</p>
+                                </div>
+                                <div>
+                                    <p className="text-sm font-medium text-gray-700">Game Date</p>
+                                    <p className="text-lg font-bold text-blue-900">{game.game_date}</p>
+                                </div>
+                            </div>
+                            
+                            {/* Confidence Score Display */}
+                            {game.confidence !== undefined && (
+                                <div className="bg-white rounded-lg p-3 mb-3">
+                                    <p className="text-sm font-medium text-gray-700 mb-2">Confidence Score</p>
+                                    <div className="flex items-center space-x-3">
+                                        <div className="flex-1 bg-gray-200 rounded-full h-4">
+                                            <div 
+                                                className={`h-4 rounded-full ${
+                                                    game.confidence >= 0.7 ? 'bg-green-500' : 
+                                                    game.confidence >= 0.6 ? 'bg-yellow-500' : 
+                                                    'bg-orange-500'
+                                                }`}
+                                                style={{ width: `${game.confidence * 100}%` }}
+                                            ></div>
+                                        </div>
+                                        <span className="text-lg font-bold text-gray-900">
+                                            {(game.confidence * 100).toFixed(1)}%
+                                        </span>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Win Probabilities */}
+                            <div className="grid grid-cols-2 gap-4 mb-3">
+                                <div className="bg-white rounded-lg p-3">
+                                    <p className="text-sm font-medium text-gray-700">Home Win Probability</p>
+                                    <p className="text-2xl font-bold text-blue-600">
+                                        {(game.home_win_probability * 100).toFixed(1)}%
+                                    </p>
+                                    <p className="text-xs text-gray-500">Team ID: {game.home_team_id}</p>
+                                </div>
+                                <div className="bg-white rounded-lg p-3">
+                                    <p className="text-sm font-medium text-gray-700">Away Win Probability</p>
+                                    <p className="text-2xl font-bold text-purple-600">
+                                        {(game.away_win_probability * 100).toFixed(1)}%
+                                    </p>
+                                    <p className="text-xs text-gray-500">Team ID: {game.away_team_id}</p>
+                                </div>
+                            </div>
+
+                            {/* Decision Factors */}
+                            {game.decision_factors && game.decision_factors.length > 0 && (
+                                <div className="bg-gradient-to-br from-indigo-50 to-blue-50 rounded-lg p-4 border border-indigo-200">
+                                    <h5 className="font-semibold text-indigo-900 mb-3 flex items-center">
+                                        <span className="mr-2">🧠</span>
+                                        Key Decision Factors (AI Reasoning)
+                                    </h5>
+                                    <div className="space-y-2">
+                                        {game.decision_factors.map((factor, factorIdx: number) => (
+                                            <div key={factorIdx} className="bg-white rounded-lg p-3 shadow-sm">
+                                                <div className="flex items-start justify-between mb-2">
+                                                    <div className="flex-1">
+                                                        <p className="font-medium text-gray-900">
+                                                            {factorIdx + 1}. {factor.factor}
+                                                        </p>
+                                                        <p className="text-sm text-gray-600">Value: {factor.value}</p>
+                                                    </div>
+                                                    <span className="text-sm font-semibold text-indigo-600 ml-2">
+                                                        {(factor.contribution * 100).toFixed(1)}%
+                                                    </span>
+                                                </div>
+                                                <div className="grid grid-cols-2 gap-2 text-xs text-gray-500">
+                                                    <div>Importance: {(factor.importance * 100).toFixed(1)}%</div>
+                                                    <div>Contribution: {factor.contribution.toFixed(4)}</div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    ))}
+                </div>
+            );
+        }
+
+        // Render Player Predictions with Decision Factors
+        if (isPlayerPrediction && data?.predictions) {
+            return (
+                <div className="mb-4 space-y-4">
+                    <h4 className="font-semibold text-purple-900 text-lg">🏀 Player Predictions with AI Insights</h4>
+                    {data.predictions.slice(0, 3).map((player: {
+                        player_name: string;
+                        position: string;
+                        team_id: number;
+                        game_date: string;
+                        predicted_points: number;
+                        predicted_assists: number;
+                        predicted_rebounds: number;
+                        decision_factors?: Record<string, Array<{
+                            factor: string;
+                            value: number;
+                            contribution: number;
+                        }>>;
+                    }, idx: number) => (
+                        <div key={idx} className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                            <div className="mb-3">
+                                <h5 className="text-xl font-bold text-purple-900">{player.player_name}</h5>
+                                <p className="text-sm text-gray-600">
+                                    {player.position} | Team ID: {player.team_id} | Game: {player.game_date}
+                                </p>
+                            </div>
+
+                            {/* Predicted Stats */}
+                            <div className="grid grid-cols-3 gap-3 mb-3">
+                                <div className="bg-white rounded-lg p-3 text-center">
+                                    <p className="text-sm font-medium text-gray-700">Points</p>
+                                    <p className="text-3xl font-bold text-orange-600">{player.predicted_points}</p>
+                                </div>
+                                <div className="bg-white rounded-lg p-3 text-center">
+                                    <p className="text-sm font-medium text-gray-700">Assists</p>
+                                    <p className="text-3xl font-bold text-green-600">{player.predicted_assists}</p>
+                                </div>
+                                <div className="bg-white rounded-lg p-3 text-center">
+                                    <p className="text-sm font-medium text-gray-700">Rebounds</p>
+                                    <p className="text-3xl font-bold text-blue-600">{player.predicted_rebounds}</p>
+                                </div>
+                            </div>
+
+                            {/* Decision Factors for Each Stat */}
+                            {player.decision_factors && (
+                                <div className="space-y-3">
+                                    {Object.entries(player.decision_factors).map(([statType, factors]) => (
+                                        <div key={statType} className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-lg p-3 border border-purple-200">
+                                            <h6 className="font-semibold text-purple-900 mb-2 capitalize flex items-center">
+                                                <span className="mr-2">🧠</span>
+                                                {statType} Prediction Factors
+                                            </h6>
+                                            <div className="space-y-2">
+                                                {factors && factors.length > 0 ? factors.map((factor, factorIdx: number) => (
+                                                    <div key={factorIdx} className="bg-white rounded p-2 text-sm">
+                                                        <div className="flex justify-between items-start">
+                                                            <div className="flex-1">
+                                                                <p className="font-medium text-gray-900">{factor.factor}</p>
+                                                                <p className="text-xs text-gray-600">Value: {factor.value}</p>
+                                                            </div>
+                                                            <span className="text-sm font-semibold text-purple-600 ml-2">
+                                                                {(factor.contribution * 100).toFixed(1)}%
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                )) : <p className="text-xs text-gray-500">No factors available</p>}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    ))}
+                    {data.predictions.length > 3 && (
+                        <p className="text-sm text-gray-500 text-center">
+                            Showing 3 of {data.predictions.length} player predictions. See full JSON below for all results.
+                        </p>
+                    )}
+                </div>
+            );
+        }
+
+        return null;
+    };
+
     return (
         <div className="min-h-screen bg-gray-50 p-8">
             <div className="max-w-7xl mx-auto">
@@ -1200,9 +1405,20 @@ export default function TestingPage() {
                                         {result.timestamp.toLocaleTimeString()}
                                     </p>
                                     {result.success ? (
-                                        <pre className="text-sm bg-gray-100 p-3 rounded overflow-x-auto max-h-48 overflow-y-auto">
-                                            {JSON.stringify(result.data, null, 2)}
-                                        </pre>
+                                        <>
+                                            {/* Display NBA Prediction Results with Confidence and Factors */}
+                                            {renderNBAPredictionResult(result)}
+                                            
+                                            {/* Default JSON display */}
+                                            <details className="mt-3">
+                                                <summary className="cursor-pointer text-sm font-medium text-gray-700 hover:text-gray-900">
+                                                    View Raw JSON Response
+                                                </summary>
+                                                <pre className="text-sm bg-gray-100 p-3 rounded overflow-x-auto max-h-48 overflow-y-auto mt-2">
+                                                    {JSON.stringify(result.data, null, 2)}
+                                                </pre>
+                                            </details>
+                                        </>
                                     ) : (
                                         <p className="text-red-700 font-medium">{result.error}</p>
                                     )}
