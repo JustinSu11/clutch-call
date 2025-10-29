@@ -1,6 +1,6 @@
 """
 NBA Prediction System Data Collection
-Comprehensive data collection using nba_api for machine learning
+Comprehensive data collection using ESPN API for machine learning
 """
 
 import pandas as pd
@@ -13,48 +13,24 @@ import json
 import logging
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-# NBA API imports
-from nba_api.stats.endpoints import (
-    boxscoretraditionalv2, 
-    boxscoresummaryv2, 
-    boxscoreadvancedv2,
-    boxscoreplayertrackv2,
-    leaguegamelog,
-    teamgamelog,
-    playergamelog,
-    scoreboardv2,
-    leaguestandings,
-    teamdashboardbygeneralsplits,
-    playerdashboardbygeneralsplits,
-    commonplayerinfo,
-    commonteamroster,
-    teamyearbyyearstats,
-    playercareerstats,
-    teamestimatedmetrics,
-    leaguedashteamstats,
-    leaguedashplayerstats
-)
-from nba_api.stats.static import teams, players
+# ESPN API data collector
+from nba_ml_espn_data_collector import ESPNNBADataCollector
 
 # Set up logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
 class NBADataCollector:
-    """Comprehensive NBA data collector for machine learning purposes"""
+    """Comprehensive NBA data collector for machine learning purposes - Now using ESPN API"""
     
     def __init__(self, data_dir: str = "nba_ml_data"):
         self.data_dir = data_dir
-        self.ensure_data_directory()
-        self.teams_info = teams.get_teams()
-        self.rate_limit_delay = 0.6  # Respect NBA API rate limits
+        self.espn_collector = ESPNNBADataCollector(data_dir)
+        self.rate_limit_delay = 0.6  # Respect ESPN API rate limits
         
     def ensure_data_directory(self):
-        """Create data directory structure"""
-        subdirs = ['games', 'players', 'teams', 'processed', 'models']
-        os.makedirs(self.data_dir, exist_ok=True)
-        for subdir in subdirs:
-            os.makedirs(os.path.join(self.data_dir, subdir), exist_ok=True)
+        """Create data directory structure - delegated to ESPN collector"""
+        self.espn_collector.ensure_data_directory()
             
     def rate_limit(self):
         """Apply rate limiting to API calls"""
@@ -71,282 +47,89 @@ class NBADataCollector:
         return seasons
     
     def collect_team_info(self) -> pd.DataFrame:
-        """Collect basic team information"""
-        logger.info("Collecting team information...")
-        
-        team_data = []
-        for team in self.teams_info:
-            team_data.append({
-                'team_id': team['id'],
-                'team_name': team['full_name'],
-                'team_abbreviation': team['abbreviation'],
-                'city': team['city'],
-                'state': team['state']
-            })
-        
-        df = pd.DataFrame(team_data)
-        df.to_csv(os.path.join(self.data_dir, 'teams', 'team_info.csv'), index=False)
-        return df
+        """Collect basic team information using ESPN API"""
+        return self.espn_collector.get_teams_info()
     
     def collect_games_for_season(self, season: str) -> pd.DataFrame:
-        """Collect all games for a given season"""
-        logger.info(f"Collecting games for season {season}...")
+        """Collect all games for a given season using ESPN API"""
+        logger.info(f"Collecting games for season {season} using ESPN API...")
         
-        self.rate_limit()
-        try:
-            game_log = leaguegamelog.LeagueGameLog(season=season, season_type_all_star="Regular Season")
-            games_df = game_log.get_data_frames()[0]
-            
-            # Add season column
+        # Parse season string like "2023-24" to get years
+        start_year = int(season.split('-')[0])
+        end_year_short = season.split('-')[1]
+        end_year = int(f"20{end_year_short}") if len(end_year_short) == 2 else int(end_year_short)
+        
+        # NBA season runs October to June
+        season_start = date(start_year, 10, 1)
+        season_end = date(end_year, 6, 30)
+        
+        # Don't go into the future
+        if season_start > date.today():
+            return pd.DataFrame()
+        season_end = min(season_end, date.today())
+        
+        games_df = self.espn_collector.get_games_for_date_range(season_start, season_end)
+        
+        if not games_df.empty:
             games_df['SEASON'] = season
-            
-            # Save raw data
             filename = os.path.join(self.data_dir, 'games', f'games_{season.replace("-", "_")}.csv')
             games_df.to_csv(filename, index=False)
-            
-            return games_df
-        except Exception as e:
-            logger.error(f"Error collecting games for season {season}: {e}")
-            return pd.DataFrame()
+        
+        return games_df
     
     def collect_detailed_game_data(self, game_id: str) -> Dict:
-        """Collect detailed data for a specific game"""
-        self.rate_limit()
-        
-        try:
-            # Get traditional box score
-            traditional = boxscoretraditionalv2.BoxScoreTraditionalV2(game_id=game_id)
-            try:
-                traditional_dfs = traditional.get_data_frames()
-            except (KeyError, AttributeError, TypeError) as e:
-                logger.warning(f"Game {game_id}: Traditional box score unavailable (likely game hasn't started yet)")
-                return {}
-            
-            # Get advanced box score
-            self.rate_limit()
-            advanced = boxscoreadvancedv2.BoxScoreAdvancedV2(game_id=game_id)
-            try:
-                advanced_dfs = advanced.get_data_frames()
-            except (KeyError, AttributeError, TypeError) as e:
-                logger.warning(f"Game {game_id}: Advanced box score unavailable")
-                advanced_dfs = []
-            
-            # Get game summary
-            self.rate_limit()
-            summary = boxscoresummaryv2.BoxScoreSummaryV2(game_id=game_id)
-            try:
-                summary_dfs = summary.get_data_frames()
-            except (KeyError, AttributeError, TypeError) as e:
-                logger.warning(f"Game {game_id}: Game summary unavailable")
-                summary_dfs = []
-            
-            return {
-                'game_id': game_id,
-                'player_traditional': traditional_dfs[0] if len(traditional_dfs) > 0 else pd.DataFrame(),
-                'team_traditional': traditional_dfs[1] if len(traditional_dfs) > 1 else pd.DataFrame(),
-                'player_advanced': advanced_dfs[0] if len(advanced_dfs) > 0 else pd.DataFrame(),
-                'team_advanced': advanced_dfs[1] if len(advanced_dfs) > 1 else pd.DataFrame(),
-                'game_summary': summary_dfs[0] if len(summary_dfs) > 0 else pd.DataFrame(),
-                'line_score': summary_dfs[1] if len(summary_dfs) > 1 else pd.DataFrame()
-            }
-        except Exception as e:
-            logger.error(f"Error collecting detailed data for game {game_id}: {e}")
-            return {}
+        """Collect detailed data for a specific game using ESPN API"""
+        return self.espn_collector.get_detailed_game_data(game_id)
     
     def collect_player_season_stats(self, season: str) -> pd.DataFrame:
-        """Collect player statistics for entire season"""
-        logger.info(f"Collecting player stats for season {season}...")
-        
-        self.rate_limit()
-        try:
-            player_stats = leaguedashplayerstats.LeagueDashPlayerStats(season=season, season_type_all_star="Regular Season")
-            df = player_stats.get_data_frames()[0]
-            df['SEASON'] = season
-            
-            filename = os.path.join(self.data_dir, 'players', f'player_stats_{season.replace("-", "_")}.csv')
-            df.to_csv(filename, index=False)
-            
-            return df
-        except Exception as e:
-            logger.error(f"Error collecting player stats for season {season}: {e}")
-            return pd.DataFrame()
+        """Collect player statistics for entire season
+        Note: ESPN API doesn't provide season-aggregated player stats directly.
+        This will return empty DataFrame - player stats are collected per-game.
+        """
+        logger.info(f"Player season stats not available via ESPN API for season {season}")
+        return pd.DataFrame()
     
     def collect_team_season_stats(self, season: str) -> pd.DataFrame:
-        """Collect team statistics for entire season"""
-        logger.info(f"Collecting team stats for season {season}...")
-        
-        self.rate_limit()
-        try:
-            team_stats = leaguedashteamstats.LeagueDashTeamStats(season=season, season_type_all_star="Regular Season")
-            df = team_stats.get_data_frames()[0]
-            df['SEASON'] = season
-            
-            filename = os.path.join(self.data_dir, 'teams', f'team_stats_{season.replace("-", "_")}.csv')
-            df.to_csv(filename, index=False)
-            
-            return df
-        except Exception as e:
-            logger.error(f"Error collecting team stats for season {season}: {e}")
-            return pd.DataFrame()
+        """Collect team statistics for entire season
+        Note: Team stats are generated from game results in ESPN collector
+        """
+        logger.info(f"Team stats will be generated from game data for season {season}")
+        return pd.DataFrame()
     
     def collect_historical_data(self, seasons: List[str], collect_detailed_games: bool = False):
-        """Collect comprehensive historical data for multiple seasons"""
-        logger.info(f"Starting historical data collection for {len(seasons)} seasons...")
+        """Collect comprehensive historical data for multiple seasons using ESPN API"""
+        logger.info(f"Starting ESPN-based historical data collection for {len(seasons)} seasons...")
         
-        # Collect team info
-        self.collect_team_info()
+        # Convert seasons to year range
+        if seasons:
+            # Parse first and last season
+            start_year = int(seasons[0].split('-')[0])
+            last_season = seasons[-1]
+            end_year_short = last_season.split('-')[1]
+            end_year = int(f"20{end_year_short}") if len(end_year_short) == 2 else int(end_year_short)
+        else:
+            # Default to recent seasons
+            current_year = datetime.now().year
+            start_year = current_year - 2
+            end_year = current_year
         
-        all_games = []
-        all_player_stats = []
-        all_team_stats = []
+        # Use ESPN collector to get historical data
+        games_df = self.espn_collector.collect_historical_data(
+            start_year=start_year, 
+            end_year=end_year, 
+            collect_detailed_games=collect_detailed_games
+        )
         
-        for season in seasons:
-            logger.info(f"Processing season {season}...")
-            
-            # Collect games
-            games_df = self.collect_games_for_season(season)
-            if not games_df.empty:
-                all_games.append(games_df)
-            
-            # Collect player stats
-            player_stats_df = self.collect_player_season_stats(season)
-            if not player_stats_df.empty:
-                all_player_stats.append(player_stats_df)
-            
-            # Collect team stats  
-            team_stats_df = self.collect_team_season_stats(season)
-            if not team_stats_df.empty:
-                all_team_stats.append(team_stats_df)
-            
-            # Optional: Collect detailed game data (slower)
-            if collect_detailed_games and not games_df.empty:
-                unique_games = games_df['GAME_ID'].unique()[:50]  # Limit for demo
-                logger.info(f"Collecting detailed data for {len(unique_games)} games...")
-                
-                for game_id in unique_games:
-                    detailed_data = self.collect_detailed_game_data(game_id)
-                    if detailed_data:
-                        # Save detailed game data
-                        game_dir = os.path.join(self.data_dir, 'games', 'detailed', str(game_id))
-                        os.makedirs(game_dir, exist_ok=True)
-                        
-                        for key, df in detailed_data.items():
-                            if isinstance(df, pd.DataFrame) and not df.empty:
-                                df.to_csv(os.path.join(game_dir, f'{key}.csv'), index=False)
-        
-        # Combine and save all data
-        if all_games:
-            combined_games = pd.concat(all_games, ignore_index=True)
-            combined_games.to_csv(os.path.join(self.data_dir, 'processed', 'all_games.csv'), index=False)
-            logger.info(f"Saved {len(combined_games)} game records")
-        
-        if all_player_stats:
-            combined_player_stats = pd.concat(all_player_stats, ignore_index=True)
-            combined_player_stats.to_csv(os.path.join(self.data_dir, 'processed', 'all_player_stats.csv'), index=False)
-            logger.info(f"Saved {len(combined_player_stats)} player stat records")
-        
-        if all_team_stats:
-            combined_team_stats = pd.concat(all_team_stats, ignore_index=True)
-            combined_team_stats.to_csv(os.path.join(self.data_dir, 'processed', 'all_team_stats.csv'), index=False)
-            logger.info(f"Saved {len(combined_team_stats)} team stat records")
+        logger.info(f"ESPN historical data collection complete")
+        return games_df
     
     def collect_recent_games_with_details(self, days_back: int = 30) -> List[Dict]:
-        """Collect recent games with detailed box scores for training"""
-        logger.info(f"Collecting recent games from last {days_back} days with details...")
-        
-        recent_games = []
-        end_date = datetime.now().date()
-        start_date = end_date - timedelta(days=days_back)
-        
-        current_date = start_date
-        while current_date <= end_date:
-            date_str = current_date.strftime("%m/%d/%Y")
-            logger.info(f"Collecting games for {date_str}...")
-            
-            try:
-                self.rate_limit()
-                scoreboard = scoreboardv2.ScoreboardV2(game_date=date_str)
-                games_data = scoreboard.get_data_frames()[0]
-                
-                if not games_data.empty:
-                    for _, game in games_data.iterrows():
-                        game_id = game['GAME_ID']
-                        
-                        # Get detailed data for each game
-                        detailed_data = self.collect_detailed_game_data(game_id)
-                        if detailed_data:
-                            detailed_data['game_date'] = date_str
-                            recent_games.append(detailed_data)
-                
-            except Exception as e:
-                logger.error(f"Error collecting games for {date_str}: {e}")
-            
-            current_date += timedelta(days=1)
-        
-        # Save recent games data
-        if recent_games:
-            recent_games_dir = os.path.join(self.data_dir, 'games', 'recent')
-            os.makedirs(recent_games_dir, exist_ok=True)
-            
-            with open(os.path.join(recent_games_dir, 'recent_games_metadata.json'), 'w') as f:
-                metadata = {
-                    'collection_date': datetime.now().isoformat(),
-                    'days_collected': days_back,
-                    'games_count': len(recent_games),
-                    'game_ids': [g.get('game_id', 'unknown') for g in recent_games]
-                }
-                json.dump(metadata, f, indent=2)
-        
-        logger.info(f"Collected {len(recent_games)} recent games with details")
-        return recent_games
+        """Collect recent games with detailed box scores for training using ESPN API"""
+        return self.espn_collector.collect_recent_games_with_details(days_back)
     
     def get_upcoming_games(self, days_ahead: int = 7) -> pd.DataFrame:
-        """Get upcoming games for prediction"""
-        logger.info(f"Getting upcoming games for next {days_ahead} days...")
-        logger.info(f"Date range: {datetime.now().date()} to {datetime.now().date() + timedelta(days=days_ahead)}")
-        
-        upcoming_games = []
-        start_date = datetime.now().date()
-        end_date = start_date + timedelta(days=days_ahead)
-        
-        current_date = start_date
-        while current_date <= end_date:
-            date_str = current_date.strftime("%m/%d/%Y")
-            
-            try:
-                self.rate_limit()
-                scoreboard = scoreboardv2.ScoreboardV2(game_date=date_str)
-                games_data = scoreboard.get_data_frames()[0]
-                
-                logger.info(f"Checking {date_str}: Found {len(games_data)} games")
-                
-                if not games_data.empty:
-                    for _, game in games_data.iterrows():
-                        upcoming_games.append({
-                            'game_id': game['GAME_ID'],
-                            'game_date': date_str,
-                            'home_team_id': game.get('HOME_TEAM_ID'),
-                            'away_team_id': game.get('VISITOR_TEAM_ID'),
-                            'home_team': game.get('HOME_TEAM_NAME', ''),
-                            'away_team': game.get('VISITOR_TEAM_NAME', ''),
-                            'game_time': game.get('GAME_STATUS_TEXT', '')
-                        })
-                        
-            except Exception as e:
-                logger.error(f"Error getting upcoming games for {date_str}: {e}")
-            
-            current_date += timedelta(days=1)
-        
-        df = pd.DataFrame(upcoming_games)
-        logger.info(f"Total upcoming games found: {len(df)}")
-        
-        if not df.empty:
-            df.to_csv(os.path.join(self.data_dir, 'processed', 'upcoming_games.csv'), index=False)
-            logger.info(f"Upcoming games saved to: {os.path.join(self.data_dir, 'processed', 'upcoming_games.csv')}")
-        else:
-            logger.warning("No upcoming games found in the specified date range")
-        
-        return df
+        """Get upcoming games for prediction using ESPN API"""
+        return self.espn_collector.get_upcoming_games(days_ahead)
 
 def main():
     """Main execution function"""
@@ -355,11 +138,11 @@ def main():
     # Collect data for recent seasons
     seasons = collector.get_seasons_list(start_year=2020, end_year=2024)
     
-    print("Starting NBA data collection...")
+    print("Starting NBA data collection using ESPN API...")
     print(f"Collecting data for seasons: {seasons}")
     
     # Collect historical data
-    collector.collect_historical_data(seasons, collect_detailed_games=True)
+    collector.collect_historical_data(seasons, collect_detailed_games=False)
     
     # Collect recent games with details
     collector.collect_recent_games_with_details(days_back=30)
@@ -370,6 +153,7 @@ def main():
     
     print("Data collection complete!")
     print(f"Data saved to: {collector.data_dir}")
+    print("Note: Now using ESPN API instead of nba_api for prediction data collection")
 
 if __name__ == "__main__":
     main()

@@ -452,7 +452,8 @@ class NBAMLPredictor:
                     logger.info(f"Found {len(roster)} players for team {team_id}")
                     return roster
             
-            # Fallback to NBA API if no processed data
+            # Fallback to NBA API if no processed data (acceptable for roster lookup only)
+            # Note: Main prediction data uses ESPN API via data collector
             from nba_api.stats.endpoints import teamplayerdashboard
             
             # Get current season (2024-25)
