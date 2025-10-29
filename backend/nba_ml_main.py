@@ -1,6 +1,6 @@
 """
 NBA ML System - Main Entry Point
-Complete NBA prediction system using nba_api and machine learning
+Complete NBA prediction system using ESPN API and machine learning
 """
 
 import os
@@ -278,8 +278,8 @@ Examples:
 
 def create_requirements_file():
     """Create requirements.txt with all necessary dependencies"""
-    requirements = """# NBA ML Prediction System Requirements
-nba_api>=1.1.11
+    requirements = """# NBA ML Prediction System Requirements (ESPN API)
+nba_api>=1.1.11  # Only for non-prediction frontend endpoints
 pandas>=1.5.0
 numpy>=1.21.0
 scikit-learn>=1.2.0
@@ -290,7 +290,7 @@ seaborn>=0.11.0
 # Optional: TensorFlow for advanced models
 # tensorflow>=2.10.0
 
-# Data processing
+# Data processing (ESPN API)
 requests>=2.28.0
 
 # Existing backend dependencies
@@ -304,7 +304,7 @@ asgiref>=3.5.0
     with open('requirements_nba_ml.txt', 'w') as f:
         f.write(requirements)
     
-    print("Created requirements_nba_ml.txt with all dependencies")
+    print("Created requirements_nba_ml.txt with all dependencies (ESPN API)")
 
 if __name__ == "__main__":
     print("🏀 NBA ML Prediction System")
