@@ -61,7 +61,12 @@ export const parseUpcomingNFLGames = async () => {
             alternateColor: event['competitions'][0]['competitors'][0]['team']['alternateColor'],
             displayName: event['competitions'][0]['competitors'][0]['team']['displayName'],
         };
-        const awayTeam:Team = event['competitions'][0]['competitors'][1]['team'];
+        const awayTeam:Team = {
+            abbreviation: event['competitions'][0]['competitors'][1]['team']['abbreviation'],
+            color: event['competitions'][0]['competitors'][1]['team']['color'],
+            alternateColor: event['competitions'][0]['competitors'][1]['team']['alternateColor'],
+            displayName: event['competitions'][0]['competitors'][1]['team']['displayName'],
+        }
 
         // extract date of match
         const gameDate = event['date'].split('T')[0]; // extract date only, ignore time
@@ -86,7 +91,7 @@ export const parseUpcomingNFLGames = async () => {
         const formattedGameDate = `${month}-${day}-${year}`;
 
         // return { homeTeam, awayTeam, gameDate: formattedGameDate};
-        return { homeTeam, awayTeam, gameDate: dateAndTime, league };
+        return { homeTeam, awayTeam, gameDate: dateAndTime, league: league };
     });
 
     return games;

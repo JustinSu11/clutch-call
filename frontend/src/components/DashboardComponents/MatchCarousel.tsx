@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* 
 Author: Justin Nguyen
 Last Updated: 10/08/2025 by Justin Nguyen
@@ -27,15 +28,14 @@ const fetchAllMatches = async (): Promise<UpcomingGame[]> => {
     const normalize = (arr: any[]) => (arr || []).map((game: any) => ({
         awayTeam: game.awayTeam,
         homeTeam: game.homeTeam,
-        gameDate: new Date(game.gameDate)
+        gameDate: new Date(game.gameDate),
+        league: game.league
     }))
 
     return [...normalize(nba), ...normalize(nfl), ...normalize(mls)]
 }
 
-
-
-export default function MatchCarousel() {
+export default function MatchCarousel({ selectedLeagues }: { selectedLeagues: string[] }) {
     const [upcomingMatchesToday, setUpcomingMatchesToday] = useState<UpcomingGame[]>([])
 
     //timer to know when midnight passes
@@ -73,8 +73,11 @@ export default function MatchCarousel() {
                 return
             }
             const today = new Date()
-            const todayMatches = all.filter((game) => upcomingMatchesWithinXDays(game.gameDate, today))
-            setUpcomingMatchesToday(todayMatches)
+            const matchesWithinDays = all.filter((game) => upcomingMatchesWithinXDays(game.gameDate, today))
+
+            const filteredMatches = selectedLeagues.length > 0 ? matchesWithinDays.filter((game) => selectedLeagues.includes(game.league?.toUpperCase() ?? "")) : matchesWithinDays
+
+            setUpcomingMatchesToday(filteredMatches)
         }
 
         loadAndFilter()
@@ -98,7 +101,7 @@ export default function MatchCarousel() {
             }
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [])
+    }, [selectedLeagues])
 
     const settings = {
         dots: true,
@@ -109,7 +112,7 @@ export default function MatchCarousel() {
     }
     return (
         <div className="block w-full">
-            <Slider {...settings}>
+            <Slider {...settings} className="!flex !items-center">
                 {upcomingMatchesToday.length === 0 ? (
                     <div className="text-sm text-text-secondary">No Matches today</div>
                 ) : (
