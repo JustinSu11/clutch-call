@@ -118,7 +118,7 @@ export default function MatchCarousel({ selectedLeagues }: { selectedLeagues: st
                     <div className="text-sm text-text-secondary">No Matches today</div>
                 ) : (
                     upcomingMatchesToday.map((game) => (
-                        <MatchCard key={`${game.awayTeam.displayName} versus ${game.homeTeam.displayName}`} matchDate={game.dateAndTime} awayTeam={game.awayTeam} homeTeam={game.homeTeam}/>
+                        <MatchCard key={`${game.awayTeam.displayName} versus ${game.homeTeam.displayName}`} matchDate={game.dateAndTime} awayTeam={game.awayTeam} homeTeam={game.homeTeam} league={game.league} />
                     ))
                 )}
             </Slider>
