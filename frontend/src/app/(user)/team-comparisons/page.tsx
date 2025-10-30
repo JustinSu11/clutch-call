@@ -1,8 +1,11 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 
 // -- TYPE DEFINITIONS --
+
+// Defines the allowed sports. Copied from Predictions.tsx
+type SportKey = 'All Sports' | 'NFL' | 'NBA' | 'MLS';
 
 // Defines the structure for a single team's data
 type Team = {
@@ -22,13 +25,38 @@ type Team = {
 };
 
 // Defines the allowed keys for the teams, providing type safety.
-type TeamKey = 'lakers' | 'heat' | 'warriors' | 'nets';
+// Changed from specific keys to 'string' to allow for dynamic team data per sport.
+type TeamKey = string;
 
 // -- COMPONENT DEFINITIONS --
 
+// --- SportsFilter Component (Copied from Predictions.tsx) ---
+const SportsFilter: React.FC<{
+    sports: SportKey[];
+    activeSport: SportKey;
+    setActiveSport: (sport: SportKey) => void;
+}> = ({ sports, activeSport, setActiveSport }) => (
+    <div className="text-text-primary mb-8">
+        {sports.map((sport) => (
+            <button
+                key={sport}
+                onClick={() => setActiveSport(sport)}
+                className={`px-4 py-2 text-sm text-text-primary font-medium rounded-md whitespace-nowrap ${
+                    activeSport === sport
+                        ? 'bg-primary text-white' // Using primary color for selection
+                        : 'hover:bg-secondary' // Use semantic hover color
+                } cursor-pointer mr-2`}
+            >
+                {sport}
+            </button>
+        ))}
+    </div>
+);
+
+
 // Props for the TeamSelector component
 type TeamSelectorProps = {
-  teams: Record<TeamKey, Team>;
+  teams: Record<TeamKey, Team>; // Use new TeamKey type
   selectedTeam1: TeamKey;
   selectedTeam2: TeamKey;
   onTeam1Change: (event: React.ChangeEvent<HTMLSelectElement>) => void;
@@ -44,19 +72,23 @@ function TeamSelector({ teams, selectedTeam1, selectedTeam2, onTeam1Change, onTe
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
       <div className="flex flex-col gap-6">
+        <label htmlFor="team1-select" className="text-sm font-medium text-text-secondary">Select Team 1</label>
         <select 
+          id="team1-select"
           value={selectedTeam1} 
           onChange={onTeam1Change}
-          className="form-select w-full appearance-none bg-secondary-background rounded-lg h-12 px-4 text-text-primary shadow-sm"
+          className="form-select w-full appearance-none bg-secondary-background border border-secondary rounded-lg h-12 px-4 text-text-primary focus:ring-primary focus:border-primary"
         >
           {teamOptions}
         </select>
       </div>
       <div className="flex flex-col gap-6">
+        <label htmlFor="team2-select" className="text-sm font-medium text-text-secondary">Select Team 2</label>
         <select 
+          id="team2-select"
           value={selectedTeam2}
           onChange={onTeam2Change}
-          className="form-select w-full appearance-none bg-secondary-background rounded-lg h-12 px-4 text-text-primary shadow-sm"
+          className="form-select w-full appearance-none bg-secondary-background border border-secondary rounded-lg h-12 px-4 text-text-primary focus:ring-primary focus:border-primary"
         >
           {teamOptions}
         </select>
@@ -88,7 +120,7 @@ function TeamMatchup({ team1, team2 }: TeamMatchupProps) {
 
       {/* "VS" Divider */}
       <div className="col-span-1 flex items-center justify-center">
-        <div className="w-16 h-16 bg-primary rounded-full flex items-center justify-center text-text-primary font-bold text-2xl shadow-lg"> VS </div>
+        <div className="w-16 h-16 bg-primary rounded-full flex items-center justify-center text-white font-black text-2xl shadow-lg"> VS </div>
       </div>
 
       {/* Team 2 Info */}
@@ -96,7 +128,7 @@ function TeamMatchup({ team1, team2 }: TeamMatchupProps) {
         <div className="bg-secondary-background rounded-xl shadow-sm p-6 flex items-center justify-end text-right">
           <div>
             <h3 className="text-2xl font-bold text-text-primary">{team2.name}</h3>
-            <p className="text-sm text-gray-500">{team2.form}</p>
+            <p className="text-sm text-text-secondary">{team2.form}</p>
           </div>
           <img alt={`${team2.name} Logo`} className="h-16 w-16 ml-6" src={team2.logo} />
         </div>
@@ -121,11 +153,16 @@ function StatBar({ label, value1, value2, diff1, isLowerBetter = false }: StatBa
     const team2Color = !isTeam1Better ? 'bg-green-500' : 'bg-red-500';
     const diff1Color = diff1?.startsWith('+') ? 'text-green-500' : 'text-red-500';
     
-    // Normalize values for bar width calculation. Assuming max is around 120 for scores.
-    const maxWinRate = 100;
-    const maxScore = 120;
-    const width1 = label === 'Win Rate' ? value1 : (parseFloat(value1.toString()) / maxScore) * 100;
-    const width2 = label === 'Win Rate' ? value2 : (parseFloat(value2.toString()) / maxScore) * 100;
+    // Normalize values for bar width calculation.
+    let maxVal = 100;
+    if (label.includes('Points')) {
+        maxVal = 120; // NBA max
+    } else if (label.includes('Score')) {
+         maxVal = 40; // NFL/MLS max
+    }
+
+    const width1 = label.includes('Rate') ? value1 : (parseFloat(value1.toString()) / maxVal) * 100;
+    const width2 = label.includes('Rate') ? value2 : (parseFloat(value2.toString()) / maxVal) * 100;
 
     return (
         <div className="flex items-center gap-4">
@@ -149,17 +186,22 @@ function StatBar({ label, value1, value2, diff1, isLowerBetter = false }: StatBa
 type StatsComparisonProps = {
   team1: Team;
   team2: Team;
+  sport: SportKey;
 };
 
 // Component for the detailed statistics breakdown
-function StatsComparison({ team1, team2 }: StatsComparisonProps) {
+function StatsComparison({ team1, team2, sport }: StatsComparisonProps) {
+    // Customize labels based on sport
+    const scoreLabel = sport === 'NBA' ? 'Avg. Points Scored' : 'Avg. Score';
+    const concededLabel = sport === 'NBA' ? 'Avg. Points Conceded' : 'Avg. Score Conceded';
+
     return (
         <div className="mt-8 bg-secondary-background rounded-xl shadow-sm p-6">
             <h3 className="text-xl font-bold text-text-primary mb-6 text-center">Team Statistics Comparison</h3>
             <div className="space-y-6">
                 <StatBar label="Win Rate" value1={team1.stats.winRate} value2={team2.stats.winRate} />
-                <StatBar label="Avg. Points Scored" value1={team1.stats.avgPointsScored} value2={team2.stats.avgPointsScored} diff1={team1.stats.avgPointsScoredDiff} />
-                <StatBar label="Avg. Points Conceded" value1={team1.stats.avgPointsConceded} value2={team2.stats.avgPointsConceded} diff1={team1.stats.avgPointsConcededDiff} isLowerBetter={true} />
+                <StatBar label={scoreLabel} value1={team1.stats.avgPointsScored} value2={team2.stats.avgPointsScored} diff1={team1.stats.avgPointsScoredDiff} />
+                <StatBar label={concededLabel} value1={team1.stats.avgPointsConceded} value2={team2.stats.avgPointsConceded} diff1={team1.stats.avgPointsConcededDiff} isLowerBetter={true} />
             </div>
         </div>
     );
@@ -184,7 +226,7 @@ function InsightCard({ teamName, analysis, winProbability, probabilityColor }: I
             <div className="mt-6">
                 <h4 className="text-md font-semibold text-text-primary mb-2">Win Probability</h4>
                 <div className="w-full bg-secondary rounded-full h-6">
-                    <div className={`${probabilityColor} h-6 rounded-full flex items-center justify-center text-text-primary font-bold`} style={{ width: `${winProbability}%` }}>
+                    <div className={`${probabilityColor} h-6 rounded-full flex items-center justify-center text-white font-bold`} style={{ width: `${winProbability}%` }}>
                         {winProbability}%
                     </div>
                 </div>
@@ -283,11 +325,11 @@ function HistoricalChart({ team1Data, team2Data, team1Name, team2Name }: Histori
                 <div className="flex justify-center mt-4 gap-8">
                     <div className="flex items-center gap-2">
                         <div className="w-4 h-4 rounded-full bg-green-500"></div>
-                        <span className="text-sm font-medium text-text-primary">{team1Name} Performance</span>
+                        <span className="text-sm font-medium text-text-secondary">{team1Name} Performance</span>
                     </div>
                     <div className="flex items-center gap-2">
                         <div className="w-4 h-4 rounded-full bg-red-500"></div>
-                        <span className="text-sm font-medium text-text-primary">{team2Name} Performance</span>
+                        <span className="text-sm font-medium text-text-secondary">{team2Name} Performance</span>
                     </div>
                 </div>
             </div>
@@ -297,7 +339,9 @@ function HistoricalChart({ team1Data, team2Data, team1Name, team2Name }: Histori
 
 
 // -- DATA SOURCE --
-const teamData: Record<TeamKey, Team> = {
+
+// Original NBA Data
+const nbaTeamData: Record<TeamKey, Team> = {
     lakers: {
         name: "Los Angeles Lakers",
         form: "WWLWL",
@@ -328,7 +372,7 @@ const teamData: Record<TeamKey, Team> = {
     nets: {
         name: "Brooklyn Nets",
         form: "LWLWL",
-        logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/44/Brooklyn_Nets_newlogo.svg/1200px-Brooklyn_N_ets_newlogo.svg.png",
+        logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/44/Brooklyn_Nets_newlogo.svg/1200px-Brooklyn_Nets_newlogo.svg.png",
         stats: { winRate: 55, avgPointsScored: 112.1, avgPointsConceded: 112.3 },
         aiAnalysis: "The Nets have a 45% chance. Their success hinges on their star players performing at a high level consistently.",
         winProbability: 45,
@@ -336,11 +380,84 @@ const teamData: Record<TeamKey, Team> = {
     }
 };
 
+// Placeholder NFL Data
+const nflTeamData: Record<TeamKey, Team> = {
+    cowboys: {
+        name: "Dallas Cowboys",
+        form: "WWLWW",
+        logo: "https://static.www.nfl.com/image/private/f_auto/league/vwwxppjmdwuh1i6fkdeq",
+        stats: { winRate: 80, avgPointsScored: 31.5, avgPointsScoredDiff: "+3.2", avgPointsConceded: 20.1, avgPointsConcededDiff: "-1.1" },
+        aiAnalysis: "AI predicts a 70% win chance for the Cowboys, citing their dominant offense and strong defensive line.",
+        winProbability: 70,
+        performance: [20, 30, 28, 35, 40, 24, 31, 38, 27, 19, 33, 29, 36, 41]
+    },
+    eagles: {
+        name: "Philadelphia Eagles",
+        form: "WLWLW",
+        logo: "https://static.www.nfl.com/image/private/f_auto/league/puhrqgj71r9jypf4cvrn",
+        stats: { winRate: 60, avgPointsScored: 28.2, avgPointsConceded: 22.5 },
+        aiAnalysis: "AI predicts a 30% win chance for the Eagles. Their secondary has shown vulnerabilities against strong passing games.",
+        winProbability: 30,
+        performance: [24, 21, 30, 27, 33, 19, 28, 22, 31, 25, 29, 34, 20, 26]
+    }
+};
+
+// Placeholder MLS Data
+const mlsTeamData: Record<TeamKey, Team> = {
+    interMiami: {
+        name: "Inter Miami CF",
+        form: "WWWDW",
+        logo: "https://images.mlssoccer.com/image/upload/v1615312030/assets/logos/MIA-Logo-Primary-Bkgd-2021-small.svg",
+        stats: { winRate: 75, avgPointsScored: 2.8, avgPointsConceded: 1.1 },
+        aiAnalysis: "With their new lineup, AI gives Inter Miami an 80% win probability, highlighting their unmatched offensive firepower.",
+        winProbability: 80,
+        performance: [1, 3, 2, 2, 4, 1, 3, 3, 2, 1, 4, 3, 2, 3]
+    },
+    lafc: {
+        name: "LAFC",
+        form: "LWLDW",
+        logo: "https://images.mlssoccer.com/image/upload/v1615312030/assets/logos/LAFC-Logo-Primary-Bkgd-2021-small.svg",
+        stats: { winRate: 50, avgPointsScored: 1.9, avgPointsConceded: 1.5 },
+        aiAnalysis: "AI predicts a 20% win probability for LAFC. They struggle to contain counter-attacks, which will be a major factor.",
+        winProbability: 20,
+        performance: [2, 1, 1, 0, 3, 2, 1, 2, 2, 0, 1, 3, 1, 2]
+    }
+};
+
+// Main data object mapping sports to their respective team data
+const allSportsData = {
+    'NBA': nbaTeamData,
+    'NFL': nflTeamData,
+    'MLS': mlsTeamData,
+};
+
 
 // -- MAIN APP COMPONENT --
 function App() {
-  const [selectedTeam1Key, setSelectedTeam1Key] = React.useState<TeamKey>('lakers');
-  const [selectedTeam2Key, setSelectedTeam2Key] = React.useState<TeamKey>('heat');
+  // Available sports for the filter. 'All Sports' is removed as comparison is sport-specific.
+  const sports: SportKey[] = ['NBA', 'NFL', 'MLS'];
+  
+  // State for the currently selected sport
+  const [activeSport, setActiveSport] = useState<SportKey>('NBA');
+  
+  // Get the team data for the currently active sport
+  const currentSportData = allSportsData[activeSport as Exclude<SportKey, 'All Sports'>] || allSportsData['NBA'];
+  const currentTeamKeys = Object.keys(currentSportData);
+
+  // State for the selected teams
+  const [selectedTeam1Key, setSelectedTeam1Key] = useState<TeamKey>(currentTeamKeys[0]);
+  const [selectedTeam2Key, setSelectedTeam2Key] = useState<TeamKey>(currentTeamKeys[1] || currentTeamKeys[0]);
+
+  // Effect to reset selected teams when the sport changes
+  useEffect(() => {
+    const newSportData = allSportsData[activeSport as Exclude<SportKey, 'All Sports'>] || allSportsData['NBA'];
+    const newTeamKeys = Object.keys(newSportData);
+    
+    // Set to the first two teams of the new sport
+    setSelectedTeam1Key(newTeamKeys[0]);
+    setSelectedTeam2Key(newTeamKeys[1] || newTeamKeys[0]); // Fallback if only one team exists
+  }, [activeSport]);
+
 
   const handleTeam1Change = (event: React.ChangeEvent<HTMLSelectElement>) => {
     setSelectedTeam1Key(event.target.value as TeamKey);
@@ -350,23 +467,39 @@ function App() {
     setSelectedTeam2Key(event.target.value as TeamKey);
   };
 
-  const team1 = teamData[selectedTeam1Key];
-  const team2 = teamData[selectedTeam2Key];
+  const team1 = currentSportData[selectedTeam1Key];
+  const team2 = currentSportData[selectedTeam2Key];
+
+  // Handle loading or empty state
+  if (!team1 || !team2) {
+    return (
+        <main className="flex-grow container mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12 bg-background text-text-primary">
+          <div className="max-w-7xl mx-auto">
+            <h2 className="text-4xl font-bold text-text-primary mb-8">Team Comparison</h2>
+            <SportsFilter sports={sports} activeSport={activeSport} setActiveSport={setActiveSport} />
+            <p className="text-center text-text-secondary mt-8">Loading team data...</p>
+          </div>
+        </main>
+    );
+  }
 
   return (
     <main className="flex-grow container mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12 bg-background text-text-primary">
       <div className="max-w-7xl mx-auto">
         <h2 className="text-4xl font-bold text-text-primary mb-8">Team Comparison</h2>
         
+        {/* --- Add the SportsFilter component --- */}
+        <SportsFilter sports={sports} activeSport={activeSport} setActiveSport={setActiveSport} />
+
         <TeamSelector 
-          teams={teamData}
+          teams={currentSportData}
           selectedTeam1={selectedTeam1Key}
           selectedTeam2={selectedTeam2Key}
           onTeam1Change={handleTeam1Change}
           onTeam2Change={handleTeam2Change}
         />
         <TeamMatchup team1={team1} team2={team2} />
-        <StatsComparison team1={team1} team2={team2} />
+        <StatsComparison team1={team1} team2={team2} sport={activeSport} />
         <AiInsights team1={team1} team2={team2} />
         <HistoricalChart 
           team1Data={team1.performance}
