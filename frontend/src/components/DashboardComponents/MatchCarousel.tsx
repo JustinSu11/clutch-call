@@ -29,6 +29,7 @@ const fetchAllMatches = async (): Promise<UpcomingGame[]> => {
         awayTeam: game.awayTeam,
         homeTeam: game.homeTeam,
         gameDate: new Date(game.gameDate),
+        dateAndTime: new Date(game.dateAndTime),
         league: game.league
     }))
 
@@ -117,7 +118,7 @@ export default function MatchCarousel({ selectedLeagues }: { selectedLeagues: st
                     <div className="text-sm text-text-secondary">No Matches today</div>
                 ) : (
                     upcomingMatchesToday.map((game) => (
-                        <MatchCard key={`${game.awayTeam.displayName} versus ${game.homeTeam.displayName}`} matchDate={game.gameDate} awayTeam={game.awayTeam} homeTeam={game.homeTeam}/>
+                        <MatchCard key={`${game.awayTeam.displayName} versus ${game.homeTeam.displayName}`} matchDate={game.dateAndTime} awayTeam={game.awayTeam} homeTeam={game.homeTeam}/>
                     ))
                 )}
             </Slider>

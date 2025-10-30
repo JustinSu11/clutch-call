@@ -91,7 +91,7 @@ export const parseUpcomingNFLGames = async () => {
         const formattedGameDate = `${month}-${day}-${year}`;
 
         // return { homeTeam, awayTeam, gameDate: formattedGameDate};
-        return { homeTeam, awayTeam, gameDate: dateAndTime, league: league };
+        return { homeTeam, awayTeam, gameDate: formattedGameDate, dateAndTime: dateAndTime, league: league };
     });
 
     return games;

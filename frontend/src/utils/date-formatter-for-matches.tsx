@@ -11,6 +11,6 @@ export default function formatDate(input: string | Date): string {
     const month = d.toLocaleString(undefined, { month: "short" })
     const day = d.toLocaleString(undefined, { day: "2-digit"})
     const time = d.toLocaleString(undefined, { hour: "numeric", minute: "2-digit", hour12: true }).toLowerCase().replace(" ", "")
-    return `${month}-${day} @ ${time}`
+    return `${month} - ${day} @ ${time}`
     //example return: Oct-10 @ 7:00pm
 }   

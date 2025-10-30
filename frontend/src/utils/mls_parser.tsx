@@ -73,7 +73,7 @@ export const parseUpcomingMLSGames = async () => {
         const officialGameName = event['name'];
 
         // extract date of match
-        const date = event['competitions']['date']
+        const dateAndTime = event['date']
 
         //categorize into a league
         const league = "MLS"
@@ -90,7 +90,7 @@ export const parseUpcomingMLSGames = async () => {
         const formattedGameDate = `${month}-${day}-${year}`;
 
         // return { homeTeam, awayTeam, gameDate: formattedGameDate };
-        return { homeTeam, awayTeam, gameDate: formattedGameDate, date, league: league };
+        return { homeTeam, awayTeam, gameDate: formattedGameDate, dateAndTime: dateAndTime, league: league };
     });
 
     return games;

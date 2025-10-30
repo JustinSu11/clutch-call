@@ -15,6 +15,7 @@ import { UpcomingGame } from '@/utils/data_class';
 import { get } from 'http';
 import { urlToHttpOptions } from 'url';
 import MatchDialog, { TeamStats } from '@/components/DashboardComponents/Dialog';
+import formatDate from '@/utils/date-formatter-for-matches';
 
 
 // declare data types
@@ -40,9 +41,9 @@ const buildNFLPredictions = async (): Promise<Prediction[]> => {
 
     // map each game to a Prediction object
     return upcomingNFLGames.map((game) => ({
-        match: `${game.awayTeam} at ${game.homeTeam}`,
-        date: `${game.gameDate}`,
-        prediction: `${game.homeTeam} predicted to win`,
+        match: `${game.awayTeam.displayName} at ${game.homeTeam.displayName}`,
+        date: `${game.dateAndTime}`,
+        prediction: `${game.homeTeam.displayName} predicted to win`,
         confidence: 100,
         sport: 'NFL'
     }));
@@ -60,9 +61,9 @@ const buildMLSPredictions = async (): Promise<Prediction[]> => {
 
     // map each game to a Prediction object
     return upcomingMLSGames.map((game) => ({
-        match: `${game.awayTeam} at ${game.homeTeam}`,
-        date: `${game.gameDate}`,
-        prediction: `${game.homeTeam} predicted to win`,
+        match: `${game.awayTeam.displayName} at ${game.homeTeam.displayName}`,
+        date: `${game.dateAndTime}`,
+        prediction: `${game.homeTeam.displayName} predicted to win`,
         confidence: 100,
         sport: 'MLS'
     }));
@@ -186,7 +187,7 @@ const PredictionRow: React.FC<{ item: Prediction; onClick?: () => void }> = ({ i
             <div className="text-md font-medium text-text-primary">{item.match}</div>
         </td>
         <td className="text-center px-6 py-4 whitespace-nowrap">
-            <div className="text-md font-medium text-text-primary">{item.date}</div>
+            <div className="text-md font-medium text-text-primary">{formatDate(item.date)}</div>
         </td>
         <td className="text-center px-6 py-4 whitespace-nowrap">
             <div className="text-md font-medium text-text-primary">{item.prediction}</div>

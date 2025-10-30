@@ -16,6 +16,7 @@ export type Team = {
 export type UpcomingGame = {
     homeTeam: Team;
     awayTeam: Team;
-    gameDate: Date;  
+    gameDate: Date; 
+    dateAndTime: Date; 
     league: string;                     // YYYY-MM-DD
 };
