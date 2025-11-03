@@ -35,7 +35,6 @@ class NBAMLPredictor:
         
         # Models
         self.game_model = None
-        self.player_models = {}
         
         # Preprocessors
         self.preprocessor = NBADataPreprocessor(data_dir)
@@ -56,15 +55,6 @@ class NBAMLPredictor:
                 logger.info("✅ Game outcome model loaded")
             else:
                 logger.warning("❌ Game outcome model not found")
-            
-            # Load player performance models
-            for target in ['points', 'assists', 'rebounds']:
-                model_path = os.path.join(self.models_dir, f'{target}_prediction_model.pkl')
-                if os.path.exists(model_path):
-                    self.player_models[target] = joblib.load(model_path)
-                    logger.info(f"✅ {target.title()} prediction model loaded")
-                else:
-                    logger.warning(f"❌ {target.title()} prediction model not found")
             
             # Load preprocessors
             try:
@@ -419,393 +409,9 @@ class NBAMLPredictor:
         
         return predictions
     
-    def get_player_roster(self, team_id: int, season: str = None) -> List[Dict]:
-        """Get current roster for a team"""
-        try:
-            # Try to get roster from processed data first
-            processed_dir = os.path.join(self.data_dir, 'processed')
-            player_stats_file = os.path.join(processed_dir, 'all_player_stats.csv')
-            
-            if os.path.exists(player_stats_file):
-                player_stats = pd.read_csv(player_stats_file)
-                
-                # Get latest season players for this team
-                latest_season = player_stats['SEASON'].max()
-                team_players = player_stats[
-                    (player_stats['TEAM_ID'] == team_id) & 
-                    (player_stats['SEASON'] == latest_season)
-                ]
-                
-                if not team_players.empty:
-                    # Get top players by minutes played
-                    team_players = team_players.sort_values('MIN', ascending=False).head(8)
-                    
-                    roster = []
-                    for _, player in team_players.iterrows():
-                        roster.append({
-                            'player_id': str(int(player['PLAYER_ID'])),
-                            'player_name': player.get('PLAYER_NAME', f'Player {player["PLAYER_ID"]}'),
-                            'position': player.get('POSITION', 'G'),
-                            'minutes_avg': float(player.get('MIN', 25.0))
-                        })
-                    
-                    logger.info(f"Found {len(roster)} players for team {team_id}")
-                    return roster
-            
-            # Fallback to NBA API if no processed data
-            from nba_api.stats.endpoints import teamplayerdashboard
-            
-            # Get current season (2024-25)
-            current_season = "2024-25"
-            
-            team_dashboard = teamplayerdashboard.TeamPlayerDashboard(
-                team_id=team_id,
-                season=current_season,
-                season_type_all_star='Regular Season'
-            )
-            
-            players_df = team_dashboard.get_data_frames()[1]  # Players general data
-            
-            if not players_df.empty:
-                # Get key players (top 8 by minutes)
-                key_players = players_df.sort_values('MIN', ascending=False).head(8)
-                
-                roster = []
-                for _, player in key_players.iterrows():
-                    roster.append({
-                        'player_id': str(int(player['PLAYER_ID'])),
-                        'player_name': player['PLAYER_NAME'],
-                        'position': 'G',  # Default position
-                        'minutes_avg': float(player['MIN'])
-                    })
-                
-                logger.info(f"Found {len(roster)} players for team {team_id} from NBA API")
-                return roster
-            
-        except Exception as e:
-            logger.error(f"Error getting roster for team {team_id}: {e}")
-        
-        # Fallback mock data with real-looking player IDs
-        mock_players = [
-            {'player_id': f'{team_id}001', 'player_name': 'Star Player', 'position': 'G', 'minutes_avg': 35.0},
-            {'player_id': f'{team_id}002', 'player_name': 'Key Forward', 'position': 'F', 'minutes_avg': 32.0},
-            {'player_id': f'{team_id}003', 'player_name': 'Center', 'position': 'C', 'minutes_avg': 28.0},
-            {'player_id': f'{team_id}004', 'player_name': 'Sixth Man', 'position': 'G', 'minutes_avg': 25.0},
-            {'player_id': f'{team_id}005', 'player_name': 'Role Player', 'position': 'F', 'minutes_avg': 22.0},
-        ]
-        logger.warning(f"Using fallback mock data for team {team_id}")
-        return mock_players
-    
-    def prepare_player_features(self, player_id: str, team_id: int) -> Dict:
-        """Prepare features for player performance prediction - MUST match training feature set"""
-        # Load latest player stats
-        try:
-            processed_dir = os.path.join(self.data_dir, 'processed')
-            player_stats_file = os.path.join(processed_dir, 'all_player_stats.csv')
-            
-            if os.path.exists(player_stats_file):
-                player_stats = pd.read_csv(player_stats_file)
-                # Convert player_id to int properly
-                try:
-                    player_id_int = int(player_id)
-                except:
-                    # If player_id is composite like "team_id_player_id", extract player part
-                    if '_' in str(player_id):
-                        player_id_int = int(str(player_id).split('_')[-1])
-                    else:
-                        player_id_int = int(str(player_id).replace(str(team_id), ''))
-                
-                # Get latest season data for player
-                latest_season = player_stats['SEASON'].max()
-                player_data = player_stats[
-                    (player_stats['PLAYER_ID'] == player_id_int) &
-                    (player_stats['SEASON'] == latest_season)
-                ]
-                
-                # If no data for latest season, try previous seasons
-                if player_data.empty:
-                    player_data = player_stats[player_stats['PLAYER_ID'] == player_id_int]
-                    if not player_data.empty:
-                        # Get most recent season for this player
-                        player_data = player_data[player_data['SEASON'] == player_data['SEASON'].max()]
-                
-                logger.info(f"Player {player_id_int}: Found {len(player_data)} records")
-            else:
-                player_data = pd.DataFrame()
-                logger.warning(f"Player stats file not found: {player_stats_file}")
-        except Exception as e:
-            logger.error(f"Error loading player data for {player_id}: {e}")
-            player_data = pd.DataFrame()
-        
-        # Essential columns MUST match the training set exactly (13 features)
-        essential_columns = [
-            'GP', 'MIN', 'FG_PCT', 'FG3_PCT', 'FT_PCT', 'REB', 'AST', 'PTS',
-            'PPG', 'RPG', 'APG', 'TS_PCT', 'EFG_PCT'
-        ]
-        
-        # Default values for essential features only
-        features = {}
-        
-        if not player_data.empty:
-            logger.info(f"Player data found with columns: {list(player_data.columns)}")
-            logger.info(f"Player data values: {player_data.iloc[0].to_dict()}")
-        else:
-            logger.warning(f"No player data found for player_id: {player_id}")
-        
-        for col in essential_columns:
-            if not player_data.empty and col in player_data.columns:
-                value = player_data.iloc[0][col]
-                # Handle NaN/null values
-                if pd.isna(value) or value is None:
-                    features[col] = self._get_default_value(col)
-                else:
-                    features[col] = float(value)
-                logger.debug(f"Player feature {col}: {features[col]} (from data)")
-            else:
-                features[col] = self._get_default_value(col)
-                logger.debug(f"Player feature {col}: {features[col]} (default)")
-        
-        return features
-    
-    def _get_default_value(self, column: str) -> float:
-        """Get default value for a column"""
-        defaults = {
-            'GP': 50.0,
-            'MIN': 25.0,
-            'FG_PCT': 0.45,
-            'FG3_PCT': 0.35,
-            'FT_PCT': 0.80,
-            'REB': 5.0,
-            'AST': 3.0,
-            'PTS': 12.0,
-            'PPG': 12.0,
-            'RPG': 5.0,
-            'APG': 3.0,
-            'TS_PCT': 0.55,
-            'EFG_PCT': 0.50
-        }
-        return defaults.get(column, 0.0)
-    
-    def get_player_model_feature_importance(self, target: str) -> Dict[str, float]:
-        """Get feature importance from a player performance model"""
-        if target not in self.player_models:
-            return {}
-        
-        model = self.player_models[target]
-        
-        # Check if model has feature_importances_ attribute (tree-based models)
-        if hasattr(model, 'feature_importances_'):
-            essential_columns = [
-                'GP', 'MIN', 'FG_PCT', 'FG3_PCT', 'FT_PCT', 'REB', 'AST', 'PTS',
-                'PPG', 'RPG', 'APG', 'TS_PCT', 'EFG_PCT'
-            ]
-            
-            importances = model.feature_importances_
-            
-            # Create feature importance dictionary
-            feature_importance = {}
-            for i, feature in enumerate(essential_columns):
-                if i < len(importances):
-                    feature_importance[feature] = float(importances[i])
-            
-            return feature_importance
-        
-        return {}
-    
-    def get_player_decision_factors(self, target: str, feature_values: Dict, top_n: int = 3) -> List[Dict]:
-        """Get top factors influencing a player prediction"""
-        feature_importance = self.get_player_model_feature_importance(target)
-        
-        if not feature_importance:
-            return []
-        
-        # Calculate contribution scores
-        contributions = []
-        for feature, importance in feature_importance.items():
-            if feature in feature_values:
-                value = feature_values[feature]
-                
-                # Normalize value for contribution calculation
-                if 'PCT' in feature:
-                    # Already in 0-1 range
-                    normalized_value = value
-                elif feature in ['PPG', 'PTS']:
-                    # Points - normalize to ~0-1 (typical range 0-30)
-                    normalized_value = min(value / 30, 1)
-                elif feature in ['RPG', 'REB']:
-                    # Rebounds
-                    normalized_value = min(value / 15, 1)
-                elif feature in ['APG', 'AST']:
-                    # Assists
-                    normalized_value = min(value / 12, 1)
-                elif feature == 'MIN':
-                    # Minutes per game
-                    normalized_value = min(value / 40, 1)
-                elif feature == 'GP':
-                    # Games played
-                    normalized_value = min(value / 82, 1)
-                else:
-                    normalized_value = min(abs(value) / 10, 1)
-                
-                contribution_score = importance * normalized_value
-                
-                contributions.append({
-                    'factor': self._format_player_feature_name(feature),
-                    'importance': round(importance, 4),
-                    'value': round(value, 2),
-                    'contribution': round(contribution_score, 4)
-                })
-        
-        # Sort by contribution and return top N
-        contributions.sort(key=lambda x: x['contribution'], reverse=True)
-        return contributions[:top_n]
-    
-    def _format_player_feature_name(self, feature: str) -> str:
-        """Convert player feature name to human-readable format"""
-        name_mapping = {
-            'GP': 'Games Played',
-            'MIN': 'Minutes Per Game',
-            'FG_PCT': 'Field Goal Percentage',
-            'FG3_PCT': 'Three-Point Percentage',
-            'FT_PCT': 'Free Throw Percentage',
-            'REB': 'Total Rebounds',
-            'AST': 'Total Assists',
-            'PTS': 'Total Points',
-            'PPG': 'Points Per Game',
-            'RPG': 'Rebounds Per Game',
-            'APG': 'Assists Per Game',
-            'TS_PCT': 'True Shooting Percentage',
-            'EFG_PCT': 'Effective Field Goal Percentage'
-        }
-        return name_mapping.get(feature, feature.replace('_', ' ').title())
-    
-    def predict_player_performance(self, upcoming_games: pd.DataFrame) -> List[Dict]:
-        """Predict player performance for upcoming games"""
-        logger.info("Predicting player performances...")
-        
-        if not self.player_models:
-            logger.error("No player models loaded")
-            return []
-        
-        predictions = []
-        
-        try:
-            for _, game in upcoming_games.iterrows():
-                game_predictions = {
-                    'game_id': game.get('game_id', 'unknown'),
-                    'game_date': game.get('game_date', ''),
-                    'home_team_predictions': [],
-                    'away_team_predictions': []
-                }
-                
-                # Predict for both teams
-                for team_type in ['home', 'away']:
-                    team_id = game.get(f'{team_type}_team_id')
-                    if team_id is None:
-                        continue
-                    
-                    # Get roster (simplified)
-                    roster = self.get_player_roster(team_id)
-                    
-                    team_predictions = []
-                    
-                    for player in roster:
-                        player_id = player['player_id']
-                        player_name = player['player_name']
-                        
-                        # Prepare player features
-                        player_features = self.prepare_player_features(player_id, team_id)
-                        
-                        # Get feature columns - MUST match training exactly (13 features)
-                        essential_columns = [
-                            'GP', 'MIN', 'FG_PCT', 'FG3_PCT', 'FT_PCT', 'REB', 'AST', 'PTS',
-                            'PPG', 'RPG', 'APG', 'TS_PCT', 'EFG_PCT'
-                        ]
-                        
-                        # Use essential columns only
-                        feature_columns = essential_columns
-                        
-                        # Create feature vector with exact same feature set as training
-                        X = np.array([[player_features.get(col, 0) for col in feature_columns]])
-                        
-                        # Scale features if available
-                        if hasattr(self.preprocessor, 'scalers') and 'standard' in self.preprocessor.scalers:
-                            try:
-                                X_scaled = self.preprocessor.scalers['standard'].transform(X)
-                            except:
-                                X_scaled = X
-                        else:
-                            X_scaled = X
-                        
-                        # Predict each stat
-                        player_prediction = {
-                            'player_id': player_id,
-                            'player_name': player_name,
-                            'position': player['position']
-                        }
-                        
-                        # Get games played for per-game conversion (from player features)
-                        games_played = player_features.get('GP', 72.0)  # Default to ~full season
-                        if games_played <= 0:
-                            games_played = 72.0  # Safety check
-                        
-                        # Store decision factors for each prediction
-                        all_decision_factors = {}
-                        
-                        for target, model in self.player_models.items():
-                            try:
-                                # Get season total prediction
-                                season_prediction = model.predict(X_scaled)[0]
-                                
-                                # Convert to per-game average
-                                per_game_prediction = season_prediction / games_played
-                                
-                                # Ensure non-negative predictions
-                                per_game_prediction = max(0, per_game_prediction)
-                                
-                                # Apply reasonable caps for per-game stats
-                                if target == 'points':
-                                    per_game_prediction = min(per_game_prediction, 50.0)  # Cap at 50 PPG
-                                elif target == 'assists':
-                                    per_game_prediction = min(per_game_prediction, 20.0)  # Cap at 20 APG
-                                elif target == 'rebounds':
-                                    per_game_prediction = min(per_game_prediction, 25.0)  # Cap at 25 RPG
-                                
-                                player_prediction[f'predicted_{target}'] = round(per_game_prediction, 1)
-                                
-                                # Get decision factors for this prediction
-                                decision_factors = self.get_player_decision_factors(target, player_features, top_n=3)
-                                all_decision_factors[target] = decision_factors
-                                
-                            except Exception as e:
-                                logger.warning(f"Could not predict {target} for {player_name}: {e}")
-                                # Use historical per-game averages as fallback
-                                fallback_values = {'points': 12.0, 'assists': 3.0, 'rebounds': 5.0}
-                                player_prediction[f'predicted_{target}'] = fallback_values.get(target, 0)
-                                all_decision_factors[target] = []
-                        
-                        # Add decision factors to prediction
-                        player_prediction['decision_factors'] = all_decision_factors
-                        
-                        team_predictions.append(player_prediction)
-                    
-                    if team_type == 'home':
-                        game_predictions['home_team_predictions'] = team_predictions
-                    else:
-                        game_predictions['away_team_predictions'] = team_predictions
-                
-                predictions.append(game_predictions)
-            
-            logger.info(f"Generated player predictions for {len(predictions)} games")
-            
-        except Exception as e:
-            logger.error(f"Error in player performance prediction: {e}")
-        
-        return predictions
-    
     def generate_comprehensive_predictions(self, days_ahead: int = 7) -> Dict:
-        """Generate comprehensive predictions for upcoming games"""
-        logger.info("Generating comprehensive NBA predictions...")
+        """Generate predictions for upcoming games"""
+        logger.info("Generating NBA game predictions...")
         
         try:
             # Get upcoming games
@@ -817,7 +423,6 @@ class NBAMLPredictor:
                     'prediction_date': datetime.now().isoformat(),
                     'games_predicted': 0,
                     'game_outcomes': [],
-                    'player_performances': [],
                     'summary': 'No upcoming games found'
                 }
             
@@ -826,19 +431,14 @@ class NBAMLPredictor:
             # Predict game outcomes
             game_outcomes = self.predict_game_outcomes(upcoming_games)
             
-            # Predict player performances
-            player_performances = self.predict_player_performance(upcoming_games)
-            
-            # Compile comprehensive results
+            # Compile results
             comprehensive_predictions = {
                 'prediction_date': datetime.now().isoformat(),
                 'prediction_window_days': days_ahead,
                 'games_predicted': len(upcoming_games),
                 'game_outcomes': game_outcomes,
-                'player_performances': player_performances,
                 'model_info': {
                     'game_model_loaded': self.game_model is not None,
-                    'player_models_loaded': list(self.player_models.keys()),
                     'preprocessors_loaded': hasattr(self.preprocessor, 'scalers')
                 },
                 'summary': f'Predictions generated for {len(upcoming_games)} games over {days_ahead} days'
@@ -864,8 +464,7 @@ class NBAMLPredictor:
                 'prediction_date': datetime.now().isoformat(),
                 'error': str(e),
                 'games_predicted': 0,
-                'game_outcomes': [],
-                'player_performances': []
+                'game_outcomes': []
             }
     
     def print_predictions_summary(self, predictions: Dict):
@@ -893,27 +492,6 @@ class NBAMLPredictor:
                 print(f"  Home Team ({game.get('home_team_id', 'N/A')}): {home_prob:.1%}")
                 print(f"  Away Team ({game.get('away_team_id', 'N/A')}): {away_prob:.1%}")
                 print(f"  Predicted Winner: {winner.title()} (Confidence: {confidence:.1%})")
-                print()
-        
-        # Player performances  
-        player_performances = predictions.get('player_performances', [])
-        if player_performances:
-            print("⭐ TOP PLAYER PERFORMANCE PREDICTIONS:")
-            print("-" * 40)
-            
-            for game_perf in player_performances[:3]:  # Show first 3 games
-                print(f"Game {game_perf.get('game_id', 'N/A')}: {game_perf.get('game_date', 'N/A')}")
-                
-                # Show top performers from each team
-                for team_type in ['home_team_predictions', 'away_team_predictions']:
-                    team_preds = game_perf.get(team_type, [])
-                    if team_preds:
-                        top_scorer = max(team_preds, key=lambda x: x.get('predicted_points', 0))
-                        print(f"  {team_type.replace('_', ' ').title()}:")
-                        print(f"    {top_scorer.get('player_name', 'Unknown')}: "
-                              f"{top_scorer.get('predicted_points', 0):.1f} pts, "
-                              f"{top_scorer.get('predicted_rebounds', 0):.1f} reb, "
-                              f"{top_scorer.get('predicted_assists', 0):.1f} ast")
                 print()
         
         print("=" * 80)
