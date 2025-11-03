@@ -15,9 +15,6 @@ The Model Manager handles the lifecycle of NBA ML models:
 
 - **Model Detection**: Checks if all required models exist:
   - `game_outcome_model.pkl` - Predicts game outcomes (win/loss)
-  - `points_prediction_model.pkl` - Predicts player points
-  - `assists_prediction_model.pkl` - Predicts player assists
-  - `rebounds_prediction_model.pkl` - Predicts player rebounds
 
 - **Automatic Training**: If models are missing on startup, they are automatically trained
 - **Manual Retraining**: Can be triggered manually for scheduled updates
@@ -69,9 +66,9 @@ Server Ready
 - **Process**:
   1. Collect latest NBA data
   2. Preprocess data and engineer features
-  3. Train all models (game outcome + player performance)
-  4. Save trained models
-  5. Models are immediately available for predictions
+  3. Train game outcome model
+  4. Save trained model
+  5. Model is immediately available for predictions
 
 ## Configuration
 

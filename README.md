@@ -1,5 +1,5 @@
 # Clutch Call
-Clutch Call is a student built website that uses AI to determine the best players and teams in their leagues using sports statistics.
+Clutch Call is a student built website that uses AI to predict game outcomes using team statistics.
 The project is built using python and react.
 
 ## Features
