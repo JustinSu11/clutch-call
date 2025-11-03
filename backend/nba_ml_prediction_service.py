@@ -29,6 +29,40 @@ logger = logging.getLogger(__name__)
 class NBAMLPredictor:
     """NBA Machine Learning Prediction Service"""
     
+    # ESPN to NBA.com team ID mapping
+    ESPN_TO_NBA_TEAM_ID = {
+        1: 1610612737,   # Atlanta Hawks
+        2: 1610612738,   # Boston Celtics
+        3: 1610612751,   # Brooklyn Nets
+        4: 1610612766,   # Charlotte Hornets
+        5: 1610612741,   # Chicago Bulls
+        6: 1610612739,   # Cleveland Cavaliers
+        7: 1610612742,   # Dallas Mavericks
+        8: 1610612743,   # Denver Nuggets
+        9: 1610612765,   # Detroit Pistons
+        10: 1610612744,  # Golden State Warriors
+        11: 1610612745,  # Houston Rockets
+        12: 1610612754,  # Indiana Pacers
+        13: 1610612746,  # LA Clippers
+        14: 1610612747,  # LA Lakers
+        15: 1610612763,  # Memphis Grizzlies
+        16: 1610612748,  # Miami Heat
+        17: 1610612749,  # Milwaukee Bucks
+        18: 1610612750,  # Minnesota Timberwolves
+        19: 1610612740,  # New Orleans Pelicans
+        20: 1610612752,  # New York Knicks
+        21: 1610612760,  # Oklahoma City Thunder
+        22: 1610612753,  # Orlando Magic
+        23: 1610612755,  # Philadelphia 76ers
+        24: 1610612756,  # Phoenix Suns
+        25: 1610612757,  # Portland Trail Blazers
+        26: 1610612758,  # Sacramento Kings
+        27: 1610612759,  # San Antonio Spurs
+        28: 1610612761,  # Toronto Raptors
+        29: 1610612762,  # Utah Jazz
+        30: 1610612764,  # Washington Wizards
+    }
+    
     def __init__(self, data_dir: str = "nba_ml_data"):
         self.data_dir = data_dir
         self.models_dir = os.path.join(data_dir, 'models')
@@ -422,6 +456,9 @@ class NBAMLPredictor:
     def get_player_roster(self, team_id: int, season: str = None) -> List[Dict]:
         """Get current roster for a team - returns empty list if data not available"""
         try:
+            # Convert ESPN team ID to NBA.com team ID if needed
+            nba_team_id = self.ESPN_TO_NBA_TEAM_ID.get(team_id, team_id)
+            
             # Try to get roster from processed data first
             processed_dir = os.path.join(self.data_dir, 'processed')
             player_stats_file = os.path.join(processed_dir, 'all_player_stats.csv')
@@ -429,10 +466,10 @@ class NBAMLPredictor:
             if os.path.exists(player_stats_file):
                 player_stats = pd.read_csv(player_stats_file)
                 
-                # Get latest season players for this team
+                # Get latest season players for this team (try both ESPN and NBA.com IDs)
                 latest_season = player_stats['SEASON'].max()
                 team_players = player_stats[
-                    (player_stats['TEAM_ID'] == team_id) & 
+                    ((player_stats['TEAM_ID'] == team_id) | (player_stats['TEAM_ID'] == nba_team_id)) & 
                     (player_stats['SEASON'] == latest_season)
                 ]
                 
@@ -449,7 +486,7 @@ class NBAMLPredictor:
                             'minutes_avg': float(player.get('MIN', 25.0))
                         })
                     
-                    logger.info(f"Found {len(roster)} players for team {team_id} from processed data")
+                    logger.info(f"Found {len(roster)} players for team {team_id} (NBA ID: {nba_team_id}) from processed data")
                     return roster
             
             # Fallback to NBA API if no processed data (acceptable for roster lookup only)
@@ -459,8 +496,9 @@ class NBAMLPredictor:
             # Get current season (2024-25)
             current_season = "2024-25"
             
+            # Use NBA.com team ID for API call
             team_dashboard = teamplayerdashboard.TeamPlayerDashboard(
-                team_id=team_id,
+                team_id=nba_team_id,
                 season=current_season,
                 season_type_all_star='Regular Season'
             )
@@ -480,7 +518,7 @@ class NBAMLPredictor:
                         'minutes_avg': float(player['MIN'])
                     })
                 
-                logger.info(f"Found {len(roster)} players for team {team_id} from NBA API")
+                logger.info(f"Found {len(roster)} players for team {team_id} (NBA ID: {nba_team_id}) from NBA API")
                 return roster
             
         except Exception as e:
