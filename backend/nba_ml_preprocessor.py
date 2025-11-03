@@ -28,8 +28,7 @@ class NBADataPreprocessor:
         self.encoders = {}
         self.feature_columns = {
             'game_features': [],
-            'team_features': [],
-            'player_features': []
+            'team_features': []
         }
         
     def load_raw_data(self) -> Dict[str, pd.DataFrame]:
@@ -488,7 +487,7 @@ class NBADataPreprocessor:
     
     def process_all_data(self) -> Dict[str, Dict]:
         """Main processing pipeline"""
-        logger.info("Starting comprehensive data preprocessing...")
+        logger.info("Starting data preprocessing...")
         
         # Load raw data
         raw_data = self.load_raw_data()
@@ -499,7 +498,6 @@ class NBADataPreprocessor:
         
         # Engineer features
         team_features = self.engineer_team_features(raw_data['team_stats'], raw_data['games'])
-        player_features = self.engineer_player_features(raw_data['player_stats'])
         
         # Create matchup features
         matchup_features = self.create_matchup_features(raw_data['games'], team_features)
@@ -508,18 +506,13 @@ class NBADataPreprocessor:
         rolling_features = self.create_rolling_features(matchup_features)
         final_features = self.create_recent_form_features(rolling_features)
         
-        # Prepare datasets for different prediction tasks
+        # Prepare datasets for game prediction
         game_X, game_y = self.prepare_game_outcome_features(final_features)
-        player_datasets = self.prepare_player_performance_features(player_features, raw_data['games'])
         
         # Split data
         processed_data = {
-            'game_prediction': self.create_train_val_test_split(game_X, game_y),
-            'player_predictions': {}
+            'game_prediction': self.create_train_val_test_split(game_X, game_y)
         }
-        
-        for target_name, (X, y) in player_datasets.items():
-            processed_data['player_predictions'][target_name] = self.create_train_val_test_split(X, y)
         
         # Save processed data
         self.save_processed_data(processed_data)
