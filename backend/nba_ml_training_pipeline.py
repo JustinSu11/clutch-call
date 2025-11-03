@@ -136,22 +136,22 @@ class NBAMLPipeline:
             self.pipeline_results['preprocessing'] = {'status': 'failed', 'error': str(e)}
             return False
     
-    def step_3_train_models(self, epochs_game: int = 50, epochs_player: int = 75) -> bool:
-        """Step 3: Train ML models (simplified version without TensorFlow for compatibility)"""
+    def step_3_train_models(self, epochs_game: int = 50) -> bool:
+        """Step 3: Train ML models (game outcome only)"""
         logger.info("=" * 60)
         logger.info("STEP 3: MODEL TRAINING")
         logger.info("=" * 60)
         
         try:
             # Import scikit-learn for fallback models
-            from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor, GradientBoostingClassifier, GradientBoostingRegressor
-            from sklearn.linear_model import LogisticRegression, LinearRegression
-            from sklearn.metrics import accuracy_score, classification_report, mean_absolute_error, mean_squared_error, r2_score
+            from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
+            from sklearn.linear_model import LogisticRegression
+            from sklearn.metrics import accuracy_score, classification_report
             import pandas as pd
             import numpy as np
             import joblib
             
-            logger.info("Using scikit-learn models as TensorFlow alternative...")
+            logger.info("Using scikit-learn models for game outcome prediction...")
             
             # Load processed data
             processed_dir = os.path.join(self.data_dir, 'processed', 'ml_ready')
@@ -217,71 +217,6 @@ class NBAMLPipeline:
                 except Exception as e:
                     logger.error(f"  Game model training failed: {e}")
             
-            # Train player performance models
-            player_dir = os.path.join(processed_dir, 'player_predictions')
-            if os.path.exists(player_dir):
-                for target in ['points', 'assists', 'rebounds']:
-                    target_dir = os.path.join(player_dir, target)
-                    if not os.path.exists(target_dir):
-                        continue
-                        
-                    logger.info(f"Training {target} prediction model...")
-                    
-                    try:
-                        X_train = pd.read_csv(os.path.join(target_dir, 'X_train.csv'))
-                        y_train = pd.read_csv(os.path.join(target_dir, 'y_train.csv')).values.flatten()
-                        X_val = pd.read_csv(os.path.join(target_dir, 'X_val.csv'))
-                        y_val = pd.read_csv(os.path.join(target_dir, 'y_val.csv')).values.flatten()
-                        X_test = pd.read_csv(os.path.join(target_dir, 'X_test.csv'))
-                        y_test = pd.read_csv(os.path.join(target_dir, 'y_test.csv')).values.flatten()
-                        
-                        # Train regression models
-                        models = {
-                            'random_forest': RandomForestRegressor(n_estimators=200, max_depth=15, random_state=42),
-                            'gradient_boosting': GradientBoostingRegressor(n_estimators=200, max_depth=6, random_state=42),
-                            'linear_regression': LinearRegression()
-                        }
-                        
-                        best_model = None
-                        best_score = float('inf')
-                        target_results = {}
-                        
-                        for name, model in models.items():
-                            logger.info(f"  Training {name} for {target}...")
-                            model.fit(X_train, y_train)
-                            
-                            # Evaluate
-                            val_pred = model.predict(X_val)
-                            val_mae = mean_absolute_error(y_val, val_pred)
-                            
-                            test_pred = model.predict(X_test)
-                            test_mae = mean_absolute_error(y_test, test_pred)
-                            test_mse = mean_squared_error(y_test, test_pred)
-                            test_r2 = r2_score(y_test, test_pred)
-                            
-                            target_results[name] = {
-                                'validation_mae': val_mae,
-                                'test_mae': test_mae,
-                                'test_mse': test_mse,
-                                'test_r2': test_r2
-                            }
-                            
-                            if val_mae < best_score:
-                                best_score = val_mae
-                                best_model = model
-                            
-                            logger.info(f"    {name} - Val MAE: {val_mae:.4f}, Test MAE: {test_mae:.4f}, R²: {test_r2:.4f}")
-                        
-                        # Save best model
-                        if best_model is not None:
-                            joblib.dump(best_model, os.path.join(models_dir, f'{target}_prediction_model.pkl'))
-                            logger.info(f"  ✅ Best {target} model saved (MAE: {best_score:.4f})")
-                        
-                        results[f'player_{target}'] = target_results
-                        
-                    except Exception as e:
-                        logger.error(f"  {target} model training failed: {e}")
-            
             # Save training results
             with open(os.path.join(models_dir, 'training_results.json'), 'w') as f:
                 json.dump(results, f, indent=2)
@@ -324,7 +259,7 @@ class NBAMLPipeline:
             return False
     
     def run_full_pipeline(self, seasons: List[str] = None, 
-                         epochs_game: int = 50, epochs_player: int = 75) -> Dict:
+                         epochs_game: int = 50) -> Dict:
         """Run the complete NBA ML pipeline"""
         logger.info("🏀 STARTING NBA ML PIPELINE")
         logger.info(f"Pipeline started at: {datetime.now()}")
@@ -341,7 +276,7 @@ class NBAMLPipeline:
             return self.pipeline_results
         
         # Step 3: Model Training
-        if not self.step_3_train_models(epochs_game, epochs_player):
+        if not self.step_3_train_models(epochs_game):
             return self.pipeline_results
         
         # Step 4: Prediction Service
@@ -418,7 +353,6 @@ def main():
     parser.add_argument('--force-retrain', action='store_true', help='Force retraining even if models exist')
     parser.add_argument('--seasons', nargs='+', help='Seasons to collect (e.g., 2020-21 2021-22)')
     parser.add_argument('--epochs-game', type=int, default=50, help='Epochs for game prediction model')
-    parser.add_argument('--epochs-player', type=int, default=75, help='Epochs for player prediction models')
     
     args = parser.parse_args()
     
@@ -431,8 +365,7 @@ def main():
     # Run pipeline
     results = pipeline.run_full_pipeline(
         seasons=args.seasons,
-        epochs_game=args.epochs_game,
-        epochs_player=args.epochs_player
+        epochs_game=args.epochs_game
     )
     
     # Print summary

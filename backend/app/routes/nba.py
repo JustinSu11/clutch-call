@@ -195,125 +195,9 @@ def nba_game_predictions():
         return jsonify({"error": f"Error generating game predictions: {str(e)}"}), 500
 
 
-@bp.get("/predictions/players")
-def nba_player_predictions():
-    """Get individual player performance predictions for upcoming games.
-    
-    Query params:
-        days_ahead (int): Number of days ahead to predict (default: 1, max: 7)
-        game_id (str): Specific game ID to get player predictions for
-        team_id (int): Filter predictions for specific team
-        min_points (float): Minimum predicted points threshold
-        top_n (int): Return top N performers by predicted points
-    """
-    if not ML_AVAILABLE:
-        return jsonify({"error": "NBA ML system is not available"}), 503
-    
-    try:
-        days_ahead = int(request.args.get('days_ahead', 1))
-        game_id = request.args.get('game_id')
-        team_id = request.args.get('team_id', type=int)
-        min_points = request.args.get('min_points', type=float)
-        top_n = request.args.get('top_n', type=int)
-        
-        # Validate parameters
-        if days_ahead < 1 or days_ahead > 7:
-            return jsonify({"error": "days_ahead must be between 1 and 7"}), 400
-        
-        # Initialize predictor
-        predictor = NBAMLPredictor()
-        
-        # Generate predictions
-        predictions = predictor.generate_comprehensive_predictions(days_ahead=days_ahead)
-        
-        if not predictions:
-            return jsonify({
-                "message": "No upcoming games found for player predictions",
-                "predictions": []
-            })
-        
-        # Process player predictions
-        all_player_predictions = []
-        
-        for game in predictions.get('player_performances', []):
-            game_info = {
-                "game_id": game.get('game_id'),
-                "game_date": game.get('game_date'),
-                "home_team_id": game.get('home_team_id'),
-                "away_team_id": game.get('away_team_id')
-            }
-            
-            # Process home team players
-            for player in game.get('home_team_predictions', []):
-                player_data = {
-                    **game_info,
-                    "team_type": "home",
-                    "team_id": game.get('home_team_id'),
-                    "player_id": player.get('player_id'),
-                    "player_name": player.get('player_name'),
-                    "position": player.get('position'),
-                    "predicted_points": round(player.get('predicted_points', 0), 1),
-                    "predicted_assists": round(player.get('predicted_assists', 0), 1),
-                    "predicted_rebounds": round(player.get('predicted_rebounds', 0), 1),
-                    "decision_factors": player.get('decision_factors', {})
-                }
-                all_player_predictions.append(player_data)
-            
-            # Process away team players
-            for player in game.get('away_team_predictions', []):
-                player_data = {
-                    **game_info,
-                    "team_type": "away", 
-                    "team_id": game.get('away_team_id'),
-                    "player_id": player.get('player_id'),
-                    "player_name": player.get('player_name'),
-                    "position": player.get('position'),
-                    "predicted_points": round(player.get('predicted_points', 0), 1),
-                    "predicted_assists": round(player.get('predicted_assists', 0), 1),
-                    "predicted_rebounds": round(player.get('predicted_rebounds', 0), 1),
-                    "decision_factors": player.get('decision_factors', {})
-                }
-                all_player_predictions.append(player_data)
-        
-        # Apply filters
-        filtered_predictions = all_player_predictions
-        
-        if game_id:
-            filtered_predictions = [p for p in filtered_predictions if p['game_id'] == game_id]
-        
-        if team_id:
-            filtered_predictions = [p for p in filtered_predictions if p['team_id'] == team_id]
-        
-        if min_points:
-            filtered_predictions = [p for p in filtered_predictions if p['predicted_points'] >= min_points]
-        
-        # Sort by predicted points (descending)
-        filtered_predictions.sort(key=lambda x: x['predicted_points'], reverse=True)
-        
-        # Apply top_n filter
-        if top_n and top_n > 0:
-            filtered_predictions = filtered_predictions[:top_n]
-        
-        return jsonify({
-            "prediction_date": datetime.now().isoformat(),
-            "days_ahead": days_ahead,
-            "total_predictions": len(filtered_predictions),
-            "filters_applied": {
-                "game_id": game_id,
-                "team_id": team_id,
-                "min_points": min_points,
-                "top_n": top_n
-            },
-            "predictions": filtered_predictions
-        })
-        
-    except Exception as e:
-        return jsonify({"error": f"Error generating player predictions: {str(e)}"}), 500
-
-
 @bp.get("/predictions/game/<game_id>")
 def nba_game_prediction_detail(game_id: str):
-    """Get detailed predictions for a specific game including both game outcome and player performances.
+    """Get detailed predictions for a specific game outcome.
     
     Path params:
         game_id (str): The specific game ID to get predictions for
@@ -333,19 +217,13 @@ def nba_game_prediction_detail(game_id: str):
         
         # Find the specific game
         game_outcome = None
-        game_players = None
         
         for game in predictions.get('game_outcomes', []):
             if game.get('game_id') == game_id:
                 game_outcome = game
                 break
         
-        for game in predictions.get('player_performances', []):
-            if game.get('game_id') == game_id:
-                game_players = game
-                break
-        
-        if not game_outcome or not game_players:
+        if not game_outcome:
             return jsonify({"error": f"Game {game_id} not found in upcoming predictions"}), 404
         
         # Build detailed response
@@ -361,15 +239,6 @@ def nba_game_prediction_detail(game_id: str):
                 "home_win_probability": round(game_outcome.get('home_team_win_probability', 0), 3),
                 "away_win_probability": round(game_outcome.get('away_team_win_probability', 0), 3),
                 "decision_factors": game_outcome.get('decision_factors', [])
-            },
-            "player_predictions": {
-                "home_team": game_players.get('home_team_predictions', []),
-                "away_team": game_players.get('away_team_predictions', [])
-            },
-            "summary": {
-                "total_players": len(game_players.get('home_team_predictions', [])) + len(game_players.get('away_team_predictions', [])),
-                "home_players": len(game_players.get('home_team_predictions', [])),
-                "away_players": len(game_players.get('away_team_predictions', []))
             }
         }
         
@@ -377,96 +246,6 @@ def nba_game_prediction_detail(game_id: str):
         
     except Exception as e:
         return jsonify({"error": f"Error getting game prediction details: {str(e)}"}), 500
-
-
-@bp.get("/predictions/top-performers")
-def nba_top_performers():
-    """Get predicted top performers across all upcoming games.
-    
-    Query params:
-        days_ahead (int): Number of days ahead to analyze (default: 1, max: 7)
-        stat (str): Stat to rank by - 'points', 'assists', 'rebounds' (default: points)
-        limit (int): Number of top performers to return (default: 10, max: 50)
-        min_threshold (float): Minimum value threshold for the selected stat
-    """
-    if not ML_AVAILABLE:
-        return jsonify({"error": "NBA ML system is not available"}), 503
-    
-    try:
-        days_ahead = int(request.args.get('days_ahead', 1))
-        stat = request.args.get('stat', 'points').lower()
-        limit = int(request.args.get('limit', 10))
-        min_threshold = request.args.get('min_threshold', type=float, default=0)
-        
-        # Validate parameters
-        if days_ahead < 1 or days_ahead > 7:
-            return jsonify({"error": "days_ahead must be between 1 and 7"}), 400
-        
-        if stat not in ['points', 'assists', 'rebounds']:
-            return jsonify({"error": "stat must be 'points', 'assists', or 'rebounds'"}), 400
-        
-        if limit < 1 or limit > 50:
-            return jsonify({"error": "limit must be between 1 and 50"}), 400
-        
-        # Initialize predictor
-        predictor = NBAMLPredictor()
-        
-        # Generate predictions
-        predictions = predictor.generate_comprehensive_predictions(days_ahead=days_ahead)
-        
-        if not predictions:
-            return jsonify({
-                "message": "No upcoming games found",
-                "top_performers": []
-            })
-        
-        # Collect all player predictions
-        all_players = []
-        stat_key = f'predicted_{stat}'
-        
-        for game in predictions.get('player_predictions', []):
-            game_info = {
-                "game_id": game.get('game_id'),
-                "game_date": game.get('game_date'),
-                "home_team_id": game.get('home_team_id'),
-                "away_team_id": game.get('away_team_id')
-            }
-            
-            # Process all players from both teams
-            for team_key, team_type in [('home_team_predictions', 'home'), ('away_team_predictions', 'away')]:
-                for player in game.get(team_key, []):
-                    stat_value = player.get(stat_key, 0)
-                    if stat_value >= min_threshold:
-                        player_data = {
-                            **game_info,
-                            "team_type": team_type,
-                            "team_id": game.get(f'{team_type}_team_id'),
-                            "player_id": player.get('player_id'),
-                            "player_name": player.get('player_name'),
-                            "position": player.get('position'),
-                            "predicted_points": round(player.get('predicted_points', 0), 1),
-                            "predicted_assists": round(player.get('predicted_assists', 0), 1),
-                            "predicted_rebounds": round(player.get('predicted_rebounds', 0), 1),
-                            f"predicted_{stat}": round(stat_value, 1)
-                        }
-                        all_players.append(player_data)
-        
-        # Sort by the selected stat (descending) and limit results
-        all_players.sort(key=lambda x: x[stat_key], reverse=True)
-        top_performers = all_players[:limit]
-        
-        return jsonify({
-            "prediction_date": datetime.now().isoformat(),
-            "days_ahead": days_ahead,
-            "stat_analyzed": stat,
-            "min_threshold": min_threshold,
-            "total_qualified_players": len(all_players),
-            "returned_count": len(top_performers),
-            "top_performers": top_performers
-        })
-        
-    except Exception as e:
-        return jsonify({"error": f"Error getting top performers: {str(e)}"}), 500
 
 
 @bp.post("/predictions/train")
