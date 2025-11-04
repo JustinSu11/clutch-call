@@ -1,7 +1,7 @@
 /*
     File: frontend/src/app/predictions/page.tsx
     Created: 09/29/2025 by Michael Tajchman
-    Last Updated: 10/13/2025 by CJ Quintero
+    Last Updated: 10/28/2025 by CJ Quintero
 
     Description: This file contains the main React component for the Predictions screen of the ClutchCall web application.
     It includes a header with navigation, a filterable list of sports, and a table displaying AI-powered match predictions.
@@ -309,7 +309,8 @@ export default function PredictionsScreen() {
                 </div>
                 <SportsFilter sports={sports} activeSport={activeSport} setActiveSport={setActiveSport} />
                 <div className="rounded-lg overflow-hidden">
-                    <div className="overflow-x-hidden">
+                    {/* Desktop table */}
+                    <div className="hidden sm:block overflow-x-auto">
                         <table className="min-w-full divide-y divide-secondary">
                             <thead className="bg-secondary-background rounded-xl shadow-sm">
                                 <tr>
@@ -353,11 +354,53 @@ export default function PredictionsScreen() {
                             </tbody>
                         </table>
                     </div>
+
+                    {/* Mobile cards */}
+                    <div className="sm:hidden space-y-4">
+                        {loading ? (
+                            <div className="text-center py-10 text-text-primary bg-secondary-background rounded-lg">
+                                Loading predictions...
+                            </div>
+                        ) : error ? (
+                            <div className="text-center py-10 text-text-primary bg-secondary-background rounded-lg">
+                                {error}
+                            </div>
+                        ) : filteredPredictions.length > 0 ? (
+                            filteredPredictions.map((item, idx) => {
+                                const [awayTeam, homeTeam] = item.match.split(' at ');
+                                return (
+                                    <div
+                                        key={idx}
+                                        className="bg-secondary-background p-4 rounded-lg cursor-pointer hover:bg-secondary"
+                                        onClick={() => openMatchDialog(homeTeam ?? '', awayTeam ?? '', item.sport)}
+                                    >
+                                        <div className="flex justify-between items-start mb-2">
+                                            <div className="font-medium text-text-primary">{item.match}</div>
+                                            <div className="text-sm text-text-secondary">{item.date}</div>
+                                        </div>
+                                        <div className="text-sm text-text-primary mb-3">{item.prediction}</div>
+                                        <div className="flex items-center">
+                                            <div className="flex-1 bg-gray-200 rounded-full h-2 mr-3">
+                                                <div
+                                                    className="h-2 rounded-full"
+                                                    style={{ ...getConfidenceStyle(item.confidence), width: `${item.confidence}%` }}
+                                                ></div>
+                                            </div>
+                                            <span className="text-sm font-medium text-text-primary">{item.confidence}%</span>
+                                        </div>
+                                    </div>
+                                );
+                            })
+                        ) : (
+                            <div className="text-center py-10 text-text-primary bg-secondary-background rounded-lg">
+                                No predictions available for {activeSport}.
+                            </div>
+                        )}
+                    </div>
                 </div>
             </main>
-
             <MatchDialog
-                open={dialogOpen}
+                open ={dialogOpen}
                 onClose={() => setDialogOpen(false)}
                 homeTeam={selectedHome}
                 awayTeam={selectedAway}

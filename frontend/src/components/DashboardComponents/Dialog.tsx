@@ -2,7 +2,7 @@
     A dialog component to display match stuff when clicking on a
     match in the predictions page
     Made: 10/09/2025 by CJ
-    Last Updated: 10/13/2025 by CJ
+    Last Updated: 10/28/2025 by CJ
 
 */
 
