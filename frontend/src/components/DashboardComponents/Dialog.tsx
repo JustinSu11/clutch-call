@@ -2,7 +2,7 @@
     A dialog component to display match stuff when clicking on a
     match in the predictions page
     Made: 10/09/2025 by CJ
-    Last Updated: 10/09/2025 by CJ
+    Last Updated: 10/28/2025 by CJ
 
 */
 
@@ -59,7 +59,7 @@ export default function MatchDialog({
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {/* left column with right border (the divider) */}
-                        <div className="text-text-primary space-y-2 border-r-2 pr-4">
+                        <div className="text-text-primary space-y-2">
                             <h4 className="text-text-primary text-lg font-semibold">{awayTeam}</h4>
                             {awayStats ? (
                                 <ul className="text-xl space-y-1">
@@ -75,8 +75,7 @@ export default function MatchDialog({
                             )}
                         </div>
 
-                        <div className="space-y-2 pl-4">
-                            {/* right column with left padding */}
+                        <div className="space-y-2">
                             <h4 className="text-text-primary text-lg font-semibold">{homeTeam}</h4>
                             {homeStats ? (
                                 <ul className="text-xl space-y-1">
