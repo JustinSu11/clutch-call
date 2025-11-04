@@ -3,7 +3,7 @@
     Created: 09/19/2025 
     Author: CJ Quintero
 
-    Last Updated: 10/31/2025 by CJ Quintero
+    Last Updated: 11/04/2025 by Justin Nguyen
 
     Description: This file has the code for the upcoming matches component in the dashboard.
     For future development, this component will fetch and display real upcoming matches using 
