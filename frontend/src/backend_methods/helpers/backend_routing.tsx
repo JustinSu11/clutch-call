@@ -29,7 +29,7 @@ export const ROUTES = {
     // Sports Statistics Analysis Routes
     today_all_games: `/today`,
     today_nba_games: `/today/nba`,
-    today_nfl_games: `/today/nfl`,
+    today_nfl_games: `/nfl/today`, // Use /nfl/today instead of /today/nfl since today blueprint may not be registered
     today_soccer_games: `/today/soccer`,
     
     weekly_all_games: `/weekly`,
@@ -81,7 +81,7 @@ export const makeBackendRequest = async (method: 'GET' | 'POST', relativeRoute: 
     }
 
     try {
-        const response = await fetch(fullUrl, { // <-- Use fullUrl here
+        const response = await fetch(fullUrl, {
             method,
             headers: {
                 'Content-Type': 'application/json',
@@ -92,16 +92,23 @@ export const makeBackendRequest = async (method: 'GET' | 'POST', relativeRoute: 
 
         // Check if the response was successful (status code 2xx)
         if (!response.ok) {
-            let errorData = { error: `HTTP error! status: ${response.status}` };
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            let errorData: any = { 
+                error: 'HTTP error! status: ' + (response?.status || 'unknown'),
+                status: response?.status || 'unknown',
+                statusText: response?.statusText || 'Unknown error'
+            };
+            
             try {
                  // Try to parse error details from the response body
                 const body = await response.json();
                 errorData = { ...errorData, ...body }; // Combine status error with body details
             } catch (jsonError) {
-                // If response is not JSON or empty, use status text
-                errorData.error = response.statusText || errorData.error;
+                // If response is not JSON or empty, keep existing error data
+                console.warn('Could not parse error response body');
             }
-            console.error(`API Error (${response.status}):`, errorData);
+            
+            console.error('API Error:', JSON.stringify(errorData, null, 2));
             // Throw an error object with details
             throw new Error(JSON.stringify(errorData)); 
         }
@@ -114,9 +121,14 @@ export const makeBackendRequest = async (method: 'GET' | 'POST', relativeRoute: 
         return response.json(); // Parse the JSON body
 
     } catch (error) {
-        console.error("Fetch Error:", error);
-        // Ensure error is re-thrown so the calling function's catch block works
-        throw error; 
+        // If error is from our !response.ok block, just re-throw it
+        if (error instanceof Error && error.message.startsWith('{')) {
+            throw error;
+        }
+        
+        // Otherwise it's a network/fetch error - log and throw with better message
+        console.error("Network/Fetch Error:", error);
+        throw new Error(`Network error: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
 };
 // --- END UPDATE ---

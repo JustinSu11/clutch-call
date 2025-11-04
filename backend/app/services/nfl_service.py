@@ -1,10 +1,12 @@
 """
-File: app/services/nfl_service.py
-Author: Maaz Haque
-Purpose: Service functions for NFL data via ESPN's public JSON endpoints. Provides
-         helpers used by the route layer for listing games, fetching a single event,
-         retrieving box scores, and listing upcoming games.
-         *** UPDATED to use LIVE data for AI predictions. ***
+Final working nfl_service.py - Matches emergency_fix model
+Replace: backend/app/services/nfl_service.py
+
+FIXES:
+- Added game status check to prevent predictions on upcoming games
+- Returns clear error message for pre-game predictions
+- Model only works on in-progress or completed games with actual statistics
+- Enhanced debugging to track where errors occur
 """
 
 from datetime import datetime, timedelta
@@ -13,94 +15,227 @@ import requests
 import joblib
 import pandas as pd
 import os
+import traceback
 
-# ESPN public API endpoints
 SCOREBOARD = "https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard"
 EVENT = "https://site.api.espn.com/apis/site/v2/sports/football/nfl/summary"
 
-
-# --- AI MODEL INTEGRATION ---
-
-# Load the saved NFL model from file
 MODEL_PATH = os.path.join(os.path.dirname(__file__), '../../models/saved_models/nfl_model.pkl')
 try:
     model = joblib.load(MODEL_PATH)
-    print("NFL prediction model loaded successfully.")
+    print("✅ NFL model loaded")
+    print(f"   Features: {model.n_features_in_}")
 except Exception as e:
-    print(f"Error loading NFL model: {e}")
+    print(f"❌ Model load error: {e}")
     model = None
 
-def _extract_team_stats(team_data: Dict[str, Any]):
-    """Helper function to find and extract season stats from the ESPN payload."""
-    # The stats are often nested in a list called 'stats'
-    for stat in team_data.get("statistics", []):
-        if stat.get("name") == "totalYards":
-            return float(stat.get("displayValue", 350.0))
-    return 350.0 # Return an average value if stats aren't found
 
 def generate_prediction_for_game(event_id: str):
-    """
-    Orchestrator function that uses LIVE data to generate a prediction.
-    """
+    """Generate prediction using actual game yard statistics."""
+    print(f"\n{'='*60}")
+    print(f"🏈 PREDICTION FOR: {event_id}")
+    
     if model is None:
-        return {"error": "Model not loaded. Cannot make a prediction."}
+        print("❌ Model not loaded")
+        return {"error": "Model not loaded"}
     
     try:
-        # 1. Get live game data from the ESPN summary endpoint
+        # Step 1: Fetch game data
+        print(f"📡 Fetching game data...")
         game_data = get_game_by_id(event_id)
         
-        # 2. Feature Engineering: Parse the JSON to find the stats for each team
-        boxscore = game_data.get("boxscore", {})
-        teams_data = boxscore.get("teams", [])
+        # DEBUG: Show top-level keys
+        print(f"🔍 Top-level keys in response: {list(game_data.keys())}")
         
-        home_team_stats = teams_data[1] if teams_data and teams_data[1].get('homeAway') == 'home' else {}
-        away_team_stats = teams_data[0] if teams_data and teams_data[0].get('homeAway') == 'away' else {}
-
-        if not home_team_stats or not away_team_stats:
-             return {"error": "Could not find team stat data in the API response."}
-
-        # Extract the specific stats our model was trained on
-        home_off_yards = _extract_team_stats(home_team_stats)
-        away_off_yards = _extract_team_stats(away_team_stats)
+        # Step 2: Access competitions - check different possible locations
+        competitions = game_data.get("competitions", [])
         
-        # For this model, we'll assume defensive yards allowed is similar to opponent's offensive yards.
-        # A more complex model would need a direct 'defensiveYards' stat.
-        home_def_yards = away_off_yards 
-        away_def_yards = home_off_yards
+        # If not found at top level, check inside 'header'
+        if not competitions and "header" in game_data:
+            competitions = game_data.get("header", {}).get("competitions", [])
+            print(f"🔍 Found competitions in 'header'")
+        
+        if not competitions:
+            print(f"❌ No competitions data found")
+            print(f"🔍 Available keys: {list(game_data.keys())}")
+            return {"error": f"No competitions data found for event {event_id}"}
+        
+        comp = competitions[0]
+        print(f"✅ Competition data retrieved")
+        
+        # Step 3: CHECK GAME STATUS
+        status = comp.get("status", {})
+        status_type = status.get("type", {}).get("name", "unknown").lower()
+        status_state = status.get("type", {}).get("state", "unknown").lower()
+        
+        print(f"📋 Game Status: '{status_type}' (state: '{status_state}')")
+        
+        # Check if game is scheduled/upcoming
+        if status_state == "pre":
+            print(f"⚠️  Game has NOT started - status_state is 'pre'")
+            return {
+                "error": "Cannot predict upcoming games",
+                "message": "This model predicts outcomes based on in-game yard statistics. The game must be in progress or completed.",
+                "game_status": status_type,
+                "status_state": status_state,
+                "event_id": event_id,
+                "suggestion": "Please wait until the game starts to get a prediction."
+            }
+        
+        if status_type in ["scheduled", "pre"]:
+            print(f"⚠️  Game has NOT started - status_type is '{status_type}'")
+            return {
+                "error": "Cannot predict upcoming games",
+                "message": "This model predicts outcomes based on in-game yard statistics. The game must be in progress or completed.",
+                "game_status": status_type,
+                "status_state": status_state,
+                "event_id": event_id,
+                "suggestion": "Please wait until the game starts to get a prediction."
+            }
+        
+        print(f"✅ Game is live or completed - proceeding with prediction")
+        
+        # Step 4: Get competitors
+        competitors = comp.get("competitors", [])
+        
+        home = next((c for c in competitors if c.get("homeAway") == "home"), None)
+        away = next((c for c in competitors if c.get("homeAway") == "away"), None)
+        
+        if not home or not away:
+            # Fallback: Check boxscore teams if not in main competitors list
+            boxscore_teams = game_data.get("boxscore", {}).get("teams", [])
+            if len(boxscore_teams) == 2:
+                home = next((t for t in boxscore_teams if t.get("homeAway") == "home"), None)
+                away = next((t for t in boxscore_teams if t.get("homeAway") == "away"), None)
 
-        # 3. Format features to match the model's "contract"
-        feature_data = pd.DataFrame(
-            [[home_off_yards, home_def_yards, away_off_yards, away_def_yards]], 
-            columns=['HomeOffYards', 'HomeDefYards', 'AwayOffYards', 'AwayDefYards']
+        if not home or not away:
+            print(f"❌ Cannot find home/away teams")
+            return {"error": f"Cannot find teams for event {event_id}"}
+        
+        home_team_name = home.get("team", {}).get("displayName", "Unknown")
+        away_team_name = away.get("team", {}).get("displayName", "Unknown")
+        print(f"🏟️  {away_team_name} @ {home_team_name}")
+        
+        # Step 5: Extract total yards from statistics
+        home_yards = 300.0
+        away_yards = 300.0
+        
+        home_stats = home.get("statistics", [])
+        away_stats = away.get("statistics", [])
+        
+        print(f"📊 Extracting statistics...")
+        print(f"   Home stats available: {len(home_stats)} items")
+        print(f"   Away stats available: {len(away_stats)} items")
+        
+        for stat in home_stats:
+            if stat.get("name") == "totalYards":
+                val_str = stat.get("displayValue") or "300"
+                home_yards = float(val_str.replace(",", ""))
+                print(f"   ✓ Home yards from stats: {home_yards}")
+        
+        for stat in away_stats:
+            if stat.get("name") == "totalYards":
+                val_str = stat.get("displayValue") or "300"
+                away_yards = float(val_str.replace(",", ""))
+                print(f"   ✓ Away yards from stats: {away_yards}")
+        
+        # Fallback: use boxscore stats if available
+        if home_yards == 300.0 or away_yards == 300.0:
+            print(f"⚠️  Missing stats, checking boxscore...")
+            boxscore = game_data.get("boxscore", {})
+            teams = boxscore.get("teams", [])
+            
+            for team in teams:
+                if team.get("homeAway") == "home":
+                    for stat in team.get("statistics", []):
+                        if stat.get("name") == "totalYards":
+                            val_str = stat.get("displayValue") or "300"
+                            home_yards = float(val_str.replace(",", ""))
+                            print(f"   ✓ Home yards from boxscore: {home_yards}")
+                elif team.get("homeAway") == "away":
+                    for stat in team.get("statistics", []):
+                        if stat.get("name") == "totalYards":
+                            val_str = stat.get("displayValue") or "300"
+                            away_yards = float(val_str.replace(",", ""))
+                            print(f"   ✓ Away yards from boxscore: {away_yards}")
+        
+        # Check if we still have default values (no stats found)
+        if home_yards == 300.0 and away_yards == 300.0:
+            print(f"⚠️  No yard statistics found - using defaults")
+            print(f"⚠️  This likely means the game hasn't generated stats yet")
+            return {
+                "error": "Insufficient game data",
+                "message": "No yard statistics available for this game yet. The game may have just started.",
+                "game_status": status_type,
+                "status_state": status_state,
+                "event_id": event_id
+            }
+        
+        yard_diff = home_yards - away_yards
+        
+        print(f"📊 FEATURES:")
+        print(f"   Home Total Yards: {home_yards:.1f}")
+        print(f"   Away Total Yards: {away_yards:.1f}")
+        print(f"   Yard Differential: {yard_diff:+.1f}")
+        
+        # Step 6: Create features and predict
+        features = pd.DataFrame(
+            [[home_yards, away_yards, yard_diff]], 
+            columns=['HomeYards', 'AwayYards', 'YardDiff']
         )
         
-        # 4. Make the prediction
-        prediction = model.predict(feature_data)
-        prediction_proba = model.predict_proba(feature_data)
-
-        winner_index = prediction[0]
-        confidence = prediction_proba[0][winner_index]
-        winner = "Home" if winner_index == 1 else "Away"
+        # Predict
+        prediction = model.predict(features)
+        proba = model.predict_proba(features)
+        
+        predicted_class = int(prediction[0])
+        home_prob = float(proba[0][1])
+        away_prob = float(proba[0][0])
+        
+        predicted_winner = "home" if predicted_class == 1 else "away"
+        confidence = home_prob if predicted_class == 1 else away_prob
+        
+        print(f"\n🤖 PREDICTION:")
+        print(f"   Winner: {predicted_winner.upper()}")
+        print(f"   Home: {home_prob:.1%}, Away: {away_prob:.1%}")
+        print(f"   Confidence: {confidence:.1%}")
+        print(f"{'='*60}\n")
         
         return {
-            "predicted_winner": winner,
-            "confidence": f"{confidence * 100:.2f}%",
+            "prediction": predicted_winner,
+            "predicted_winner": predicted_winner,
+            "confidence": round(confidence * 100, 2),
+            "home_win_probability": round(home_prob * 100, 2),
+            "away_win_probability": round(away_prob * 100, 2),
+            "model_info": {
+                "type": "RandomForestClassifier",
+                "raw_prediction": predicted_class
+            },
+            "features_used": {
+                "HomeYards": round(home_yards, 1),
+                "AwayYards": round(away_yards, 1),
+                "YardDiff": round(yard_diff, 1)
+            },
+            "game_status": status_type,
+            "teams": {
+                "home": home_team_name,
+                "away": away_team_name
+            }
         }
+        
     except Exception as e:
-        return {"error": "Failed to generate NFL prediction.", "details": str(e)}
-
-# --- END AI MODEL INTEGRATION ---
+        print(f"❌ EXCEPTION: {str(e)}")
+        print(f"❌ ERROR: {traceback.format_exc()}")
+        return {"error": str(e), "event_id": event_id}
 
 
 def _get(url: str, params: Optional[Dict[str, Any]] = None):
-    """Perform a GET request against ESPN and return parsed JSON."""
     r = requests.get(url, params=params, timeout=20)
     r.raise_for_status()
     return r.json()
 
 
 def get_games(week: Optional[str] = None, season: Optional[str] = None):
-    """Return NFL games from the scoreboard with optional week/season filters."""
     params: Dict[str, Any] = {}
     if week:
         params["week"] = week
@@ -110,12 +245,39 @@ def get_games(week: Optional[str] = None, season: Optional[str] = None):
 
 
 def get_game_by_id(event_id: str):
-    """Fetch a single game summary using ESPN event ID."""
-    return _get(EVENT, {"event": event_id})
+    """Fetch game data from ESPN summary API with fallback to scoreboard."""
+    try:
+        # Try summary endpoint first
+        data = _get(EVENT, {"event": event_id})
+        
+        # Check if we got valid competition data
+        if data.get("competitions") or data.get("header", {}).get("competitions"):
+            return data
+        
+        # If summary didn't work, try finding in scoreboard
+        print(f"⚠️  Summary API didn't return competitions, trying scoreboard...")
+        today_data = get_today_games()
+        for event in today_data.get("events", []):
+            if str(event.get("id")) == str(event_id):
+                print(f"✅ Found game {event_id} in scoreboard")
+                return event
+        
+        # Return original data even if incomplete
+        return data
+    except Exception as e:
+        print(f"❌ Error fetching game {event_id}: {e}")
+        # Try scoreboard as last resort
+        try:
+            today_data = get_today_games()
+            for event in today_data.get("events", []):
+                if str(event.get("id")) == str(event_id):
+                    return event
+        except:
+            pass
+        raise
 
 
 def get_box_score(event_id: str):
-    """Extract game box score from the summary payload if present."""
     data = _get(EVENT, {"event": event_id})
     comps = (data or {}).get("competitions", [])
     if comps:
@@ -126,7 +288,6 @@ def get_box_score(event_id: str):
 
 
 def get_upcoming_games(days: int = 7):
-    """List NFL games between today and today+days using ESPN date range format."""
     today = datetime.utcnow().date()
     end = today + timedelta(days=days)
     fmt = "%Y%m%d"
@@ -135,22 +296,17 @@ def get_upcoming_games(days: int = 7):
 
 
 def get_today_games():
-    """List NFL games for today using ESPN scoreboard."""
     today = datetime.utcnow().date()
     fmt = "%Y%m%d"
     params = {"dates": today.strftime(fmt)}
     data = _get(SCOREBOARD, params)
-    
     if "events" in data:
         for event in data["events"]:
             event["league"] = "NFL"
-    
-    return data
     return data
 
 
 def get_live_games():
-    """Get currently live/active NFL games."""
     try:
         today = datetime.utcnow().date()
         fmt = "%Y%m%d"
@@ -162,50 +318,34 @@ def get_live_games():
             for event in data["events"]:
                 status = event.get("status", {})
                 status_type = status.get("type", {}).get("name", "").lower()
-                
-                # Check if game is currently active
                 if status_type in ["in-progress", "live"]:
                     event["league"] = "NFL"
                     event["live"] = True
                     live_events.append(event)
         
-        # Return in same format as regular games but filtered for live only
         result = data.copy()
         result["events"] = live_events
         return result
-        
     except Exception as e:
         return {"error": str(e), "events": []}
 
 
 def get_historical_games(start_date=None, end_date=None, season=None, team_id=None, page=1, per_page=50):
-    """Get historical NFL games with filtering options."""
     try:
         params = {}
-        
-        # Handle date range
         if start_date and end_date:
-            # Convert YYYY-MM-DD to YYYYMMDD
-            start_fmt = start_date.replace("-", "")
-            end_fmt = end_date.replace("-", "")
-            params["dates"] = f"{start_fmt}-{end_fmt}"
+            params["dates"] = f"{start_date.replace('-', '')}-{end_date.replace('-', '')}"
         elif season:
-            # Use season year
             params["dates"] = season
         else:
-            # Default to last 30 days
             today = datetime.utcnow().date()
             start = today - timedelta(days=30)
-            fmt = "%Y%m%d"
-            params["dates"] = f"{start.strftime(fmt)}-{today.strftime(fmt)}"
+            params["dates"] = f"{start.strftime('%Y%m%d')}-{today.strftime('%Y%m%d')}"
         
         data = _get(SCOREBOARD, params)
         
-        # Add historical context and filter by team if specified
         if "events" in data:
             events = data["events"]
-            
-            # Filter by team_id if provided
             if team_id:
                 filtered_events = []
                 for event in events:
@@ -216,27 +356,16 @@ def get_historical_games(start_date=None, end_date=None, season=None, team_id=No
                             break
                 events = filtered_events
             
-            # Add historical context
             for event in events:
                 event["league"] = "NFL"
                 event["historical"] = True
-                event["stats_context"] = "Historical statistics and performance data available"
             
-            # Simple pagination
             start_idx = (page - 1) * per_page
             end_idx = start_idx + per_page
-            paginated_events = events[start_idx:end_idx]
-            
             result = data.copy()
-            result["events"] = paginated_events
-            result["meta"] = {
-                "page": page,
-                "per_page": per_page,
-                "total": len(events)
-            }
+            result["events"] = events[start_idx:end_idx]
+            result["meta"] = {"page": page, "per_page": per_page, "total": len(events)}
             return result
-        
         return data
-        
     except Exception as e:
-        return {"error": str(e), "events": [], "meta": {"page": page, "per_page": per_page, "total": 0}}
+        return {"error": str(e), "events": []}

@@ -1,53 +1,160 @@
+"""
+File: 3_train_nfl_model.py
+Author: Aron Rios 
+Purpose: Step 3 - Train the NFL prediction model using processed game data
+"""
+
 import pandas as pd
-from sklearn.ensemble import RandomForestClassifier
+import numpy as np
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
 import joblib
 import os
 
-# --- THIS IS THE KEY FIX ---
-# Get the absolute path of the directory where this script is located
-script_dir = os.path.dirname(os.path.abspath(__file__))
+print("="*60)
+print("🏈 STEP 3: Training NFL Prediction Model")
+print("="*60)
 
-# Build a robust, absolute path to the CSV file
-CSV_PATH = os.path.abspath(os.path.join(script_dir, '../../nfl_games.csv'))
-# -----------------------------
+# Load the processed data
+print("\n📂 Loading nfl_games.csv...")
+try:
+    df = pd.read_csv('nfl_games.csv')
+    print(f"✅ Loaded {len(df)} games")
+except FileNotFoundError:
+    print("❌ ERROR: nfl_games.csv not found!")
+    print("Please run 2_process_with_api_stats.py first")
+    exit(1)
 
+print(f"\n📊 Data Preview:")
+print(df.head())
+print(f"\n📈 Shape: {df.shape}")
 
-print("--- Starting NFL Model Training ---")
+# Check for missing values
+print(f"\n🔍 Checking data quality...")
+missing = df.isnull().sum()
+if missing.any():
+    print("⚠️ Missing values found:")
+    print(missing[missing > 0])
+else:
+    print("✅ No missing values")
 
-# Define paths for the model files
-MODEL_DIR = os.path.abspath(os.path.join(script_dir, '../../models/saved_models'))
-MODEL_PATH = os.path.join(MODEL_DIR, 'nfl_model.pkl')
+# Class distribution
+print(f"\n📊 Class Distribution:")
+class_counts = df['HomeWin'].value_counts()
+print(f"Home Wins (1): {class_counts.get(1, 0)}")
+print(f"Away Wins (0): {class_counts.get(0, 0)}")
+print(f"Home Win Rate: {df['HomeWin'].mean() * 100:.2f}%")
 
-# Load the historical NFL data using the absolute path
-data = pd.read_csv(CSV_PATH)
+# Prepare features and target
+print("\n🎯 Preparing features...")
+X = df[['HomeOffYards', 'HomeDefYards', 'AwayOffYards', 'AwayDefYards']]
+y = df['HomeWin']
 
-# Define the features and target
-features = ['HomeOffYards', 'HomeDefYards', 'AwayOffYards', 'AwayDefYards']
-target = 'HomeWin'
+print(f"Features: {list(X.columns)}")
+print(f"Samples: {len(X)}")
 
-X = data[features]
-y = data[target]
+print(f"\n📋 Feature Statistics:")
+print(X.describe())
 
-# Split data: 80% for training, 20% for testing
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+# Split data
+print("\n✂️ Splitting data (80% train, 20% test)...")
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42, stratify=y
+)
 
-# Train the model ONLY on the training data
-model = RandomForestClassifier(n_estimators=100, random_state=42)
+print(f"Training: {len(X_train)} games")
+print(f"Testing: {len(X_test)} games")
+
+# Train model
+print("\n🤖 Training Random Forest Classifier...")
+model = RandomForestClassifier(
+    n_estimators=100,
+    max_depth=10,
+    random_state=42,
+    n_jobs=-1
+)
+
 model.fit(X_train, y_train)
+print("✅ Training complete!")
 
-# Make predictions on the test data
-predictions = model.predict(X_test)
+# Predictions
+print("\n🎲 Generating predictions...")
+y_pred = model.predict(X_test)
+y_pred_proba = model.predict_proba(X_test)
 
-# Calculate and print the accuracy
-accuracy = accuracy_score(y_test, predictions)
-print(f"✅ Model Accuracy on test data: {accuracy * 100:.2f}%")
+# Evaluation
+print("\n" + "="*60)
+print("📊 MODEL EVALUATION")
+print("="*60)
 
-print("NFL Model training complete.")
+accuracy = accuracy_score(y_test, y_pred)
+print(f"\n🎯 Accuracy: {accuracy * 100:.2f}%")
 
-# Saving the model
-os.makedirs(MODEL_DIR, exist_ok=True)
-joblib.dump(model, MODEL_PATH)
+print("\n📋 Classification Report:")
+print(classification_report(y_test, y_pred, target_names=['Away Win (0)', 'Home Win (1)']))
 
-print(f"--- NFL Model saved successfully to {MODEL_PATH} ---")
+print("\n🔢 Confusion Matrix:")
+cm = confusion_matrix(y_test, y_pred)
+print(cm)
+print("\nBreakdown:")
+print(f"  Correct Away predictions: {cm[0][0]}")
+print(f"  Wrong (predicted Home, was Away): {cm[0][1]}")
+print(f"  Wrong (predicted Away, was Home): {cm[1][0]}")
+print(f"  Correct Home predictions: {cm[1][1]}")
+
+# Feature importance
+print("\n🎨 Feature Importance:")
+importance_df = pd.DataFrame({
+    'Feature': X.columns,
+    'Importance': model.feature_importances_
+}).sort_values('Importance', ascending=False)
+print(importance_df.to_string(index=False))
+
+# Sample predictions
+print("\n🧪 Sample Predictions (first 5 test games):")
+for i in range(min(5, len(X_test))):
+    sample = X_test.iloc[i]
+    actual = y_test.iloc[i]
+    pred = y_pred[i]
+    prob = y_pred_proba[i]
+    
+    print(f"\n  Game {i+1}:")
+    print(f"    Home: Off={sample['HomeOffYards']:.1f} Def={sample['HomeDefYards']:.1f}")
+    print(f"    Away: Off={sample['AwayOffYards']:.1f} Def={sample['AwayDefYards']:.1f}")
+    print(f"    Predicted: {'Home' if pred == 1 else 'Away'} ({max(prob)*100:.1f}% conf)")
+    print(f"    Actual: {'Home' if actual == 1 else 'Away'}")
+    print(f"    {'✅ Correct' if pred == actual else '❌ Wrong'}")
+
+# Save model
+print("\n💾 Saving model...")
+model_dir = os.path.join('..', 'saved_models')
+os.makedirs(model_dir, exist_ok=True)
+
+model_path = os.path.join(model_dir, 'nfl_model.pkl')
+joblib.dump(model, model_path)
+print(f"✅ Saved to: {model_path}")
+
+# Verify
+print("\n🔍 Verifying model...")
+try:
+    loaded = joblib.load(model_path)
+    test_pred = loaded.predict(X_test.iloc[:1])
+    print("✅ Model loads successfully")
+except Exception as e:
+    print(f"❌ Verification failed: {e}")
+
+# Summary
+print("\n" + "="*60)
+print("🎉 TRAINING COMPLETE!")
+print("="*60)
+print(f"📊 Final Accuracy: {accuracy * 100:.2f}%")
+print(f"💾 Model Location: {model_path}")
+print(f"🎯 Model Classes: {list(model.classes_)}")
+print(f"📝 Label Mapping:")
+print(f"   0 = Away Win")
+print(f"   1 = Home Win")
+print("\n⚠️ IMPORTANT: Your prediction service MUST use:")
+print("   predicted_class == 0  →  'away'")
+print("   predicted_class == 1  →  'home'")
+print("="*60)
