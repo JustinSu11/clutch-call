@@ -1,22 +1,33 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /*
 Author: Justin Nguyen
-Last Updated: 10/18/2025 by Justin Nguyen
-Purpose: Displays a single match card for upcoming or live games with improved balance and contrast
+Last Updated: 11/05/2025 by GitHub Copilot
+Purpose: Displays a single match card for upcoming or live games with improved balance and contrast.
+         Live games can be expanded to show score, period/clock, and leaders carousel.
 */
+'use client'
+
 import "@/styles/globals.css"
 import formatDate from "@/utils/date-formatter-for-matches"
 import { Team } from "@/utils/data_class"
 import createTeamLogo from "@/utils/create-team-logo"
+import { useLiveGameStatus } from "@/hooks/use-live-game-status"
+import LiveGamePanel from "./LiveGamePanel"
+import { useState } from "react"
+import { ChevronDown } from "lucide-react"
 
 type MatchCardProps = {
   awayTeam: Team
   homeTeam: Team
   matchDate: Date
   league: string
+  gameId?: string
 }
 
-export default function MatchCard({ awayTeam, homeTeam, matchDate, league }: MatchCardProps) {
+export default function MatchCard({ awayTeam, homeTeam, matchDate, league, gameId }: MatchCardProps) {
+    const [isExpanded, setIsExpanded] = useState(false)
+    const { liveData } = useLiveGameStatus(gameId, league)
+    
     const calculateTimeLeft = () => {
         const now = new Date()
         const diff = matchDate.getTime() - now.getTime()
@@ -30,6 +41,7 @@ export default function MatchCard({ awayTeam, homeTeam, matchDate, league }: Mat
     const timeLeft = calculateTimeLeft()
     const awayTeamLogo = createTeamLogo(awayTeam)
     const homeTeamLogo = createTeamLogo(homeTeam)
+    const isLive = liveData.status === 'LIVE'
 
     return (
         <div className="flex items-center justify-center p-4">
@@ -51,7 +63,8 @@ export default function MatchCard({ awayTeam, homeTeam, matchDate, league }: Mat
             <div className="absolute inset-0 bg-black/50" />
 
             {/* Content */}
-            <div className="relative p-8 text-white">
+            <div className="relative text-white">
+            <div className="p-8">
             <div className="grid grid-cols-3 grid-rows-[auto_auto] justify-items-center text-center gap-y-4 w-full">
                 {/* Row 1 — Logos + VS */}
                 <div className="row-start-1 col-start-1 flex items-center justify-center h-28">
@@ -88,6 +101,39 @@ export default function MatchCard({ awayTeam, homeTeam, matchDate, league }: Mat
                 </span>
                 </div>
             </div>
+            </div>
+
+            {/* Expand/Collapse Button - Only shown for LIVE games */}
+            {isLive && (
+                <button
+                    onClick={() => setIsExpanded(!isExpanded)}
+                    aria-expanded={isExpanded}
+                    aria-label={isExpanded ? "Collapse live game details" : "Expand live game details"}
+                    className="w-full flex items-center justify-center py-2 hover:bg-white/10 transition-colors focus:outline-none focus:ring-2 focus:ring-white/50"
+                >
+                    <ChevronDown 
+                        className={`w-6 h-6 text-white transition-transform duration-300 motion-reduce:transition-none ${isExpanded ? 'rotate-180' : ''}`}
+                    />
+                </button>
+            )}
+
+            {/* Expandable Panel - Only shown for LIVE games when expanded */}
+            {isLive && (
+                <div 
+                    className={`overflow-hidden transition-all duration-300 ease-in-out motion-reduce:transition-none ${
+                        isExpanded ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'
+                    }`}
+                >
+                    {isExpanded && (
+                        <LiveGamePanel 
+                            liveData={liveData}
+                            homeTeamName={homeTeam.displayName}
+                            awayTeamName={awayTeam.displayName}
+                            league={league}
+                        />
+                    )}
+                </div>
+            )}
             </div>
         </div>
         </div>
