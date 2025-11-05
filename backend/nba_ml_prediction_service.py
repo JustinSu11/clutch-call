@@ -21,6 +21,7 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 # Import our custom modules
 from nba_ml_data_collector import NBADataCollector
 from nba_ml_preprocessor import NBADataPreprocessor
+from nba_ml_prediction_cache import NBAMLPredictionCache
 
 # Set up logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -40,6 +41,9 @@ class NBAMLPredictor:
         # Preprocessors
         self.preprocessor = NBADataPreprocessor(data_dir)
         self.data_collector = NBADataCollector(data_dir)
+        
+        # Prediction cache
+        self.cache = NBAMLPredictionCache(os.path.join(data_dir, 'predictions_cache.db'))
         
         # Load models and preprocessors
         self.load_models()
@@ -94,11 +98,16 @@ class NBAMLPredictor:
             team_stats_file = os.path.join(processed_dir, 'all_team_stats.csv')
             if os.path.exists(team_stats_file):
                 team_stats = pd.read_csv(team_stats_file)
-                # Get latest season data
-                latest_season = team_stats['SEASON'].max()
-                current_team_stats = team_stats[team_stats['SEASON'] == latest_season]
+                # Get latest season data (use most recent available, not necessarily current season)
+                if not team_stats.empty and 'SEASON' in team_stats.columns:
+                    latest_season = team_stats['SEASON'].max()
+                    current_team_stats = team_stats[team_stats['SEASON'] == latest_season]
+                    logger.info(f"Using team stats from season: {latest_season} ({len(current_team_stats)} teams)")
+                else:
+                    logger.warning("No SEASON column or empty team stats")
+                    current_team_stats = pd.DataFrame()
             else:
-                logger.warning("No team stats found, using default values")
+                logger.warning(f"Team stats file not found: {team_stats_file}")
                 current_team_stats = pd.DataFrame()
             
             # Load games for recent form
@@ -116,9 +125,16 @@ class NBAMLPredictor:
             # Prepare features for each game
             game_features = []
             
+            # Log available team IDs for debugging
+            if not current_team_stats.empty and 'TEAM_ID' in current_team_stats.columns:
+                available_team_ids = current_team_stats['TEAM_ID'].unique()
+                logger.info(f"Available team IDs in stats: {available_team_ids[:10]}... (total: {len(available_team_ids)})")
+            
             for _, game in upcoming_games.iterrows():
                 home_team_id = game.get('home_team_id')
                 away_team_id = game.get('away_team_id')
+                
+                logger.info(f"Processing game: home_team_id={home_team_id}, away_team_id={away_team_id}")
                 
                 # Get team stats for both teams
                 home_stats = self.get_team_features(home_team_id, current_team_stats, recent_games, is_home=True)
@@ -184,6 +200,7 @@ class NBAMLPredictor:
             team_data = team_stats[team_stats['TEAM_ID'] == team_id]
             if not team_data.empty:
                 stats = team_data.iloc[0]
+                logger.info(f"Found team stats for team_id {team_id}: GP={stats.get('GP')}, PTS={stats.get('PTS')}, FG_PCT={stats.get('FG_PCT')}")
                 features.update({
                     'TEAM_PPG': stats.get('PTS', 105.0) / max(stats.get('GP', 1), 1),
                     'TEAM_FG_PCT': stats.get('FG_PCT', 0.45),
@@ -195,6 +212,13 @@ class NBAMLPredictor:
                     'TEAM_STL_PG': stats.get('STL', 8.0) / max(stats.get('GP', 1), 1),
                     'TEAM_BLK_PG': stats.get('BLK', 5.0) / max(stats.get('GP', 1), 1),
                 })
+            else:
+                logger.warning(f"No team data found for team_id {team_id} in team_stats")
+        else:
+            if team_stats.empty:
+                logger.warning(f"team_stats DataFrame is empty")
+            if team_id is None:
+                logger.warning(f"team_id is None")
         
         # Get recent form if available
         if not recent_games.empty and team_id is not None:
@@ -256,39 +280,72 @@ class NBAMLPredictor:
         if not feature_importance:
             return []
         
-        # Calculate contribution scores (importance * normalized feature value)
+        # Calculate weighted contributions (importance weighted by feature value impact)
         contributions = []
+        total_weighted_importance = 0
+        
         for feature, importance in feature_importance.items():
             if feature in feature_values:
                 value = feature_values[feature]
-                # Normalize value for contribution calculation
-                if 'PCT' in feature or 'WIN_PCT' in feature:
-                    # Already in 0-1 range
-                    normalized_value = value
-                elif 'PPG' in feature or 'PTS' in feature:
-                    # Points per game - normalize to ~0-1 (typical range 90-120)
-                    normalized_value = min(max((value - 90) / 30, 0), 1)
-                elif 'REB' in feature or 'AST' in feature:
-                    # Per game stats
-                    normalized_value = min(value / 50, 1)
-                elif 'IS_HOME' in feature:
-                    normalized_value = value
-                else:
-                    # Default normalization
-                    normalized_value = min(abs(value) / 10, 1)
                 
-                contribution_score = importance * normalized_value
+                # Calculate impact score based on how much the feature deviates from neutral/average
+                if 'PCT' in feature or 'WIN_PCT' in feature:
+                    # For percentages, deviation from 0.5 (50%)
+                    impact = abs(value - 0.5) * 2  # Scale to 0-1
+                elif 'PPG' in feature or 'PTS' in feature:
+                    # For points, deviation from league average (~108)
+                    impact = abs(value - 108) / 20  # Scale by typical deviation
+                    impact = min(impact, 1.0)
+                elif 'REB' in feature:
+                    # Rebounds deviation from average (~45)
+                    impact = abs(value - 45) / 10
+                    impact = min(impact, 1.0)
+                elif 'AST' in feature:
+                    # Assists deviation from average (~25)
+                    impact = abs(value - 25) / 8
+                    impact = min(impact, 1.0)
+                elif 'IS_HOME' in feature:
+                    # Home court advantage - binary but important
+                    impact = 1.0 if value == 1 else 0.5
+                elif 'STREAK' in feature:
+                    # Win streak impact
+                    impact = min(abs(value) / 5, 1.0)
+                else:
+                    # Default: normalize by typical range
+                    impact = min(abs(value) / 10, 1.0)
+                
+                # Weight importance by impact
+                weighted_importance = importance * (1 + impact)
+                total_weighted_importance += weighted_importance
                 
                 contributions.append({
+                    'feature_name': feature,
                     'factor': self._format_feature_name(feature),
-                    'importance': round(importance, 4),
-                    'value': round(value, 2),
-                    'contribution': round(contribution_score, 4)
+                    'importance': importance,
+                    'value': value,
+                    'impact': impact,
+                    'weighted_importance': weighted_importance
                 })
         
-        # Sort by contribution and return top N
+        # Normalize contributions to sum to 100%
+        for contrib in contributions:
+            if total_weighted_importance > 0:
+                contrib['contribution'] = contrib['weighted_importance'] / total_weighted_importance
+            else:
+                contrib['contribution'] = 0
+        
+        # Sort by contribution and return top N with cleaned output
         contributions.sort(key=lambda x: x['contribution'], reverse=True)
-        return contributions[:top_n]
+        
+        return [
+            {
+                'factor': c['factor'],
+                'importance': round(c['importance'], 4),
+                'value': round(c['value'], 2),
+                'contribution': round(c['contribution'], 4)
+            }
+            for c in contributions[:top_n]
+        ]
     
     def _format_feature_name(self, feature: str) -> str:
         """Convert feature name to human-readable format"""
@@ -387,6 +444,9 @@ class NBAMLPredictor:
             # Make predictions
             win_probabilities = self.game_model.predict_proba(X_scaled)[:, 1]  # Probability of home team winning
             
+            logger.info(f"Win probabilities range: {win_probabilities.min():.3f} to {win_probabilities.max():.3f}")
+            logger.info(f"Mean confidence: {win_probabilities.mean():.3f}")
+            
             for i, (_, game) in enumerate(game_features_df.iterrows()):
                 home_win_prob = win_probabilities[i]
                 away_win_prob = 1 - home_win_prob
@@ -396,6 +456,12 @@ class NBAMLPredictor:
                 
                 # Get top decision factors
                 decision_factors = self.get_top_decision_factors(feature_values, top_n=5)
+                
+                # Log decision factors for debugging
+                if i == 0:  # Log first game's factors
+                    logger.info(f"Sample decision factors for game {game.get('game_id')}:")
+                    for factor in decision_factors:
+                        logger.info(f"  {factor['factor']}: {factor['contribution']*100:.1f}% (importance: {factor['importance']:.3f}, value: {factor['value']:.2f})")
                 
                 prediction = {
                     'game_id': game.get('game_id', f'game_{i}'),

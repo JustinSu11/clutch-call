@@ -9,12 +9,12 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import { parseUpcomingNFLGames, parseNFLTeamStats } from '@/utils/nfl_parser';
-import { parseUpcomingNBAGames, parseNBATeamStats } from '@/utils/nba_parser';
+import { parseNBATeamStats } from '@/utils/nba_parser';
 import { parseUpcomingMLSGames, parseMLSTeamStats } from '@/utils/mls_parser';
-import { UpcomingGame } from '@/utils/data_class';
-import { get } from 'http';
-import { urlToHttpOptions } from 'url';
 import MatchDialog, { TeamStats } from '@/components/DashboardComponents/Dialog';
+import { getNBAGamePredictions } from '@/backend_methods/nba_methods';
+import type { GamePrediction } from '@/utils/nba_prediction_parser';
+import { getNBATeamName } from '@/utils/nba_team_mapping';
 
 
 // declare data types
@@ -26,6 +26,7 @@ type Prediction = {
     prediction: string;     // the eventual prediction text
     confidence: number;     // a number between 0 and 100 showing how confident the AI prediction is
     sport: SportKey;        // the sport this prediction belongs to used for filtering (NFL, NBA, MLS)
+    meta?: Record<string, unknown>;
 };
 
 const buildNFLPredictions = async (): Promise<Prediction[]> => {
@@ -68,25 +69,74 @@ const buildMLSPredictions = async (): Promise<Prediction[]> => {
     }));
 }
 
+const formatGameDate = (input?: string | null): string => {
+    if (!input) {
+        return '';
+    }
+
+    const trimmed = input.trim();
+
+    if (trimmed.includes('/')) {
+        const parts = trimmed.split('/');
+        if (parts.length === 3) {
+            const [month, day, year] = parts;
+            return `${month.padStart(2, '0')}-${day.padStart(2, '0')}-${year}`;
+        }
+    }
+
+    const parsed = new Date(trimmed);
+    if (!Number.isNaN(parsed.getTime())) {
+        const month = String(parsed.getMonth() + 1).padStart(2, '0');
+        const day = String(parsed.getDate()).padStart(2, '0');
+        const year = parsed.getFullYear();
+        return `${month}-${day}-${year}`;
+    }
+
+    return trimmed;
+};
+
+const normalizeConfidence = (value?: number | null): number => {
+    if (typeof value !== 'number' || Number.isNaN(value)) {
+        return 0;
+    }
+    const percent = Math.round(value * 100);
+    return Math.min(100, Math.max(0, percent));
+};
+
 const buildNBAPredictions = async (): Promise<Prediction[]> => {
-    /*
-        buildNBAPredictions:
-        This method builds a list of Prediction objects for upcoming NBA games.
+    try {
+        const response = await getNBAGamePredictions(3, true);
+        const games: GamePrediction[] = Array.isArray(response?.games) ? response.games : [];
 
-        returns:
-            predictions: an array of Prediction objects for each upcoming NBA game
-    */
-    const upcomingNBAGames = await parseUpcomingNBAGames();
+        return games.map((game) => {
+            const homeName = getNBATeamName(game.home_team_id);
+            const awayName = getNBATeamName(game.away_team_id);
+            const predictedWinnerName = game.predicted_winner === 'home' ? homeName : awayName;
 
-    // map each game to a Prediction object
-    return upcomingNBAGames.map((game) => ({
-        match: `${game.awayTeam} at ${game.homeTeam}`,
-        date: `${game.gameDate}`,
-        prediction: `${game.homeTeam} predicted to win`,
-        confidence: 100,
-        sport: 'NBA'
-    }));
-}
+            const confidenceRaw = typeof game.confidence === 'number'
+                ? game.confidence
+                : Math.max(game.home_win_probability ?? 0, game.away_win_probability ?? 0);
+
+            return {
+                match: `${awayName} at ${homeName}`,
+                date: formatGameDate(game.game_date),
+                prediction: `${predictedWinnerName} predicted to win`,
+                confidence: normalizeConfidence(confidenceRaw),
+                sport: 'NBA',
+                meta: {
+                    gameId: game.game_id,
+                    homeTeamId: game.home_team_id,
+                    awayTeamId: game.away_team_id,
+                    confidenceDecimal: confidenceRaw,
+                    decisionFactors: game.decision_factors,
+                }
+            };
+        });
+    } catch (error) {
+        console.error('Failed to build NBA predictions:', error);
+        return [];
+    }
+};
 
 const getConfidenceStyle = (confidence: number) => {
     /* 
@@ -180,30 +230,141 @@ const SportsFilter: React.FC<{
     </div>
 );
 
-const PredictionRow: React.FC<{ item: Prediction; onClick?: () => void }> = ({ item, onClick }) => (
-    <tr onClick={onClick} className="bg-secondary-background hover:bg-secondary cursor-pointer">
-        <td className="text-center px-6 py-4 whitespace-nowrap">
-            <div className="text-md font-medium text-text-primary">{item.match}</div>
-        </td>
-        <td className="text-center px-6 py-4 whitespace-nowrap">
-            <div className="text-md font-medium text-text-primary">{item.date}</div>
-        </td>
-        <td className="text-center px-6 py-4 whitespace-nowrap">
-            <div className="text-md font-medium text-text-primary">{item.prediction}</div>
-        </td>
-        <td className="text-center px-6 py-4 whitespace-nowrap">
-            <div className="flex items-center justify-center">
-                <div className="w-24 bg-gray-200 rounded-full h-2.5 mr-3">
-                    <div
-                        className="h-2.5 rounded-full"
-                        style={{ ...getConfidenceStyle(item.confidence), width: `${item.confidence}%` }}
-                    ></div>
-                </div>
-                <span className="text-md font-medium text-text-primary">{item.confidence}%</span>
+const formatFactorName = (factor: string): string => {
+    // Convert snake_case or technical names to human-readable format
+    const nameMap: Record<string, string> = {
+        'home_win_pct': 'Home Win %',
+        'away_win_pct': 'Away Win %',
+        'home_offensive_rating': 'Home Offense',
+        'away_offensive_rating': 'Away Offense',
+        'home_defensive_rating': 'Home Defense',
+        'away_defensive_rating': 'Away Defense',
+        'home_net_rating': 'Home Net Rating',
+        'away_net_rating': 'Away Net Rating',
+        'home_pace': 'Home Pace',
+        'away_pace': 'Away Pace',
+        'home_elo': 'Home ELO',
+        'away_elo': 'Away ELO',
+        'rest_days_home': 'Home Rest Days',
+        'rest_days_away': 'Away Rest Days',
+        'home_last_5': 'Home Recent Form',
+        'away_last_5': 'Away Recent Form',
+        'home_streak': 'Home Streak',
+        'away_streak': 'Away Streak',
+    };
+    
+    if (nameMap[factor]) {
+        return nameMap[factor];
+    }
+    
+    // Fallback: convert snake_case to Title Case
+    return factor
+        .split('_')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ');
+};
+
+const formatFactorValue = (factor: any): string => {
+    // Format the actual value of the factor for display
+    const value = factor.value;
+    const factorName = factor.factor;
+    
+    // For percentage-based stats
+    if (factorName.includes('pct') || factorName.includes('PCT') || factorName.includes('win')) {
+        return `${(value * 100).toFixed(1)}%`;
+    }
+    
+    // For ratings and pace (typically 90-120 range)
+    if (factorName.includes('rating') || factorName.includes('pace')) {
+        return value.toFixed(1);
+    }
+    
+    // For streak (show with + or -)
+    if (factorName.includes('streak') || factorName.includes('STREAK')) {
+        const streakValue = Math.round(value);
+        return streakValue >= 0 ? `+${streakValue}` : `${streakValue}`;
+    }
+    
+    // For rest days
+    if (factorName.includes('rest') || factorName.includes('REST')) {
+        return `${Math.round(value)} days`;
+    }
+    
+    // For points per game
+    if (factorName.includes('ppg') || factorName.includes('PPG') || factorName.includes('PTS')) {
+        return `${value.toFixed(1)} pts`;
+    }
+    
+    // Default: show as decimal with 1 decimal place
+    return value.toFixed(1);
+};
+
+const PredictionRow: React.FC<{ item: Prediction; onClick?: () => void }> = ({ item, onClick }) => {
+    const decisionFactors = item.meta?.decisionFactors as any[] | undefined;
+    
+    const renderDecisionFactors = () => {
+        if (item.sport !== 'NBA' || !Array.isArray(decisionFactors) || decisionFactors.length === 0) {
+            return <span className="text-text-secondary italic">N/A</span>;
+        }
+        
+        // Sort by contribution and take top 3
+        const topFactors = decisionFactors
+            .sort((a, b) => (b.contribution || 0) - (a.contribution || 0))
+            .slice(0, 3);
+        
+        return (
+            <div className="space-y-1.5 text-left">
+                {topFactors.map((factor, idx) => (
+                    <div key={idx} className="space-y-0.5">
+                        <div className="flex items-center justify-between gap-2">
+                            <span className="text-xs font-medium text-text-primary">
+                                {formatFactorName(factor.factor)}
+                            </span>
+                            <span className="text-xs font-semibold text-primary">
+                                {(factor.contribution * 100).toFixed(0)}%
+                            </span>
+                        </div>
+                        <div className="text-xs text-text-secondary pl-1">
+                            Value: {formatFactorValue(factor)}
+                        </div>
+                    </div>
+                ))}
             </div>
-        </td>
-    </tr>
-);
+        );
+    };
+    
+    return (
+        <tr onClick={onClick} className="bg-secondary-background hover:bg-secondary cursor-pointer">
+            <td className="text-center px-6 py-4 whitespace-nowrap">
+                <div className="text-md font-medium text-text-primary">{item.match}</div>
+            </td>
+            <td className="text-center px-6 py-4 whitespace-nowrap">
+                <div className="text-md font-medium text-text-primary">{item.date}</div>
+            </td>
+            <td className="text-center px-6 py-4 whitespace-nowrap">
+                <div className="text-md font-medium text-text-primary">{item.prediction}</div>
+            </td>
+            <td className="text-center px-6 py-4 whitespace-nowrap">
+                <div className="flex items-center justify-center">
+                    <div className="w-24 bg-gray-200 rounded-full h-2.5 mr-3">
+                        <div
+                            className="h-2.5 rounded-full"
+                            style={{ ...getConfidenceStyle(item.confidence), width: `${item.confidence}%` }}
+                        ></div>
+                    </div>
+                    <span className="text-md font-medium text-text-primary">{item.confidence}%</span>
+                </div>
+            </td>
+            <td className="px-6 py-4">
+                <div className="flex justify-center">
+                    <div className="inline-block">
+                        {renderDecisionFactors()}
+                    </div>
+                </div>
+            </td>
+        </tr>
+    );
+};
 
 // --- Main App Component ---
 export default function PredictionsScreen() {
@@ -268,7 +429,7 @@ export default function PredictionsScreen() {
 
         Promise.all([
             buildNFLPredictions(),
-            // buildNBAPredictions(),
+            buildNBAPredictions(),
             buildMLSPredictions(),
         ])
             .then(results => setPredictions(results.flat()))
@@ -300,18 +461,19 @@ export default function PredictionsScreen() {
                                     <th className="px-6 py-4 text-sm font-semibold text-text-secondary uppercase tracking-wider text-center">Date</th>
                                     <th className="px-6 py-4 text-sm font-semibold text-text-secondary uppercase tracking-wider text-center">Prediction</th>
                                     <th className="px-6 py-4 text-sm font-semibold text-text-secondary uppercase tracking-wider text-center">Confidence</th>
+                                    <th className="px-6 py-4 text-sm font-semibold text-text-secondary uppercase tracking-wider text-center">Decision Factors</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-secondary">
                                 {loading ? (
                                     <tr>
-                                        <td colSpan={4} className="text-center py-10 text-text-primary bg-secondary-background">
+                                        <td colSpan={5} className="text-center py-10 text-text-primary bg-secondary-background">
                                             Loading predictions...
                                         </td>
                                     </tr>
                                 ) : error ? (
                                     <tr>
-                                        <td colSpan={4} className="text-center py-10 text-text-primary bg-secondary-background">
+                                        <td colSpan={5} className="text-center py-10 text-text-primary bg-secondary-background">
                                             {error}
                                         </td>
                                     </tr>
@@ -328,7 +490,7 @@ export default function PredictionsScreen() {
                                     })
                                 ) : (
                                     <tr>
-                                        <td colSpan={4} className="text-center py-10 text-text-primary bg-secondary-background">
+                                        <td colSpan={5} className="text-center py-10 text-text-primary bg-secondary-background">
                                             No predictions available for {activeSport}.
                                         </td>
                                     </tr>

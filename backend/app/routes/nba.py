@@ -13,6 +13,9 @@ import logging
 from datetime import datetime, timedelta
 from flask import Blueprint, request, jsonify
 
+# Set up logging
+logger = logging.getLogger(__name__)
+
 # Add backend directory to path for NBA ML imports
 backend_path = os.path.join(os.path.dirname(__file__), '..', '..')
 sys.path.append(backend_path)
@@ -126,12 +129,17 @@ def nba_ml_status():
         models_path = os.path.join(backend_path, 'nba_ml_data', 'models')
         models_exist = os.path.exists(models_path) and len(os.listdir(models_path)) > 0
         
+        # Get cache stats
+        predictor = NBAMLPredictor()
+        cache_stats = predictor.cache.get_cache_stats()
+        
         return jsonify({
             "status": "available" if models_exist else "models_not_found",
             "message": "NBA ML system is ready" if models_exist else "Models need to be trained",
             "ml_available": ML_AVAILABLE,
             "models_trained": models_exist,
             "models_path": models_path,
+            "cache_stats": cache_stats,
             "timestamp": datetime.now().isoformat()
         })
     except Exception as e:
@@ -140,6 +148,42 @@ def nba_ml_status():
             "message": f"Error checking ML system status: {str(e)}",
             "ml_available": False
         }), 500
+
+
+@bp.post("/predictions/cache/clear")
+def clear_prediction_cache():
+    """Clear all cached predictions."""
+    if not ML_AVAILABLE:
+        return jsonify({"error": "NBA ML system is not available"}), 503
+    
+    try:
+        predictor = NBAMLPredictor()
+        predictor.cache.clear_all()
+        return jsonify({
+            "message": "Prediction cache cleared successfully",
+            "timestamp": datetime.now().isoformat()
+        })
+    except Exception as e:
+        return jsonify({"error": f"Error clearing cache: {str(e)}"}), 500
+
+
+@bp.post("/predictions/cache/clear-expired")
+def clear_expired_cache():
+    """Clear only expired cache entries."""
+    if not ML_AVAILABLE:
+        return jsonify({"error": "NBA ML system is not available"}), 503
+    
+    try:
+        predictor = NBAMLPredictor()
+        predictor.cache.clear_expired()
+        cache_stats = predictor.cache.get_cache_stats()
+        return jsonify({
+            "message": "Expired cache entries cleared",
+            "cache_stats": cache_stats,
+            "timestamp": datetime.now().isoformat()
+        })
+    except Exception as e:
+        return jsonify({"error": f"Error clearing expired cache: {str(e)}"}), 500
 
 
 @bp.get("/predictions/games")
@@ -164,7 +208,14 @@ def nba_game_predictions():
         # Initialize predictor
         predictor = NBAMLPredictor()
         
-        # Generate predictions
+        # Check cache first
+        cached_result = predictor.cache.get_game_predictions(days_ahead, include_details)
+        if cached_result:
+            logger.info(f"Returning cached game predictions for days_ahead={days_ahead}")
+            return jsonify(cached_result)
+        
+        # Generate predictions (cache miss)
+        logger.info(f"Cache miss - generating new predictions for days_ahead={days_ahead}")
         predictions = predictor.generate_comprehensive_predictions(days_ahead=days_ahead)
         
         if not predictions:
@@ -201,6 +252,9 @@ def nba_game_predictions():
                 
             response_data['games'].append(game_data)
         
+        # Cache the result
+        predictor.cache.set_game_predictions(days_ahead, include_details, response_data)
+        
         return jsonify(response_data)
         
     except Exception as e:
@@ -235,7 +289,16 @@ def nba_player_predictions():
         # Initialize predictor
         predictor = NBAMLPredictor()
         
-        # Generate predictions
+        # Check cache first
+        cached_result = predictor.cache.get_player_predictions(
+            days_ahead, game_id, team_id, min_points, top_n
+        )
+        if cached_result:
+            logger.info(f"Returning cached player predictions")
+            return jsonify(cached_result)
+        
+        # Generate predictions (cache miss)
+        logger.info(f"Cache miss - generating new player predictions")
         predictions = predictor.generate_comprehensive_predictions(days_ahead=days_ahead)
         
         if not predictions:
@@ -306,7 +369,7 @@ def nba_player_predictions():
         if top_n and top_n > 0:
             filtered_predictions = filtered_predictions[:top_n]
         
-        return jsonify({
+        response_data = {
             "prediction_date": datetime.now().isoformat(),
             "days_ahead": days_ahead,
             "total_predictions": len(filtered_predictions),
@@ -317,7 +380,14 @@ def nba_player_predictions():
                 "top_n": top_n
             },
             "predictions": filtered_predictions
-        })
+        }
+        
+        # Cache the result
+        predictor.cache.set_player_predictions(
+            days_ahead, response_data, game_id, team_id, min_points, top_n
+        )
+        
+        return jsonify(response_data)
         
     except Exception as e:
         return jsonify({"error": f"Error generating player predictions: {str(e)}"}), 500
