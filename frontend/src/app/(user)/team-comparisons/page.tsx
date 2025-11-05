@@ -5,7 +5,7 @@ import React, { useState, useEffect } from 'react';
 // -- TYPE DEFINITIONS --
 
 // Defines the allowed sports. Copied from Predictions.tsx
-type SportKey = 'All Sports' | 'NFL' | 'NBA' | 'MLS';
+type SportKey = 'NFL' | 'NBA' | 'MLS';
 
 // Defines the structure for a single team's data
 type Team = {
@@ -425,7 +425,7 @@ const mlsTeamData: Record<TeamKey, Team> = {
 };
 
 // Main data object mapping sports to their respective team data
-const allSportsData = {
+const allSportsData: Record<SportKey, Record<TeamKey, Team>> = { // Added explicit type
     'NBA': nbaTeamData,
     'NFL': nflTeamData,
     'MLS': mlsTeamData,
@@ -441,7 +441,7 @@ function App() {
   const [activeSport, setActiveSport] = useState<SportKey>('NBA');
   
   // Get the team data for the currently active sport
-  const currentSportData = allSportsData[activeSport as Exclude<SportKey, 'All Sports'>] || allSportsData['NBA'];
+  const currentSportData = allSportsData[activeSport] || allSportsData['NBA'];
   const currentTeamKeys = Object.keys(currentSportData);
 
   // State for the selected teams
@@ -450,7 +450,7 @@ function App() {
 
   // Effect to reset selected teams when the sport changes
   useEffect(() => {
-    const newSportData = allSportsData[activeSport as Exclude<SportKey, 'All Sports'>] || allSportsData['NBA'];
+    const newSportData = allSportsData[activeSport] || allSportsData['NBA'];
     const newTeamKeys = Object.keys(newSportData);
     
     // Set to the first two teams of the new sport
@@ -513,4 +513,3 @@ function App() {
 }
 
 export default App;
-
