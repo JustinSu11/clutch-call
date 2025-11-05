@@ -2,7 +2,7 @@
     File: src/hooks/use-live-game-status.ts
     Created: 2025-11-05
     
-    Description: Hook to poll live game status and data every 10-15 seconds
+    Description: Hook to poll live game status and data every 12 seconds
 */
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
