@@ -74,6 +74,7 @@ export const ROUTES = {
     specific_nba_game_boxscore: (gameId: string) => `${BASE_URL}/nba/game/${gameId}/boxscore`,
     specific_nba_team_last_game: (teamId: string) => `${BASE_URL}/nba/teams/${teamId}/last`,
     upcoming_nba_games: `${BASE_URL}/nba/upcoming`,
+    nba_standings: `${BASE_URL}/nba/standings`,
     
     // NBA ML Prediction Routes
     nba_ml_status: `${BASE_URL}/nba/predictions/status`,
@@ -89,11 +90,13 @@ export const ROUTES = {
     specific_nfl_game_details: (gameId: string) => `${BASE_URL}/nfl/game/${gameId}`,
     specific_nfl_game_boxscore: (gameId: string) => `${BASE_URL}/nfl/game/${gameId}/boxscore`,
     upcoming_nfl_games: `${BASE_URL}/nfl/upcoming`,
+    nfl_standings: `${BASE_URL}/nfl/standings`,
     
     soccer_matches: `${BASE_URL}/soccer/matches`,
     specific_soccer_match_details: (matchId: string) => `${BASE_URL}/soccer/game/${matchId}`,
     specific_soccer_match_boxscore: (matchId: string) => `${BASE_URL}/soccer/game/${matchId}/boxscore`,
     upcoming_soccer_matches: `${BASE_URL}/soccer/upcoming`,
+    soccer_standings: (league: string) => `${BASE_URL}/soccer/standings?league=${league}`,
 };
 
 //method to make a request to the backend using fetch
