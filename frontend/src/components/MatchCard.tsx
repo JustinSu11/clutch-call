@@ -70,9 +70,7 @@ export default function MatchCard({ awayTeam, homeTeam, matchDate, league, gameI
             {/* Background image */}
             <div
             className="absolute inset-0 bg-center bg-cover"
-            style={{
-                backgroundImage: league === "NBA" ? "url('/BasketballMatchCardBackground.png')" : league === "NFL" ? "url('/FootballMatchCardBackground.png')" : "url('/SoccerMatchCardBackground.png')",
-            }}
+            style={{backgroundImage: league === "NBA" ? "url('/BasketballMatchCardBackground.png')" : league === "NFL" ? "url('/FootballMatchCardBackground.png')" : "url('/SoccerMatchCardBackground.png')", }}
             />
 
             {/* Gradient & vignette overlays */}
@@ -152,21 +150,19 @@ export default function MatchCard({ awayTeam, homeTeam, matchDate, league, gameI
             </div>
             </div>
 
-            {/* Expand/Collapse Button - Always rendered for consistent height, visible only for LIVE games */}
-            <div className="w-full py-2">
-                {isLive && (
-                    <button
-                        onClick={handleToggleExpand}
-                        aria-expanded={isExpanded}
-                        aria-label={isExpanded ? "Collapse live game details" : "Expand live game details"}
-                        className="w-full flex items-center justify-center hover:bg-white/10 transition-colors focus:outline-none"
-                    >
-                        <ChevronDown 
-                            className={`w-6 h-6 text-white transition-transform duration-300 motion-reduce:transition-none ${isExpanded ? 'rotate-180' : ''}`}
-                        />
-                    </button>
-                )}
-            </div>
+            {/* Expand/Collapse Button - Only shown for LIVE games */}
+            {isLive && (
+                <button
+                    onClick={handleToggleExpand}
+                    aria-expanded={isExpanded}
+                    aria-label={isExpanded ? "Collapse live game details" : "Expand live game details"}
+                    className="w-full flex items-center justify-center py-2 hover:bg-white/10 transition-colors focus:outline-none focus:ring-2 focus:ring-white/50"
+                >
+                    <ChevronDown 
+                        className={`w-6 h-6 text-white transition-transform duration-300 motion-reduce:transition-none ${isExpanded ? 'rotate-180' : ''}`}
+                    />
+                </button>
+            )}
 
             {/* Expandable Panel - Only shown for LIVE games when expanded */}
             {isLive && (
