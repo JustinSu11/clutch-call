@@ -156,7 +156,7 @@ export default function MatchCard({ awayTeam, homeTeam, matchDate, league, gameI
                     onClick={handleToggleExpand}
                     aria-expanded={isExpanded}
                     aria-label={isExpanded ? "Collapse live game details" : "Expand live game details"}
-                    className="w-full flex items-center justify-center py-2 hover:bg-white/10 transition-colors focus:outline-none focus:ring-2 focus:ring-white/50"
+                    className="w-full flex items-center justify-center py-2 hover:bg-white/10 transition-colors focus:outline-none"
                 >
                     <ChevronDown 
                         className={`w-6 h-6 text-white transition-transform duration-300 motion-reduce:transition-none ${isExpanded ? 'rotate-180' : ''}`}
