@@ -111,6 +111,11 @@ class NBADataCollector:
     
     def collect_detailed_game_data(self, game_id: str) -> Dict:
         """Collect detailed data for a specific game"""
+        # Skip preseason games early to avoid slow/failed calls
+        if str(game_id).startswith('001'):
+            logger.info(f"Skipping preseason game {game_id} in detailed data collection")
+            return {}
+
         self.rate_limit()
         
         try:
@@ -322,8 +327,14 @@ class NBADataCollector:
                 
                 if not games_data.empty:
                     for _, game in games_data.iterrows():
+                        game_id = game['GAME_ID']
+
+                        # Skip preseason games (game_id starts with '001')
+                        if str(game_id).startswith('001'):
+                            logger.info(f"Skipping preseason game {game_id} on {date_str}")
+                            continue
                         upcoming_games.append({
-                            'game_id': game['GAME_ID'],
+                            'game_id': game_id,
                             'game_date': date_str,
                             'home_team_id': game.get('HOME_TEAM_ID'),
                             'away_team_id': game.get('VISITOR_TEAM_ID'),
