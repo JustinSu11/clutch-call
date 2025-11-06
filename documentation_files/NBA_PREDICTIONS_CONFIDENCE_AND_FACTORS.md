@@ -2,7 +2,7 @@
 
 ## Overview
 
-The NBA ML prediction system now includes **confidence scores** and **decision factors** for both game outcome predictions and player performance predictions. These additions provide transparency into the AI model's decision-making process.
+The NBA ML prediction system includes **confidence scores** and **decision factors** for game outcome predictions. These additions provide transparency into the AI model's decision-making process.
 
 ## Game Outcome Predictions
 
@@ -24,17 +24,6 @@ Each factor includes:
 - **importance**: Feature importance score from the model (0.0 to 1.0)
 - **value**: Actual value of the feature for this game
 - **contribution**: Combined score (importance × normalized value)
-
-## Player Performance Predictions
-
-### Decision Factors
-Player predictions include `decision_factors` for each predicted stat (points, assists, rebounds). These show the top 3 factors influencing each prediction.
-
-Each factor includes:
-- **factor**: Human-readable name (e.g., "Minutes Per Game", "Field Goal Percentage")
-- **importance**: Feature importance from the model
-- **value**: Player's actual statistic value
-- **contribution**: Combined contribution score
 
 ## API Endpoints
 
@@ -95,68 +84,19 @@ Returns game outcome predictions with confidence scores and decision factors.
 }
 ```
 
-### GET /api/v1/nba/predictions/players
-
-Returns player performance predictions with decision factors for each stat.
-
-**Example Response:**
-```json
-{
-  "prediction_date": "2025-10-15T21:30:00",
-  "days_ahead": 1,
-  "total_predictions": 10,
-  "predictions": [
-    {
-      "game_id": "0022400123",
-      "team_id": 1610612738,
-      "player_id": "203507",
-      "player_name": "Giannis Antetokounmpo",
-      "position": "F",
-      "predicted_points": 28.5,
-      "predicted_assists": 5.8,
-      "predicted_rebounds": 11.2,
-      "decision_factors": {
-        "points": [
-          {
-            "factor": "Minutes Per Game",
-            "importance": 0.15,
-            "value": 34.5,
-            "contribution": 0.129
-          },
-          {
-            "factor": "Field Goal Percentage",
-            "importance": 0.12,
-            "value": 0.58,
-            "contribution": 0.0696
-          },
-          {
-            "factor": "Points Per Game",
-            "importance": 0.13,
-            "value": 28.2,
-            "contribution": 0.122
-          }
-        ],
-        "assists": [...],
-        "rebounds": [...]
-      }
-    }
-  ]
-}
-```
-
 ### GET /api/v1/nba/predictions/game/{game_id}
 
-Returns detailed predictions for a specific game, including both game outcome and player predictions with all confidence scores and decision factors.
+Returns detailed predictions for a specific game with confidence scores and decision factors.
 
 ## How Decision Factors Are Calculated
 
 1. **Feature Importance**: Extracted from the trained machine learning models (RandomForest or GradientBoosting). This represents how important each feature is to the model overall.
 
-2. **Feature Value**: The actual value of the feature for the specific game or player being predicted.
+2. **Feature Value**: The actual value of the feature for the specific game being predicted.
 
 3. **Normalization**: Feature values are normalized to a 0-1 scale for fair comparison:
    - Percentages: Already in 0-1 range
-   - Points Per Game: Normalized to typical range (90-120 for teams, 0-30 for players)
+   - Points Per Game: Normalized to typical range (90-120 for teams)
    - Rebounds/Assists: Normalized to typical ranges
 
 4. **Contribution Score**: `importance × normalized_value` - represents the actual impact of this feature on this specific prediction.
