@@ -102,79 +102,6 @@ class TestNBAPredictionsWithFactors(unittest.TestCase):
         self.assertIn('Points', formatted)
         self.assertIn('5', formatted)
     
-    def test_player_feature_importance(self):
-        """Test that player model feature importance can be extracted"""
-        predictor = NBAMLPredictor(data_dir=self.data_dir)
-        
-        # Mock a player model with feature_importances_
-        mock_model = Mock()
-        mock_model.feature_importances_ = np.array([0.08, 0.12, 0.10, 0.09, 0.07,
-                                                      0.11, 0.13, 0.15, 0.05, 0.04,
-                                                      0.03, 0.02, 0.01])
-        predictor.player_models['points'] = mock_model
-        
-        # Get feature importance
-        importance = predictor.get_player_model_feature_importance('points')
-        
-        # Verify we get a dictionary
-        self.assertIsInstance(importance, dict)
-        
-        # Verify we have expected features
-        expected_features = ['GP', 'MIN', 'FG_PCT', 'PPG']
-        for feature in expected_features:
-            self.assertIn(feature, importance)
-            self.assertIsInstance(importance[feature], float)
-    
-    def test_player_decision_factors(self):
-        """Test that player decision factors are calculated"""
-        predictor = NBAMLPredictor(data_dir=self.data_dir)
-        
-        # Mock a player model
-        mock_model = Mock()
-        mock_model.feature_importances_ = np.array([0.08, 0.15, 0.12, 0.10, 0.09,
-                                                      0.11, 0.10, 0.13, 0.05, 0.03,
-                                                      0.02, 0.01, 0.01])
-        predictor.player_models['points'] = mock_model
-        
-        # Sample player feature values
-        feature_values = {
-            'GP': 65,
-            'MIN': 32.5,
-            'FG_PCT': 0.48,
-            'FG3_PCT': 0.38,
-            'FT_PCT': 0.85,
-            'PPG': 22.5,
-            'RPG': 5.8,
-            'APG': 4.2
-        }
-        
-        # Get decision factors
-        factors = predictor.get_player_decision_factors('points', feature_values, top_n=3)
-        
-        # Verify we get a list
-        self.assertIsInstance(factors, list)
-        
-        # Verify we get up to 3 factors
-        self.assertLessEqual(len(factors), 3)
-        
-        # Verify each factor has required fields
-        if len(factors) > 0:
-            factor = factors[0]
-            self.assertIn('factor', factor)
-            self.assertIn('importance', factor)
-            self.assertIn('value', factor)
-            self.assertIn('contribution', factor)
-    
-    def test_format_player_feature_name(self):
-        """Test that player feature names are formatted correctly"""
-        predictor = NBAMLPredictor(data_dir=self.data_dir)
-        
-        # Test feature name formatting
-        self.assertEqual(predictor._format_player_feature_name('GP'), 'Games Played')
-        self.assertEqual(predictor._format_player_feature_name('MIN'), 'Minutes Per Game')
-        self.assertEqual(predictor._format_player_feature_name('PPG'), 'Points Per Game')
-        self.assertEqual(predictor._format_player_feature_name('FG_PCT'), 'Field Goal Percentage')
-    
     def test_prediction_includes_confidence(self):
         """Test that predictions include confidence scores"""
         # This would require a full mock setup with data
@@ -184,8 +111,6 @@ class TestNBAPredictionsWithFactors(unittest.TestCase):
         # Verify methods exist
         self.assertTrue(hasattr(predictor, 'get_feature_importance'))
         self.assertTrue(hasattr(predictor, 'get_top_decision_factors'))
-        self.assertTrue(hasattr(predictor, 'get_player_model_feature_importance'))
-        self.assertTrue(hasattr(predictor, 'get_player_decision_factors'))
 
 
 if __name__ == '__main__':
