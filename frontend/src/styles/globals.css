@@ -16,18 +16,8 @@ Purpose: Landing page for ClutchCall, explaining what it is and its features
     --color-accent: var(--accent);
     --color-backdrop: var(--backdrop);
 
-    /*Sidebar variables*/
-    --color-sidebar: var(--sidebar);
-    --color-sidebar-foreground: var(--sidebar-foreground);
-    --color-sidebar-primary: var(--sidebar-primary);
-    --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-    --color-sidebar-accent: var(--sidebar-accent);
-    --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-    --color-sidebar-border: var(--sidebar-border);
-    --color-sidebar-ring: var(--sidebar-ring);
-
-    /* dialog variables */
-    --color-dialog-bg: var(--dialog-bg);
+    /*dialog variables*/
+    --color-dialog-bg: var(--dialog-bg)
 }
 
 @layer base {
@@ -39,19 +29,7 @@ Purpose: Landing page for ClutchCall, explaining what it is and its features
         --text-primary: #1F2937;
         --text-secondary: #6B7280;
         --accent: #F87171;
-
-        /*Sidebar variable colors*/
-        --sidebar: hsl(0 0% 98%);
-        --sidebar-foreground: hsl(240 5.3% 26.1%);
-        --sidebar-primary: hsl(240 5.9% 10%);
-        --sidebar-primary-foreground: hsl(0 0% 98%);
-        --sidebar-accent: hsl(240 4.8% 95.9%);
-        --sidebar-accent-foreground: hsl(240 5.9% 10%);
-        --sidebar-border: hsl(220 13% 91%);
-        --sidebar-ring: hsl(217.2 91.2% 59.8%);
-
-        /* dialog (light) */
-        --dialog-bg: #ffffff;               
+        --dialog-bg: #ffffff;
     } 
 
     .dark {
@@ -62,19 +40,7 @@ Purpose: Landing page for ClutchCall, explaining what it is and its features
         --text-primary: #c9d1d9;
         --text-secondary: #8b949e;
         --accent: #30363d;
-
-        /*Sidebar variable colors*/
-        --sidebar: hsl(240 5.9% 10%);
-        --sidebar-foreground: hsl(240 4.8% 95.9%);
-        --sidebar-primary: hsl(224.3 76.3% 48%);
-        --sidebar-primary-foreground: hsl(0 0% 100%);
-        --sidebar-accent: hsl(240 3.7% 15.9%);
-        --sidebar-accent-foreground: hsl(240 4.8% 95.9%);
-        --sidebar-border: hsl(240 3.7% 15.9%);
-        --sidebar-ring: hsl(217.2 91.2% 59.8%);
-
-        /* dialog (dark) */
-        --dialog-bg: #0f1724;               
+        --dialog-bg: #0f1724;
     }
 
     html {
@@ -84,5 +50,53 @@ Purpose: Landing page for ClutchCall, explaining what it is and its features
     body { 
         @apply bg-background text-primary transition-colors duration-300;
         font-family: 'Inter', sans-serif;
+    }
+
+    .slick-prev:before,
+    .slick-next:before {
+        color: var(--primary) !important;
+        font-size: 28px;
+    }
+
+    .slick-dots li button:before {
+        color: var(--primary) !important;
+        opacity: 0.6;
+    }
+    .slick-dots li.slick-active button:before {
+        color: var(--primary) !important;
+        opacity: 1;
+    }
+
+    /*MatchCard Overlays*/
+    .team-gradient-overlay::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        background-image: linear-gradient(
+            to right,
+            var(--away-team-color, #00338d),
+            transparent 50%,
+            var(--home-team-color, #c60c30)
+        );
+        opacity: 0.7;
+        border-radius: inherit;
+    }
+
+    .vignette-overlay::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        background-image: radial-gradient(
+            ellipse at center,
+            rgba(0, 0, 0, 0) 40%,
+            rgba(0 ,0, 0, 0.8) 100%
+        );
+        border-radius: inherit;
     }
 }

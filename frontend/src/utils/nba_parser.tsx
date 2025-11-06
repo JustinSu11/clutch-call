@@ -1,7 +1,7 @@
 /*
     File: frontend/src/utils/nba_parser.tsx
     Created: 09/30/2025 by CJ Quintero
-    Last Updated: 10/08/2025 by CJ Quintero
+    Last Updated: 10/13/2025 by Justin Nguyen
 
     Description: This file contains methods 
     to parse each response from the nba backend methods provided
@@ -17,6 +17,7 @@ import * as sports_stats_methods from '../backend_methods/sports_stats_methods';
 
 // global
 const seasonStartDate = '2025-10-21'; // NBA season started on Oct 21, 2025
+import formatDate from './date-formatter-for-matches';
 
 // THIS METHOD CURRENTLY DOES NOT WORK 
 // due to missing nba api data, I do not know the response json structure yet
@@ -39,9 +40,19 @@ export const parseUpcomingNBAGames = async () => {
     // parse major header
     const events = responseData["events"];
 
+    // declare the Game type
+    // each game will have a home team and an away team
+    type Game = {
+        homeTeam: string;
+        awayTeam: string;
+        date: Date;
+        league: string;
+    };
+
     // map through each event to extract home and away team names
     // into the games array
     // DO NOT DELETE THE COMMAND TO DISABLE THE ANY TYPE
+    // IF YOU DO, YOUR COMPUTER WILL EXPLODE
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const games: UpcomingGame[] = events.map((event: any)  => {
 
@@ -52,6 +63,12 @@ export const parseUpcomingNBAGames = async () => {
 
         // the official game name for reference
         const officialGameName = event['name'];
+
+        // extract date of match
+        const date = event['date']
+
+        //categorize into a league
+        const league = "NBA"
 
         // sanity check to ensure the extracted team names match the official game name
         // ex) "awayTeam at homeTeam" such as "Dallas Cowboys at New York Jets"
@@ -65,7 +82,8 @@ export const parseUpcomingNBAGames = async () => {
         const year = gameDate.split('-')[0];
         const formattedGameDate = `${month}-${day}-${year}`;
 
-        return { homeTeam, awayTeam, gameDate: formattedGameDate };
+        // return { homeTeam, awayTeam, gameDate: formattedGameDate };
+        return { homeTeam, awayTeam, gameDate: formattedGameDate, date, league };
     });
 
     return games;

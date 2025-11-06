@@ -1,7 +1,7 @@
 /*
     File: frontend/src/utils/nfl_parser.tsx
     Created: 09/30/2025 by CJ Quintero
-    Last Updated: 10/08/2025 by CJ Quintero
+    Last Updated: 10/13/2025 by Justin Nguyen
 
     Description: This file contains methods 
     to parse each response from the nfl backend methods provided
@@ -15,7 +15,8 @@ import { ClassDictionary } from 'clsx';
 import * as nfl_methods from '../backend_methods/nfl_methods';
 import * as sports_stats_methods from '../backend_methods/sports_stats_methods';
 import { HistoricalGameFilters } from '../backend_methods/sports_stats_methods';
-import { UpcomingGame } from './data_class';
+import { UpcomingGame, Team } from './data_class';
+import formatDate from './date-formatter-for-matches';
 
 // globals
 const seasonStartDate = '2025-09-04'; // NFL season started on Sep 4, 2025
@@ -37,19 +38,45 @@ export const parseUpcomingNFLGames = async () => {
     // parse major header
     const events = responseData["events"];
 
+    // declare the Game type
+    // each game will have a home team and an away team
+    type Game = {
+    homeTeam: string;
+    awayTeam: string;
+    date: Date;
+    league: string;
+    };
+
     // map through each event to extract home and away team names
     // into the games array
     // DO NOT DELETE THE COMMAND TO DISABLE THE ANY TYPE
+    // IF YOU DO, YOUR COMPUTER WILL EXPLODE
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const games: UpcomingGame[] = events.map((event: any)  => {
 
         // extract home and away team names
-        const homeTeam = event['competitions'][0]['competitors'][0]['team']['displayName'];
-        const awayTeam = event['competitions'][0]['competitors'][1]['team']['displayName'];
+        const homeTeam:Team = {
+            abbreviation: event['competitions'][0]['competitors'][0]['team']['abbreviation'],
+            color: event['competitions'][0]['competitors'][0]['team']['color'],
+            alternateColor: event['competitions'][0]['competitors'][0]['team']['alternateColor'],
+            displayName: event['competitions'][0]['competitors'][0]['team']['displayName'],
+        };
+        const awayTeam:Team = {
+            abbreviation: event['competitions'][0]['competitors'][1]['team']['abbreviation'],
+            color: event['competitions'][0]['competitors'][1]['team']['color'],
+            alternateColor: event['competitions'][0]['competitors'][1]['team']['alternateColor'],
+            displayName: event['competitions'][0]['competitors'][1]['team']['displayName'],
+        }
+
+        // extract date of match
         const gameDate = event['date'].split('T')[0]; // extract date only, ignore time
+        const dateAndTime = event['date']
 
         // the official game name for reference
         const officialGameName = event['name'];
+
+        //categorize into a league
+        const league = "NFL"
 
         // sanity check to ensure the extracted team names match the official game name
         // ex) "awayTeam at homeTeam" such as "Dallas Cowboys at New York Jets"
@@ -63,7 +90,8 @@ export const parseUpcomingNFLGames = async () => {
         const year = gameDate.split('-')[0];
         const formattedGameDate = `${month}-${day}-${year}`;
 
-        return { homeTeam, awayTeam, gameDate: formattedGameDate};
+        // return { homeTeam, awayTeam, gameDate: formattedGameDate};
+        return { homeTeam, awayTeam, gameDate: formattedGameDate, dateAndTime: dateAndTime, league: league };
     });
 
     return games;
@@ -150,3 +178,50 @@ export const parseNFLTeamStats = async (teamName: string) => {
     return { wins, losses, ties, totalGames};
 };
 
+export const parseNFLTeamLogo = async (teamName: string) => {
+    /*
+        parseNFLTeamLogo:
+        This method gets a team's logo and returns the url
+
+        params:
+            teamName: String - the name of the team to get the logo for.
+
+        returns:
+            logoUrl: String - the url of the team's logo
+    */
+
+    // makes the local date in YYYY-MM-DD using the local timezone
+    const todaysDateLocal = (() => {
+        const d = new Date();
+        const yyyy = d.getFullYear();
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const dd = String(d.getDate()).padStart(2, '0');
+        return `${yyyy}-${mm}-${dd}`;
+    })();
+
+    // await the response from the backend method
+    const responseData = await sports_stats_methods.getHistoricalNFLTeamByName(teamName, {
+        startDate: `${seasonStartDate}`,              
+        endDate: `${todaysDateLocal}`,             
+    });
+
+    // for the logo url, we just have to check 1 game
+    const gameData = responseData['data']['events'][0];
+
+    // the team logo we want varies if the team is home or away
+    // so we have to check both teams for a matching name
+    const team0 = gameData['competitions'][0]['competitors'][0]['team']['displayName'];
+    const team1 = gameData['competitions'][0]['competitors'][1]['team']['displayName'];
+
+    // check the first team, then the second for a name match. Else, log the error
+    if (team0 === teamName) {
+        return gameData['competitions'][0]['competitors'][0]['team']['logo'];
+    } 
+    else if (team1 === teamName) {
+        return gameData['competitions'][0]['competitors'][1]['team']['logo'];
+    }
+    else {
+        console.log(`[ERROR]::Logo for team: ${teamName} could not be found.`);
+        return '';
+    }
+};
