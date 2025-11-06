@@ -351,12 +351,18 @@ def nba_train_models():
         training_start = datetime.now()
         
         # Execute training pipeline
-        success = pipeline.run_full_pipeline()
+        results = pipeline.run_full_pipeline()
         
         training_end = datetime.now()
         training_duration = (training_end - training_start).total_seconds()
         
-        if success:
+        # Determine success based on pipeline summary status
+        status = (
+            isinstance(results, dict)
+            and results.get('pipeline_summary', {}).get('status') == 'completed_successfully'
+        )
+
+        if status:
             return jsonify({
                 "message": "NBA ML models trained successfully",
                 "training_start": training_start.isoformat(),
@@ -413,8 +419,8 @@ def nba_models_info():
                 "modified_timestamp": datetime.fromtimestamp(stat_info.st_mtime).isoformat()
             }
         
-        # Check for preprocessors
-        preprocessors_path = os.path.join(backend_path, 'nba_ml_data', 'preprocessors')
+        # Check for preprocessors (saved under models/preprocessors)
+        preprocessors_path = os.path.join(backend_path, 'nba_ml_data', 'models', 'preprocessors')
         preprocessor_files = []
         if os.path.exists(preprocessors_path):
             preprocessor_files = [f for f in os.listdir(preprocessors_path) if f.endswith('.pkl')]

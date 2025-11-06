@@ -29,11 +29,11 @@ class NBAModelManager:
         
     def models_exist(self) -> bool:
         """Check if all required models exist"""
+        # Currently, the training pipeline only produces the game outcome model.
+        # Treat that as the minimum requirement so the app doesn’t repeatedly
+        # think models are missing. Additional models can be added later.
         required_models = [
-            'game_outcome_model.pkl',
-            'points_prediction_model.pkl',
-            'assists_prediction_model.pkl',
-            'rebounds_prediction_model.pkl'
+            'game_outcome_model.pkl'
         ]
         
         if not os.path.exists(self.models_dir):
@@ -71,8 +71,7 @@ class NBAModelManager:
             # Use fewer epochs for faster training (can be adjusted)
             results = pipeline.run_full_pipeline(
                 seasons=None,  # Will use default seasons
-                epochs_game=30,  # Reduced for faster training
-                epochs_player=50  # Reduced for faster training
+                epochs_game=30  # Reduced for faster training
             )
             
             # Check if training was successful
