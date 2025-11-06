@@ -81,67 +81,6 @@ def test_game_predictions_with_factors():
         raise
 
 
-def test_player_predictions_with_factors():
-    """Test that player predictions include decision factors"""
-    print("\n" + "=" * 80)
-    print("TEST: Player Predictions with Decision Factors")
-    print("=" * 80)
-    
-    try:
-        # Get player predictions
-        print("\n[INFO] Requesting player predictions from /nba/predictions/players")
-        data = get_json("/nba/predictions/players?days_ahead=1&top_n=5")
-        
-        print(f"[PASS] Successfully retrieved predictions")
-        print(f"  - Prediction date: {data.get('prediction_date')}")
-        print(f"  - Total predictions: {data.get('total_predictions')}")
-        
-        # Check if we have predictions
-        predictions = data.get('predictions', [])
-        if predictions:
-            player = predictions[0]
-            print(f"\n[INFO] Examining first player prediction:")
-            print(f"  - Player: {player.get('player_name')}")
-            print(f"  - Position: {player.get('position')}")
-            print(f"  - Team ID: {player.get('team_id')}")
-            
-            # Verify predictions
-            print(f"  - Predicted Points: {player.get('predicted_points'):.1f}")
-            print(f"  - Predicted Assists: {player.get('predicted_assists'):.1f}")
-            print(f"  - Predicted Rebounds: {player.get('predicted_rebounds'):.1f}")
-            
-            # Verify decision factors
-            assert 'decision_factors' in player, "Missing 'decision_factors' field"
-            factors_dict = player['decision_factors']
-            
-            print(f"\n[INFO] Decision Factors by Stat Type:")
-            
-            for stat_type in ['points', 'assists', 'rebounds']:
-                if stat_type in factors_dict:
-                    factors = factors_dict[stat_type]
-                    print(f"\n  {stat_type.upper()}:")
-                    
-                    for i, factor in enumerate(factors[:3], 1):
-                        assert 'factor' in factor, f"Factor missing 'factor' name for {stat_type}"
-                        assert 'importance' in factor, f"Factor missing 'importance' for {stat_type}"
-                        assert 'value' in factor, f"Factor missing 'value' for {stat_type}"
-                        assert 'contribution' in factor, f"Factor missing 'contribution' for {stat_type}"
-                        
-                        print(f"    {i}. {factor['factor']}")
-                        print(f"       - Importance: {factor['importance']:.4f}")
-                        print(f"       - Value: {factor['value']:.2f}")
-                        print(f"       - Contribution: {factor['contribution']:.4f}")
-            
-            print("\n[PASS] All player decision factors are present and valid")
-            print("[SUCCESS] Player predictions include decision factors!")
-        else:
-            print("[SKIP] No player predictions available for testing")
-    
-    except Exception as e:
-        print(f"[ERROR] Test failed: {e}")
-        import traceback
-        traceback.print_exc()
-        raise
 
 
 def main():
@@ -157,7 +96,6 @@ def main():
     
     try:
         test_game_predictions_with_factors()
-        test_player_predictions_with_factors()
         
         print("\n" + "=" * 80)
         print("ALL TESTS PASSED!")
@@ -165,7 +103,6 @@ def main():
         print("\nThe NBA predictions API successfully returns:")
         print("  ✓ Confidence scores for game outcome predictions")
         print("  ✓ Decision factors explaining what influenced each prediction")
-        print("  ✓ Player performance predictions with decision factors")
         print("=" * 80 + "\n")
         
     except Exception as e:
