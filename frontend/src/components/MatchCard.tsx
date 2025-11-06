@@ -96,15 +96,44 @@ export default function MatchCard({ awayTeam, homeTeam, matchDate, league, gameI
             {/* Content */}
             <div className="relative text-white">
             <div className="p-8">
-            <div className="grid grid-cols-3 grid-rows-[auto_auto_auto] justify-items-center text-center gap-y-3 w-full">
-                {/* Row 1 — Team Names */}
-                <div className="row-start-1 col-start-1">
-                <span className="font-semibold text-xl sm:text-xl tracking-tight text-white/90">
+            <div className="grid grid-cols-3 grid-rows-[auto_auto] justify-items-center text-center gap-y-4 w-full">
+                {/* Row 1 — Logos + VS/Score */}
+                <div className="row-start-1 col-start-1 flex items-center justify-center h-28">
+                {awayTeamLogo}
+                </div>
+
+                <div className="row-start-1 col-start-2 flex items-center justify-center gap-3">
+                {isLive && liveData.score ? (
+                    <>
+                    <div className="text-3xl sm:text-4xl font-bold text-white drop-shadow-lg">
+                        {liveData.score.away}
+                    </div>
+                    <span className="font-extrabold text-2xl sm:text-3xl text-white/80 drop-shadow-lg">
+                        VS
+                    </span>
+                    <div className="text-3xl sm:text-4xl font-bold text-white drop-shadow-lg">
+                        {liveData.score.home}
+                    </div>
+                    </>
+                ) : (
+                    <span className="font-extrabold text-3xl sm:text-5xl text-white drop-shadow-lg">
+                        VS
+                    </span>
+                )}
+                </div>
+
+                <div className="row-start-1 col-start-3 flex items-center justify-center h-28">
+                {homeTeamLogo}
+                </div>
+
+                {/* Row 2 — Names + Date */}
+                <div className="row-start-2 col-start-1">
+                <span className="font-semibold text-lg sm:text-xl tracking-tight text-white/90">
                     {awayTeam.displayName}
                 </span>
                 </div>
 
-                <div className="row-start-1 col-start-2 flex flex-col items-center gap-1">
+                <div className="row-start-2 col-start-2 flex flex-col items-center gap-1">
                 {isLive && liveData.periodLabel ? (
                     <>
                     <div className="flex items-center gap-2">
@@ -129,51 +158,22 @@ export default function MatchCard({ awayTeam, homeTeam, matchDate, league, gameI
                 )}
                 </div>
 
-                <div className="row-start-1 col-start-3">
-                <span className="font-semibold text-xl sm:text-xl tracking-tight text-white/90">
+                <div className="row-start-2 col-start-3">
+                <span className="font-semibold text-lg sm:text-xl tracking-tight text-white/90">
                     {homeTeam.displayName}
                 </span>
                 </div>
-
-                {/* Row 2 — Logos */}
-                <div className="row-start-2 col-start-1 flex items-center justify-center h-28">
-                {awayTeamLogo}
-                </div>
-
-                <div className="row-start-2 col-start-2 flex items-center justify-center gap-3">
-                {isLive && liveData.score ? (
-                    <>
-                    <div className="text-3xl sm:text-4xl font-bold text-white drop-shadow-lg">
-                        {liveData.score.away}
-                    </div>
-                    <span className="font-extrabold text-2xl sm:text-3xl text-white drop-shadow-lg">
-                        VS
-                    </span>
-                    <div className="text-3xl sm:text-4xl font-bold text-white drop-shadow-lg">
-                        {liveData.score.home}
-                    </div>
-                    </>
-                ) : (
-                    <span className="font-extrabold text-3xl sm:text-5xl text-white drop-shadow-lg">
-                        VS
-                    </span>
-                )}
-                </div>
-
-                <div className="row-start-2 col-start-3 flex items-center justify-center h-28">
-                {homeTeamLogo}
-                </div>
             </div>
             </div>
 
-            {/* Expand/Collapse Button - Always reserve space for consistent height */}
-            <div className={`w-full flex items-center justify-center py-2 ${isLive ? 'hover:bg-white/10 cursor-pointer' : 'invisible'}`}>
+            {/* Expand/Collapse Button - Always rendered for consistent height, visible only for LIVE games */}
+            <div className="w-full py-2">
                 {isLive && (
                     <button
                         onClick={handleToggleExpand}
                         aria-expanded={isExpanded}
                         aria-label={isExpanded ? "Collapse live game details" : "Expand live game details"}
-                        className="w-full flex items-center justify-center transition-colors focus:outline-none"
+                        className="w-full flex items-center justify-center hover:bg-white/10 transition-colors focus:outline-none"
                     >
                         <ChevronDown 
                             className={`w-6 h-6 text-white transition-transform duration-300 motion-reduce:transition-none ${isExpanded ? 'rotate-180' : ''}`}

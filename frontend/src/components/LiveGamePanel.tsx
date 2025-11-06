@@ -104,9 +104,10 @@ export default function LiveGamePanel({
                                             <div className="text-white text-center font-bold mb-6 text-2xl">
                                                 {category.label}
                                             </div>
-                                            <div className="flex items-start justify-between gap-8">
-                                                {/* Home Leader - Photo Left, Stats Right (Inside) */}
-                                                <div className="flex items-start gap-4 flex-1">
+                                            {/* Use 3-column grid to align with main card (logos in outer columns, center content in middle) */}
+                                            <div className="grid grid-cols-[1fr_auto_1fr] gap-4 items-start">
+                                                {/* Home Leader - Left Column (aligned with home logo) */}
+                                                <div className="flex flex-col items-center gap-2">
                                                     <div className="flex-shrink-0">
                                                         {homeLeader?.photo ? (
                                                             <img 
@@ -120,37 +121,61 @@ export default function LiveGamePanel({
                                                             </div>
                                                         )}
                                                     </div>
-                                                    <div className="flex flex-col gap-1 min-w-0">
-                                                        <div className="text-white text-base font-semibold">
-                                                            {homeLeader?.name || '—'}
-                                                        </div>
-                                                        <div className="text-white/80 text-sm">
-                                                            {homeTeamName}
-                                                        </div>
-                                                        <div className="mt-3 space-y-2">
-                                                            <div className="flex items-center gap-3">
-                                                                <span className="text-white/60 text-sm">{category.stat}</span>
-                                                                <span className="text-white text-4xl font-bold">
-                                                                    {homeLeader?.stats?.[category.stat] || '—'}
-                                                                </span>
-                                                            </div>
-                                                            {/* Additional stats */}
-                                                            {Object.entries(homeLeader?.stats || {})
-                                                                .filter(([key]) => key !== category.stat)
-                                                                .slice(0, 2)
-                                                                .map(([key, value]) => (
-                                                                    <div key={key} className="flex items-center gap-2 text-sm">
-                                                                        <span className="text-white/60">{key}</span>
-                                                                        <span className="text-white/80 font-medium">{value}</span>
-                                                                    </div>
-                                                                ))
-                                                            }
-                                                        </div>
+                                                    <div className="text-white text-base font-semibold text-center">
+                                                        {homeLeader?.name || '—'}
+                                                    </div>
+                                                    <div className="text-white/80 text-sm text-center">
+                                                        {homeTeamName}
                                                     </div>
                                                 </div>
 
-                                                {/* Away Leader - Photo Right, Stats Left (Inside) */}
-                                                <div className="flex items-start gap-4 flex-1 flex-row-reverse">
+                                                {/* Stats - Center Column */}
+                                                <div className="flex flex-col gap-8 min-w-[200px]">
+                                                    {/* Home Stats */}
+                                                    <div className="flex flex-col gap-2">
+                                                        <div className="flex items-center gap-3 justify-end">
+                                                            <span className="text-white/60 text-sm">{category.stat}</span>
+                                                            <span className="text-white text-4xl font-bold">
+                                                                {homeLeader?.stats?.[category.stat] || '—'}
+                                                            </span>
+                                                        </div>
+                                                        {/* Additional stats */}
+                                                        {Object.entries(homeLeader?.stats || {})
+                                                            .filter(([key]) => key !== category.stat)
+                                                            .slice(0, 2)
+                                                            .map(([key, value]) => (
+                                                                <div key={key} className="flex items-center gap-2 text-sm justify-end">
+                                                                    <span className="text-white/60">{key}</span>
+                                                                    <span className="text-white/80 font-medium">{value}</span>
+                                                                </div>
+                                                            ))
+                                                        }
+                                                    </div>
+
+                                                    {/* Away Stats */}
+                                                    <div className="flex flex-col gap-2">
+                                                        <div className="flex items-center gap-3">
+                                                            <span className="text-white text-4xl font-bold">
+                                                                {awayLeader?.stats?.[category.stat] || '—'}
+                                                            </span>
+                                                            <span className="text-white/60 text-sm">{category.stat}</span>
+                                                        </div>
+                                                        {/* Additional stats */}
+                                                        {Object.entries(awayLeader?.stats || {})
+                                                            .filter(([key]) => key !== category.stat)
+                                                            .slice(0, 2)
+                                                            .map(([key, value]) => (
+                                                                <div key={key} className="flex items-center gap-2 text-sm">
+                                                                    <span className="text-white/80 font-medium">{value}</span>
+                                                                    <span className="text-white/60">{key}</span>
+                                                                </div>
+                                                            ))
+                                                        }
+                                                    </div>
+                                                </div>
+
+                                                {/* Away Leader - Right Column (aligned with away logo) */}
+                                                <div className="flex flex-col items-center gap-2">
                                                     <div className="flex-shrink-0">
                                                         {awayLeader?.photo ? (
                                                             <img 
@@ -164,32 +189,11 @@ export default function LiveGamePanel({
                                                             </div>
                                                         )}
                                                     </div>
-                                                    <div className="flex flex-col gap-1 min-w-0 text-right">
-                                                        <div className="text-white text-base font-semibold">
-                                                            {awayLeader?.name || '—'}
-                                                        </div>
-                                                        <div className="text-white/80 text-sm">
-                                                            {awayTeamName}
-                                                        </div>
-                                                        <div className="mt-3 space-y-2">
-                                                            <div className="flex items-center gap-3 justify-end">
-                                                                <span className="text-white text-4xl font-bold">
-                                                                    {awayLeader?.stats?.[category.stat] || '—'}
-                                                                </span>
-                                                                <span className="text-white/60 text-sm">{category.stat}</span>
-                                                            </div>
-                                                            {/* Additional stats */}
-                                                            {Object.entries(awayLeader?.stats || {})
-                                                                .filter(([key]) => key !== category.stat)
-                                                                .slice(0, 2)
-                                                                .map(([key, value]) => (
-                                                                    <div key={key} className="flex items-center gap-2 justify-end text-sm">
-                                                                        <span className="text-white/80 font-medium">{value}</span>
-                                                                        <span className="text-white/60">{key}</span>
-                                                                    </div>
-                                                                ))
-                                                            }
-                                                        </div>
+                                                    <div className="text-white text-base font-semibold text-center">
+                                                        {awayLeader?.name || '—'}
+                                                    </div>
+                                                    <div className="text-white/80 text-sm text-center">
+                                                        {awayTeamName}
                                                     </div>
                                                 </div>
                                             </div>
