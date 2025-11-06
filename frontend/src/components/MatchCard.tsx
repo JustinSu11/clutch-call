@@ -71,7 +71,7 @@ export default function MatchCard({ awayTeam, homeTeam, matchDate, league, gameI
                 {awayTeamLogo}
                 </div>
 
-                <div className="row-start-1 col-start-2 flex flex-col items-center justify-center gap-2">
+                <div className="row-start-1 col-start-2 flex items-center justify-center gap-3">
                 {isLive && liveData.score ? (
                     <>
                     <div className="text-2xl sm:text-3xl font-bold text-white drop-shadow-lg">

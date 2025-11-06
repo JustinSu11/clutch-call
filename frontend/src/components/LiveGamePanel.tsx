@@ -75,7 +75,6 @@ export default function LiveGamePanel({
             {/* Leaders Carousel - One slide per category */}
             {liveData.leaders && (
                 <div className="relative">
-                    <h3 className="text-white font-semibold mb-3 text-center">Game Leaders</h3>
                     <Carousel opts={{ align: 'center', loop: false }} className="w-full">
                         <CarouselContent>
                             {categories.map((category) => {
@@ -98,10 +97,10 @@ export default function LiveGamePanel({
                                                             <img 
                                                                 src={homeLeader.photo} 
                                                                 alt={homeLeader.name}
-                                                                className="w-20 h-20 rounded-full object-cover"
+                                                                className="w-24 h-24 rounded-full object-cover"
                                                             />
                                                         ) : (
-                                                            <div className="w-20 h-20 rounded-full bg-white/20 flex items-center justify-center">
+                                                            <div className="w-24 h-24 rounded-full bg-white/20 flex items-center justify-center">
                                                                 <span className="text-white text-sm">?</span>
                                                             </div>
                                                         )}
@@ -142,10 +141,10 @@ export default function LiveGamePanel({
                                                             <img 
                                                                 src={awayLeader.photo} 
                                                                 alt={awayLeader.name}
-                                                                className="w-20 h-20 rounded-full object-cover"
+                                                                className="w-24 h-24 rounded-full object-cover"
                                                             />
                                                         ) : (
-                                                            <div className="w-20 h-20 rounded-full bg-white/20 flex items-center justify-center">
+                                                            <div className="w-24 h-24 rounded-full bg-white/20 flex items-center justify-center">
                                                                 <span className="text-white text-sm">?</span>
                                                             </div>
                                                         )}
