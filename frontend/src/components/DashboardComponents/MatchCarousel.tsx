@@ -66,9 +66,14 @@ const fetchAllMatches = async (): Promise<UpcomingGame[]> => {
 
 export default function MatchCarousel({ selectedLeagues }: { selectedLeagues: string[] }) {
     const [upcomingMatchesToday, setUpcomingMatchesToday] = useState<UpcomingGame[]>([])
+    const [expandedGameId, setExpandedGameId] = useState<string | undefined>(undefined)
 
     //timer to know when midnight passes
     const timerRef = useRef<number | null>(null)
+
+    const handleCardExpand = (gameId: string | undefined) => {
+        setExpandedGameId(gameId)
+    }
 
     function upcomingMatchesWithinXDays(a: Date, b: Date, daysAhead = 7) {
         const diff = a.getTime() - b.getTime()
@@ -145,6 +150,10 @@ export default function MatchCarousel({ selectedLeagues }: { selectedLeagues: st
         speed: 400,
         slidesToShow: 1,
         slidesToScroll: 1,
+        beforeChange: () => {
+            // Collapse any expanded card when navigating to a different slide
+            setExpandedGameId(undefined)
+        }
     }
     return (
         <div className="block w-full">
@@ -160,6 +169,8 @@ export default function MatchCarousel({ selectedLeagues }: { selectedLeagues: st
                             homeTeam={game.homeTeam} 
                             league={game.league}
                             gameId={game.gameId}
+                            isExpanded={expandedGameId === game.gameId}
+                            onExpand={handleCardExpand}
                         />
                     ))
                 )}

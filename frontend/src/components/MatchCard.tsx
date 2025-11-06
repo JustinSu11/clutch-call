@@ -22,11 +22,16 @@ type MatchCardProps = {
   matchDate: Date
   league: string
   gameId?: string
+  isExpanded?: boolean
+  onExpand?: (gameId: string | undefined) => void
 }
 
-export default function MatchCard({ awayTeam, homeTeam, matchDate, league, gameId }: MatchCardProps) {
-    const [isExpanded, setIsExpanded] = useState(false)
+export default function MatchCard({ awayTeam, homeTeam, matchDate, league, gameId, isExpanded: externalIsExpanded, onExpand }: MatchCardProps) {
+    const [internalIsExpanded, setInternalIsExpanded] = useState(false)
     const { liveData } = useLiveGameStatus(gameId, league)
+    
+    // Use external state if provided, otherwise use internal state
+    const isExpanded = externalIsExpanded !== undefined ? externalIsExpanded : internalIsExpanded
     
     const calculateTimeLeft = () => {
         const now = new Date()
@@ -36,6 +41,16 @@ export default function MatchCard({ awayTeam, homeTeam, matchDate, league, gameI
         const hours = Math.floor((diff / (1000 * 60 * 60)) % 24)
         const minutes = Math.floor((diff / (1000 * 60)) % 60)
         return `${days}d ${hours}h ${minutes}m`
+    }
+
+    const handleToggleExpand = () => {
+        if (onExpand) {
+            // Notify parent component
+            onExpand(isExpanded ? undefined : gameId)
+        } else {
+            // Fall back to internal state if no callback provided
+            setInternalIsExpanded(!internalIsExpanded)
+        }
     }
 
     const timeLeft = calculateTimeLeft()
@@ -103,10 +118,28 @@ export default function MatchCard({ awayTeam, homeTeam, matchDate, league, gameI
                 </div>
 
                 <div className="row-start-2 col-start-2 flex flex-col items-center gap-1">
-                <p className="text-base font-semibold text-white">
-                    {formatDate(matchDate)}
-                </p>
-                <p className="text-sm font-medium text-white/80">{timeLeft}</p>
+                {isLive && liveData.periodLabel ? (
+                    <>
+                    <div className="flex items-center gap-2">
+                        <span className="bg-red-600 text-white px-2 py-0.5 rounded-full text-xs font-bold animate-pulse">
+                            LIVE
+                        </span>
+                        <span className="text-base font-semibold text-white">
+                            {liveData.periodLabel}
+                        </span>
+                    </div>
+                    {liveData.clock && (
+                        <p className="text-sm font-medium text-white/80">{liveData.clock}</p>
+                    )}
+                    </>
+                ) : (
+                    <>
+                    <p className="text-base font-semibold text-white">
+                        {formatDate(matchDate)}
+                    </p>
+                    <p className="text-sm font-medium text-white/80">{timeLeft}</p>
+                    </>
+                )}
                 </div>
 
                 <div className="row-start-2 col-start-3">
@@ -120,7 +153,7 @@ export default function MatchCard({ awayTeam, homeTeam, matchDate, league, gameI
             {/* Expand/Collapse Button - Only shown for LIVE games */}
             {isLive && (
                 <button
-                    onClick={() => setIsExpanded(!isExpanded)}
+                    onClick={handleToggleExpand}
                     aria-expanded={isExpanded}
                     aria-label={isExpanded ? "Collapse live game details" : "Expand live game details"}
                     className="w-full flex items-center justify-center py-2 hover:bg-white/10 transition-colors focus:outline-none focus:ring-2 focus:ring-white/50"
