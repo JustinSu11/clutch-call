@@ -147,34 +147,34 @@ const getMockLiveData = (gameId: string, league: string): LiveGameData => {
                     points: {
                         name: 'LeBron James',
                         photo: 'https://a.espncdn.com/i/headshots/nba/players/full/1966.png',
-                        stats: { PTS: 28 }
+                        stats: { PTS: 28, REB: 7, AST: 6, FG: '10-18' }
                     },
                     rebounds: {
                         name: 'Anthony Davis',
                         photo: 'https://a.espncdn.com/i/headshots/nba/players/full/6583.png',
-                        stats: { REB: 12 }
+                        stats: { REB: 12, PTS: 18, BLK: 3, FG: '8-14' }
                     },
                     assists: {
                         name: 'D\'Angelo Russell',
                         photo: 'https://a.espncdn.com/i/headshots/nba/players/full/3136195.png',
-                        stats: { AST: 8 }
+                        stats: { AST: 8, PTS: 15, REB: 3, '3PT': '3-7' }
                     }
                 },
                 away: {
                     points: {
                         name: 'Jayson Tatum',
                         photo: 'https://a.espncdn.com/i/headshots/nba/players/full/4065648.png',
-                        stats: { PTS: 31 }
+                        stats: { PTS: 31, REB: 8, AST: 5, FG: '11-20' }
                     },
                     rebounds: {
                         name: 'Al Horford',
                         photo: 'https://a.espncdn.com/i/headshots/nba/players/full/3213.png',
-                        stats: { REB: 10 }
+                        stats: { REB: 10, PTS: 12, BLK: 2, FG: '5-9' }
                     },
                     assists: {
                         name: 'Derrick White',
                         photo: 'https://a.espncdn.com/i/headshots/nba/players/full/2991230.png',
-                        stats: { AST: 7 }
+                        stats: { AST: 7, PTS: 14, STL: 2, '3PT': '2-5' }
                     }
                 }
             }

@@ -66,15 +66,29 @@ export default function MatchCard({ awayTeam, homeTeam, matchDate, league, gameI
             <div className="relative text-white">
             <div className="p-8">
             <div className="grid grid-cols-3 grid-rows-[auto_auto] justify-items-center text-center gap-y-4 w-full">
-                {/* Row 1 — Logos + VS */}
+                {/* Row 1 — Logos + VS/Score */}
                 <div className="row-start-1 col-start-1 flex items-center justify-center h-28">
                 {awayTeamLogo}
                 </div>
 
-                <div className="row-start-1 col-start-2 flex flex-col items-center justify-center">
-                <span className="font-extrabold text-3xl sm:text-5xl text-white drop-shadow-lg">
-                    VS
-                </span>
+                <div className="row-start-1 col-start-2 flex flex-col items-center justify-center gap-2">
+                {isLive && liveData.score ? (
+                    <>
+                    <div className="text-2xl sm:text-3xl font-bold text-white drop-shadow-lg">
+                        {liveData.score.away}
+                    </div>
+                    <span className="font-extrabold text-xl sm:text-2xl text-white/80 drop-shadow-lg">
+                        VS
+                    </span>
+                    <div className="text-2xl sm:text-3xl font-bold text-white drop-shadow-lg">
+                        {liveData.score.home}
+                    </div>
+                    </>
+                ) : (
+                    <span className="font-extrabold text-3xl sm:text-5xl text-white drop-shadow-lg">
+                        VS
+                    </span>
+                )}
                 </div>
 
                 <div className="row-start-1 col-start-3 flex items-center justify-center h-28">
@@ -120,18 +134,16 @@ export default function MatchCard({ awayTeam, homeTeam, matchDate, league, gameI
             {/* Expandable Panel - Only shown for LIVE games when expanded */}
             {isLive && (
                 <div 
-                    className={`overflow-hidden transition-all duration-300 ease-in-out motion-reduce:transition-none ${
-                        isExpanded ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'
+                    className={`overflow-hidden transition-all duration-500 ease-in-out motion-reduce:transition-none ${
+                        isExpanded ? 'max-h-[600px] opacity-100' : 'max-h-0 opacity-0'
                     }`}
                 >
-                    {isExpanded && (
-                        <LiveGamePanel 
-                            liveData={liveData}
-                            homeTeamName={homeTeam.displayName}
-                            awayTeamName={awayTeam.displayName}
-                            league={league}
-                        />
-                    )}
+                    <LiveGamePanel 
+                        liveData={liveData}
+                        homeTeamName={homeTeam.displayName}
+                        awayTeamName={awayTeam.displayName}
+                        league={league}
+                    />
                 </div>
             )}
             </div>

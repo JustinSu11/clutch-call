@@ -55,43 +55,28 @@ export default function LiveGamePanel({
 
     return (
         <div className="bg-black/70 backdrop-blur-sm p-4 space-y-4">
-            {/* Header: LIVE Badge, Score, Period/Clock */}
-            <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                    <span className="bg-red-600 text-white px-3 py-1 rounded-full text-sm font-bold animate-pulse">
-                        LIVE
+            {/* Header: LIVE Badge, Period/Clock */}
+            <div className="flex items-center justify-center gap-3">
+                <span className="bg-red-600 text-white px-3 py-1 rounded-full text-sm font-bold animate-pulse">
+                    LIVE
+                </span>
+                {liveData.periodLabel && (
+                    <span className="text-white font-semibold text-lg">
+                        {liveData.periodLabel}
                     </span>
-                    {liveData.periodLabel && (
-                        <span className="text-white font-semibold text-lg">
-                            {liveData.periodLabel}
-                        </span>
-                    )}
-                    {liveData.clock && (
-                        <span className="text-white/80 text-sm">
-                            {liveData.clock}
-                        </span>
-                    )}
-                </div>
-                {liveData.score && (
-                    <div className="flex items-center gap-4 text-white">
-                        <div className="text-center">
-                            <div className="text-xs text-white/60 mb-1">{awayTeamName}</div>
-                            <div className="text-2xl font-bold">{liveData.score.away}</div>
-                        </div>
-                        <span className="text-white/60">—</span>
-                        <div className="text-center">
-                            <div className="text-xs text-white/60 mb-1">{homeTeamName}</div>
-                            <div className="text-2xl font-bold">{liveData.score.home}</div>
-                        </div>
-                    </div>
+                )}
+                {liveData.clock && (
+                    <span className="text-white/80 text-sm">
+                        {liveData.clock}
+                    </span>
                 )}
             </div>
 
-            {/* Leaders Carousel */}
+            {/* Leaders Carousel - One slide per category */}
             {liveData.leaders && (
                 <div className="relative">
                     <h3 className="text-white font-semibold mb-3 text-center">Game Leaders</h3>
-                    <Carousel opts={{ align: 'start', loop: false }} className="w-full">
+                    <Carousel opts={{ align: 'center', loop: false }} className="w-full">
                         <CarouselContent>
                             {categories.map((category) => {
                                 const homeLeader = liveData.leaders?.home?.[category.key];
@@ -100,54 +85,96 @@ export default function LiveGamePanel({
                                 if (!homeLeader && !awayLeader) return null;
 
                                 return (
-                                    <CarouselItem key={category.key} className="md:basis-1/2 lg:basis-1/2">
-                                        <div className="p-2">
-                                            <div className="text-white text-center font-semibold mb-3 text-sm">
+                                    <CarouselItem key={category.key} className="basis-full">
+                                        <div className="p-4">
+                                            <div className="text-white text-center font-bold mb-4 text-lg">
                                                 {category.label}
                                             </div>
-                                            <div className="grid grid-cols-2 gap-4">
-                                                {/* Home Leader - Photo Left, Stats Right */}
-                                                <div className="flex items-center gap-2 bg-white/10 rounded-lg p-3">
-                                                    {homeLeader?.photo ? (
-                                                        <img 
-                                                            src={homeLeader.photo} 
-                                                            alt={homeLeader.name}
-                                                            className="w-12 h-12 rounded-full object-cover"
-                                                        />
-                                                    ) : (
-                                                        <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
-                                                            <span className="text-white text-xs">?</span>
-                                                        </div>
-                                                    )}
-                                                    <div className="flex-1 min-w-0">
-                                                        <div className="text-white text-xs font-semibold truncate">
+                                            <div className="flex items-start justify-between gap-8">
+                                                {/* Home Leader - Photo Left, Stats Right (Inside) */}
+                                                <div className="flex items-start gap-3 flex-1">
+                                                    <div className="flex-shrink-0">
+                                                        {homeLeader?.photo ? (
+                                                            <img 
+                                                                src={homeLeader.photo} 
+                                                                alt={homeLeader.name}
+                                                                className="w-20 h-20 rounded-full object-cover"
+                                                            />
+                                                        ) : (
+                                                            <div className="w-20 h-20 rounded-full bg-white/20 flex items-center justify-center">
+                                                                <span className="text-white text-sm">?</span>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                    <div className="flex flex-col gap-1 min-w-0">
+                                                        <div className="text-white text-sm font-semibold">
                                                             {homeLeader?.name || '—'}
                                                         </div>
-                                                        <div className="text-white/80 text-lg font-bold">
-                                                            {homeLeader?.stats?.[category.stat] || '—'}
+                                                        <div className="text-white/80 text-xs">
+                                                            {homeTeamName}
+                                                        </div>
+                                                        <div className="mt-2 space-y-1">
+                                                            <div className="flex items-center gap-2">
+                                                                <span className="text-white/60 text-xs">{category.stat}</span>
+                                                                <span className="text-white text-2xl font-bold">
+                                                                    {homeLeader?.stats?.[category.stat] || '—'}
+                                                                </span>
+                                                            </div>
+                                                            {/* Additional stats */}
+                                                            {Object.entries(homeLeader?.stats || {})
+                                                                .filter(([key]) => key !== category.stat)
+                                                                .slice(0, 2)
+                                                                .map(([key, value]) => (
+                                                                    <div key={key} className="flex items-center gap-2 text-xs">
+                                                                        <span className="text-white/60">{key}</span>
+                                                                        <span className="text-white/80">{value}</span>
+                                                                    </div>
+                                                                ))
+                                                            }
                                                         </div>
                                                     </div>
                                                 </div>
 
-                                                {/* Away Leader - Stats Left, Photo Right */}
-                                                <div className="flex items-center gap-2 bg-white/10 rounded-lg p-3 flex-row-reverse">
-                                                    {awayLeader?.photo ? (
-                                                        <img 
-                                                            src={awayLeader.photo} 
-                                                            alt={awayLeader.name}
-                                                            className="w-12 h-12 rounded-full object-cover"
-                                                        />
-                                                    ) : (
-                                                        <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
-                                                            <span className="text-white text-xs">?</span>
-                                                        </div>
-                                                    )}
-                                                    <div className="flex-1 min-w-0 text-right">
-                                                        <div className="text-white text-xs font-semibold truncate">
+                                                {/* Away Leader - Photo Right, Stats Left (Inside) */}
+                                                <div className="flex items-start gap-3 flex-1 flex-row-reverse">
+                                                    <div className="flex-shrink-0">
+                                                        {awayLeader?.photo ? (
+                                                            <img 
+                                                                src={awayLeader.photo} 
+                                                                alt={awayLeader.name}
+                                                                className="w-20 h-20 rounded-full object-cover"
+                                                            />
+                                                        ) : (
+                                                            <div className="w-20 h-20 rounded-full bg-white/20 flex items-center justify-center">
+                                                                <span className="text-white text-sm">?</span>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                    <div className="flex flex-col gap-1 min-w-0 text-right">
+                                                        <div className="text-white text-sm font-semibold">
                                                             {awayLeader?.name || '—'}
                                                         </div>
-                                                        <div className="text-white/80 text-lg font-bold">
-                                                            {awayLeader?.stats?.[category.stat] || '—'}
+                                                        <div className="text-white/80 text-xs">
+                                                            {awayTeamName}
+                                                        </div>
+                                                        <div className="mt-2 space-y-1">
+                                                            <div className="flex items-center gap-2 justify-end">
+                                                                <span className="text-white text-2xl font-bold">
+                                                                    {awayLeader?.stats?.[category.stat] || '—'}
+                                                                </span>
+                                                                <span className="text-white/60 text-xs">{category.stat}</span>
+                                                            </div>
+                                                            {/* Additional stats */}
+                                                            {Object.entries(awayLeader?.stats || {})
+                                                                .filter(([key]) => key !== category.stat)
+                                                                .slice(0, 2)
+                                                                .map(([key, value]) => (
+                                                                    <div key={key} className="flex items-center gap-2 justify-end text-xs">
+                                                                        <span className="text-white/80">{value}</span>
+                                                                        <span className="text-white/60">{key}</span>
+                                                                    </div>
+                                                                ))
+                                                            }
                                                         </div>
                                                     </div>
                                                 </div>
@@ -157,7 +184,7 @@ export default function LiveGamePanel({
                                 );
                             })}
                         </CarouselContent>
-                        {categories.length > 2 && (
+                        {categories.length > 1 && (
                             <>
                                 <CarouselPrevious className="left-2" />
                                 <CarouselNext className="right-2" />
