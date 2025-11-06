@@ -305,7 +305,6 @@ class ModelTrainer:
             if self.game_model:
                 f.write("Game Outcome Model:\n")
                 self.game_model.model.summary(print_fn=lambda x: f.write(x + '\n'))
-                f.write("\n" + "=" * 50 + "\n\n")
         
         logger.info(f"Training results saved to {self.models_dir}")
     
