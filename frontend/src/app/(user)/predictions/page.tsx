@@ -275,11 +275,43 @@ const buildNFLPredictions = async (): Promise<Prediction[]> => {
                              predictedWinner === 'away' ? game.awayTeam : 
                              'Unknown';
             
+            // Use decision_factors if available, otherwise fall back to basic message
+            const decisionFactors = aiPrediction.decision_factors || {};
+            let analysisText = '';
+            
+            if (Object.keys(decisionFactors).length > 0) {
+                // Sort factors by absolute contribution (most influential first)
+                const sortedFactors = Object.entries(decisionFactors)
+                    .map(([feature, data]: [string, any]) => ({
+                        feature,
+                        ...data,
+                        absContribution: Math.abs(data.contribution)
+                    }))
+                    .sort((a, b) => b.absContribution - a.absContribution);
+                
+                // Build analysis from top decision factors - cleaner format
+                const topFactors = sortedFactors.slice(0, 2); // Top 2 most influential
+                
+                const factors = topFactors.map((factor) => {
+                    const featureName = factor.feature === 'HomeYards' ? 'Home yards' :
+                                      factor.feature === 'AwayYards' ? 'Away yards' :
+                                      'Yard differential';
+                    // Use actual team names instead of "home" or "away"
+                    const teamName = factor.contribution > 0 ? game.homeTeam : game.awayTeam;
+                    return `${featureName} (${factor.value}) favors ${teamName}`;
+                });
+                
+                analysisText = factors.join(', ');
+            } else {
+                // Fallback if decision_factors not available
+                analysisText = 'AI analysis based on team performance metrics.';
+            }
+            
             const prediction = {
                 match: `${game.awayTeam} at ${game.homeTeam}`,
-                prediction: `Predicted Winner: ${winnerName}`,
-                confidence: isNaN(confidenceValue) ? 0 : confidenceValue, // Ensure it's a valid number
-                analysis: `AI analysis based on team performance metrics.`,
+                prediction: winnerName + ' to win',
+                confidence: isNaN(confidenceValue) ? 0 : confidenceValue,
+                analysis: analysisText,
                 sport: 'NFL' as SportKey,
             };
             

@@ -184,7 +184,7 @@ def generate_prediction_for_game(event_id: str):
             columns=['HomeYards', 'AwayYards', 'YardDiff']
         )
         
-        # Predict
+                # Predict
         prediction = model.predict(features)
         proba = model.predict_proba(features)
         
@@ -194,6 +194,34 @@ def generate_prediction_for_game(event_id: str):
         
         predicted_winner = "home" if predicted_class == 1 else "away"
         confidence = home_prob if predicted_class == 1 else away_prob
+        
+        # Calculate decision_factors using feature importances
+        # This shows which features most influenced the model's decision
+        feature_names = ['HomeYards', 'AwayYards', 'YardDiff']
+        feature_importances = model.feature_importances_
+        
+        # Calculate decision factors for this specific prediction
+        decision_factors = {}
+        for i, feature_name in enumerate(feature_names):
+            importance = float(feature_importances[i])
+            feature_value = float(features.iloc[0][feature_name])
+            
+            # Calculate contribution (how much this feature value influenced the prediction)
+            # For home yards: higher = more home win
+            # For away yards: higher = less home win (more away win)
+            # For yard diff: positive = home advantage
+            if feature_name == 'HomeYards':
+                contribution = (home_yards - 300) * importance  # 300 is rough average
+            elif feature_name == 'AwayYards':
+                contribution = -(away_yards - 300) * importance  # Negative because higher away = less home win
+            else:  # YardDiff
+                contribution = yard_diff * importance
+            
+            decision_factors[feature_name] = {
+                "importance": round(importance * 100, 2),  # Feature importance percentage
+                "value": round(feature_value, 1),
+                "contribution": round(contribution, 2)  # How much this feature influenced this prediction
+            }
         
         print(f"\n🤖 PREDICTION:")
         print(f"   Winner: {predicted_winner.upper()}")
@@ -207,6 +235,7 @@ def generate_prediction_for_game(event_id: str):
             "confidence": round(confidence * 100, 2),
             "home_win_probability": round(home_prob * 100, 2),
             "away_win_probability": round(away_prob * 100, 2),
+            "decision_factors": decision_factors,  # Add this line
             "model_info": {
                 "type": "RandomForestClassifier",
                 "raw_prediction": predicted_class
