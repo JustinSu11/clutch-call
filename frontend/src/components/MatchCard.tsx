@@ -67,31 +67,17 @@ export default function MatchCard({ awayTeam, homeTeam, matchDate, league, gameI
             ['--home-team-color' as any]: `#${homeTeam.color}`,
             }}
         >
-            {/* Background image - fixed at expanded height */}
+            {/* Background image */}
             <div
-            className="absolute top-0 left-0 right-0 bg-center bg-cover"
+            className="absolute inset-0 bg-center bg-cover"
             style={{
                 backgroundImage: league === "NBA" ? "url('/BasketballMatchCardBackground.png')" : league === "NFL" ? "url('/FootballMatchCardBackground.png')" : "url('/SoccerMatchCardBackground.png')",
-                height: isLive && isExpanded ? '800px' : '100%',
-                minHeight: '100%'
             }}
             />
 
-            {/* Gradient & vignette overlays - fixed at expanded height */}
-            <div 
-                className="team-gradient-overlay vignette-overlay absolute top-0 left-0 right-0"
-                style={{
-                    height: isLive && isExpanded ? '800px' : '100%',
-                    minHeight: '100%'
-                }}
-            />
-            <div 
-                className="absolute top-0 left-0 right-0 bg-black/50"
-                style={{
-                    height: isLive && isExpanded ? '800px' : '100%',
-                    minHeight: '100%'
-                }}
-            />
+            {/* Gradient & vignette overlays */}
+            <div className="team-gradient-overlay vignette-overlay absolute inset-0" />
+            <div className="absolute inset-0 bg-black/50" />
 
             {/* Content */}
             <div className="relative text-white">
