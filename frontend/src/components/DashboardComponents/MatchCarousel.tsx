@@ -17,8 +17,8 @@ import "slick-carousel/slick/slick-theme.css"
 import MatchCard from "../MatchCard"
 import { UpcomingGame, Team } from "@/utils/data_class"
 
-// Mock live game for testing purposes
-const createMockLiveGame = (): UpcomingGame => {
+// Mock live games for testing purposes
+const createMockNBAGame = (): UpcomingGame => {
     const mockHomeTeam: Team = {
         displayName: "Los Angeles Lakers",
         abbreviation: "LAL",
@@ -39,7 +39,57 @@ const createMockLiveGame = (): UpcomingGame => {
         gameDate: new Date(),
         dateAndTime: new Date(),
         league: "NBA",
-        gameId: "mock-live-game-123"
+        gameId: "mock-live-nba-game"
+    };
+};
+
+const createMockNFLGame = (): UpcomingGame => {
+    const mockHomeTeam: Team = {
+        displayName: "Kansas City Chiefs",
+        abbreviation: "KC",
+        color: "E31837",
+        alternateColor: "FFB81C"
+    };
+    
+    const mockAwayTeam: Team = {
+        displayName: "San Francisco 49ers",
+        abbreviation: "SF",
+        color: "AA0000",
+        alternateColor: "B3995D"
+    };
+    
+    return {
+        homeTeam: mockHomeTeam,
+        awayTeam: mockAwayTeam,
+        gameDate: new Date(),
+        dateAndTime: new Date(),
+        league: "NFL",
+        gameId: "mock-live-nfl-game"
+    };
+};
+
+const createMockMLSGame = (): UpcomingGame => {
+    const mockHomeTeam: Team = {
+        displayName: "LA Galaxy",
+        abbreviation: "LA",
+        color: "00245D",
+        alternateColor: "FFC425"
+    };
+    
+    const mockAwayTeam: Team = {
+        displayName: "Seattle Sounders FC",
+        abbreviation: "SEA",
+        color: "5D9741",
+        alternateColor: "005595"
+    };
+    
+    return {
+        homeTeam: mockHomeTeam,
+        awayTeam: mockAwayTeam,
+        gameDate: new Date(),
+        dateAndTime: new Date(),
+        league: "MLS",
+        gameId: "mock-live-mls-game"
     };
 };
 
@@ -107,10 +157,12 @@ export default function MatchCarousel({ selectedLeagues }: { selectedLeagues: st
                 return
             }
             
-            // Add mock live game for testing (only in development)
+            // Add mock live games for testing (only in development)
             const isDevelopment = process.env.NODE_ENV === 'development';
             if (isDevelopment) {
-                all.unshift(createMockLiveGame());
+                all.unshift(createMockMLSGame());
+                all.unshift(createMockNFLGame());
+                all.unshift(createMockNBAGame());
             }
             
             const today = new Date()

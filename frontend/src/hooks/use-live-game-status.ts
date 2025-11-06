@@ -128,12 +128,13 @@ const parseLiveGameData = (data: any, league: string): LiveGameData => {
 
 // Mock live game data for testing
 const getMockLiveData = (gameId: string, league: string): LiveGameData => {
-    if (gameId !== 'mock-live-game-123') {
+    // Check if this is a mock game
+    if (!gameId?.startsWith('mock-live-')) {
         return { status: 'UPCOMING' };
     }
 
     // Return mock live data based on league
-    if (league === 'NBA') {
+    if (league === 'NBA' && gameId === 'mock-live-nba-game') {
         return {
             status: 'LIVE',
             periodLabel: 'Q3',
@@ -180,6 +181,92 @@ const getMockLiveData = (gameId: string, league: string): LiveGameData => {
             }
         };
     }
+    
+    if (league === 'NFL' && gameId === 'mock-live-nfl-game') {
+        return {
+            status: 'LIVE',
+            periodLabel: 'Q2',
+            clock: '10:23',
+            score: {
+                home: 17,
+                away: 21
+            },
+            leaders: {
+                home: {
+                    passingYards: {
+                        name: 'Patrick Mahomes',
+                        photo: 'https://a.espncdn.com/i/headshots/nfl/players/full/3139477.png',
+                        stats: { 'Pass Yds': 245, TD: 2, INT: 0, 'Comp': '18/24' }
+                    },
+                    rushingYards: {
+                        name: 'Isiah Pacheco',
+                        photo: 'https://a.espncdn.com/i/headshots/nfl/players/full/4430737.png',
+                        stats: { 'Rush Yds': 78, TD: 1, 'Rush Att': 14, AVG: 5.6 }
+                    },
+                    receivingYards: {
+                        name: 'Travis Kelce',
+                        photo: 'https://a.espncdn.com/i/headshots/nfl/players/full/15847.png',
+                        stats: { 'Rec Yds': 95, TD: 1, REC: 6, AVG: 15.8 }
+                    }
+                },
+                away: {
+                    passingYards: {
+                        name: 'Brock Purdy',
+                        photo: 'https://a.espncdn.com/i/headshots/nfl/players/full/4431457.png',
+                        stats: { 'Pass Yds': 268, TD: 2, INT: 1, 'Comp': '20/28' }
+                    },
+                    rushingYards: {
+                        name: 'Christian McCaffrey',
+                        photo: 'https://a.espncdn.com/i/headshots/nfl/players/full/3116385.png',
+                        stats: { 'Rush Yds': 92, TD: 0, 'Rush Att': 16, AVG: 5.8 }
+                    },
+                    receivingYards: {
+                        name: 'Deebo Samuel',
+                        photo: 'https://a.espncdn.com/i/headshots/nfl/players/full/3929630.png',
+                        stats: { 'Rec Yds': 112, TD: 1, REC: 7, AVG: 16.0 }
+                    }
+                }
+            }
+        };
+    }
+    
+    if (league === 'MLS' && gameId === 'mock-live-mls-game') {
+        return {
+            status: 'LIVE',
+            periodLabel: '2nd Half',
+            clock: '67\'',
+            score: {
+                home: 2,
+                away: 1
+            },
+            leaders: {
+                home: {
+                    goals: {
+                        name: 'Riqui Puig',
+                        photo: 'https://a.espncdn.com/i/headshots/soccer/players/full/209275.png',
+                        stats: { Goals: 2, Shots: 5, 'On Target': 4 }
+                    },
+                    assists: {
+                        name: 'Gastón Brugman',
+                        photo: 'https://a.espncdn.com/i/headshots/soccer/players/full/146296.png',
+                        stats: { Assists: 1, 'Key Passes': 3, Passes: 45 }
+                    }
+                },
+                away: {
+                    goals: {
+                        name: 'Jordan Morris',
+                        photo: 'https://a.espncdn.com/i/headshots/soccer/players/full/145895.png',
+                        stats: { Goals: 1, Shots: 4, 'On Target': 2 }
+                    },
+                    assists: {
+                        name: 'Cristian Roldan',
+                        photo: 'https://a.espncdn.com/i/headshots/soccer/players/full/148144.png',
+                        stats: { Assists: 1, 'Key Passes': 2, Passes: 52 }
+                    }
+                }
+            }
+        };
+    }
 
     return { status: 'UPCOMING' };
 };
@@ -197,7 +284,7 @@ export const useLiveGameStatus = (gameId: string | undefined, league: string) =>
 
         // Check if this is a mock game ID and return mock data
         const isDevelopment = process.env.NODE_ENV === 'development';
-        if (isDevelopment && gameId === 'mock-live-game-123') {
+        if (isDevelopment && gameId?.startsWith('mock-live-')) {
             setLiveData(getMockLiveData(gameId, league));
             return;
         }
