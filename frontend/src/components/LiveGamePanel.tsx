@@ -87,23 +87,6 @@ export default function LiveGamePanel({
 
     return (
         <div className="bg-black/70 backdrop-blur-sm p-4 space-y-4">
-            {/* Header: LIVE Badge, Period/Clock */}
-            <div className="flex items-center justify-center gap-3">
-                <span className="bg-red-600 text-white px-3 py-1 rounded-full text-sm font-bold animate-pulse">
-                    LIVE
-                </span>
-                {liveData.periodLabel && (
-                    <span className="text-white font-semibold text-lg">
-                        {liveData.periodLabel}
-                    </span>
-                )}
-                {liveData.clock && (
-                    <span className="text-white/80 text-sm">
-                        {liveData.clock}
-                    </span>
-                )}
-            </div>
-
             {/* Leaders Carousel - One slide per category */}
             {liveData.leaders && (
                 <div className="relative">
