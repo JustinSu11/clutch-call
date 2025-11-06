@@ -28,8 +28,7 @@ class NBADataPreprocessor:
         self.encoders = {}
         self.feature_columns = {
             'game_features': [],
-            'team_features': [],
-            'player_features': []
+            'team_features': []
         }
         
     def load_raw_data(self) -> Dict[str, pd.DataFrame]:
@@ -120,70 +119,6 @@ class NBADataPreprocessor:
         
         return team_features
     
-    def engineer_player_features(self, player_stats_df: pd.DataFrame) -> pd.DataFrame:
-        """Engineer advanced player features"""
-        logger.info("Engineering player features...")
-        
-        player_features = player_stats_df.copy()
-        
-        # Safe division function for player stats
-        def safe_divide_player(numerator, denominator, default=0):
-            return np.where((denominator != 0) & (~np.isnan(denominator)), numerator / denominator, default)
-        
-        # Advanced player metrics
-        player_features['PER'] = self.calculate_per(player_features)
-        player_features['TS_PCT'] = safe_divide_player(
-            player_features['PTS'], 
-            (2 * (player_features.get('FGA', 1) + 0.44 * player_features.get('FTA', 0))), 0.55
-        )
-        player_features['EFG_PCT'] = safe_divide_player(
-            (player_features.get('FGM', 0) + 0.5 * player_features.get('FG3M', 0)), 
-            player_features.get('FGA', 1), 0.5
-        )
-        player_features['USG_PCT'] = safe_divide_player(
-            ((player_features.get('FGA', 0) + 0.44 * player_features.get('FTA', 0) + player_features.get('TOV', 0)) * 40 * 5), 
-            (player_features.get('MIN', 1) * 10), 20.0
-        )
-        player_features['AST_TO_RATIO'] = safe_divide_player(
-            player_features.get('AST', 0), player_features.get('TOV', 1), 1.5
-        )
-        
-        # Per game stats
-        player_features['PPG'] = safe_divide_player(player_features['PTS'], player_features.get('GP', 1), 0)
-        player_features['RPG'] = safe_divide_player(player_features.get('REB', 0), player_features.get('GP', 1), 0)
-        player_features['APG'] = safe_divide_player(player_features.get('AST', 0), player_features.get('GP', 1), 0)
-        
-        # Per 36 minutes stats
-        player_features['PTS_PER_36'] = safe_divide_player(
-            (player_features['PTS'] * 36), player_features.get('MIN', 1), 0
-        )
-        player_features['REB_PER_36'] = safe_divide_player(
-            (player_features.get('REB', 0) * 36), player_features.get('MIN', 1), 0
-        )
-        player_features['AST_PER_36'] = safe_divide_player(
-            (player_features.get('AST', 0) * 36), player_features.get('MIN', 1), 0
-        )
-        
-        # Efficiency metrics
-        player_features['POINTS_PER_SHOT'] = safe_divide_player(
-            player_features['PTS'], 
-            (player_features.get('FGA', 1) + 0.44 * player_features.get('FTA', 0)), 1.0
-        )
-        player_features['SHOOTING_EFF'] = safe_divide_player(
-            (player_features.get('FGM', 0) + 0.5 * player_features.get('FG3M', 0)), 
-            player_features.get('FGA', 1), 0.5
-        )
-        
-        return player_features
-    
-    def calculate_per(self, player_df: pd.DataFrame) -> pd.Series:
-        """Calculate Player Efficiency Rating (simplified version)"""
-        # Simplified PER calculation with safe column access
-        per = (player_df.get('PTS', 0) + player_df.get('REB', 0) + player_df.get('AST', 0) + 
-               player_df.get('STL', 0) + player_df.get('BLK', 0) - player_df.get('TOV', 0) - 
-               (player_df.get('FGA', 0) - player_df.get('FGM', 0)) - 
-               (player_df.get('FTA', 0) - player_df.get('FTM', 0))) / np.maximum(player_df.get('GP', 1), 1)
-        return pd.Series(per).fillna(15.0)  # Default PER of 15
     
     def create_matchup_features(self, games_df: pd.DataFrame, team_stats_df: pd.DataFrame) -> pd.DataFrame:
         """Create head-to-head matchup features"""
@@ -348,63 +283,6 @@ class NBADataPreprocessor:
         
         return X, y
     
-    def prepare_player_performance_features(self, player_stats_df: pd.DataFrame, games_df: pd.DataFrame) -> Dict[str, Tuple[pd.DataFrame, pd.Series]]:
-        """Prepare features for player performance prediction (points, assists, rebounds)"""
-        logger.info("Preparing player performance features...")
-        
-        # Limit data size to prevent memory issues
-        max_players = 2000  # Limit to top 2000 players
-        if len(player_stats_df) > max_players:
-            # Sort by games played and minutes to get most active players
-            player_stats_df = player_stats_df.nlargest(max_players, ['GP', 'MIN'])
-            logger.info(f"Limited to {max_players} most active players to prevent memory issues")
-        
-        # Use player stats directly without massive merge
-        player_game_df = player_stats_df.copy()
-        
-        # Feature engineering for player prediction - only use essential columns
-        essential_columns = [
-            'GP', 'MIN', 'FG_PCT', 'FG3_PCT', 'FT_PCT', 'REB', 'AST', 'PTS',
-            'PPG', 'RPG', 'APG', 'TS_PCT', 'EFG_PCT'
-        ]
-        
-        # Filter available columns and ensure they exist
-        available_features = []
-        for col in essential_columns:
-            if col in player_game_df.columns:
-                available_features.append(col)
-            else:
-                # Create missing columns with default values
-                if col == 'PPG':
-                    player_game_df[col] = player_game_df.get('PTS', 0) / np.maximum(player_game_df.get('GP', 1), 1)
-                elif col == 'RPG':
-                    player_game_df[col] = player_game_df.get('REB', 0) / np.maximum(player_game_df.get('GP', 1), 1)
-                elif col == 'APG':
-                    player_game_df[col] = player_game_df.get('AST', 0) / np.maximum(player_game_df.get('GP', 1), 1)
-                elif col == 'TS_PCT':
-                    player_game_df[col] = 0.55  # Default true shooting
-                elif col == 'EFG_PCT':
-                    player_game_df[col] = 0.50  # Default effective field goal
-                else:
-                    player_game_df[col] = 0
-                available_features.append(col)
-        
-        # Limit to essential features only
-        X = player_game_df[available_features].fillna(0)
-        
-        # Ensure data types are numeric
-        X = X.select_dtypes(include=[np.number])
-        
-        # Prepare targets for different predictions
-        targets = {
-            'points': player_game_df.get('PTS', pd.Series([0] * len(player_game_df))),
-            'assists': player_game_df.get('AST', pd.Series([0] * len(player_game_df))), 
-            'rebounds': player_game_df.get('REB', pd.Series([0] * len(player_game_df)))
-        }
-        
-        self.feature_columns['player_features'] = available_features
-        
-        return {target_name: (X, target_values) for target_name, target_values in targets.items()}
     
     def scale_features(self, X_train: pd.DataFrame, X_val: pd.DataFrame = None, X_test: pd.DataFrame = None, 
                       scaler_type: str = 'standard') -> Tuple[np.ndarray, ...]:
@@ -499,7 +377,6 @@ class NBADataPreprocessor:
         
         # Engineer features
         team_features = self.engineer_team_features(raw_data['team_stats'], raw_data['games'])
-        player_features = self.engineer_player_features(raw_data['player_stats'])
         
         # Create matchup features
         matchup_features = self.create_matchup_features(raw_data['games'], team_features)
@@ -510,16 +387,11 @@ class NBADataPreprocessor:
         
         # Prepare datasets for different prediction tasks
         game_X, game_y = self.prepare_game_outcome_features(final_features)
-        player_datasets = self.prepare_player_performance_features(player_features, raw_data['games'])
         
         # Split data
         processed_data = {
-            'game_prediction': self.create_train_val_test_split(game_X, game_y),
-            'player_predictions': {}
+            'game_prediction': self.create_train_val_test_split(game_X, game_y)
         }
-        
-        for target_name, (X, y) in player_datasets.items():
-            processed_data['player_predictions'][target_name] = self.create_train_val_test_split(X, y)
         
         # Save processed data
         self.save_processed_data(processed_data)
@@ -557,24 +429,12 @@ class NBADataPreprocessor:
             task_dir = os.path.join(processed_dir, task_name)
             os.makedirs(task_dir, exist_ok=True)
             
-            if isinstance(datasets, dict) and 'X_train' in datasets:
-                # Single dataset
-                for split_name, data in datasets.items():
-                    if isinstance(data, pd.DataFrame):
-                        data.to_csv(os.path.join(task_dir, f'{split_name}.csv'), index=False)
-                    elif isinstance(data, pd.Series):
-                        data.to_csv(os.path.join(task_dir, f'{split_name}.csv'), index=False)
-            else:
-                # Multiple datasets (like player predictions)
-                for sub_task, sub_datasets in datasets.items():
-                    sub_task_dir = os.path.join(task_dir, sub_task)
-                    os.makedirs(sub_task_dir, exist_ok=True)
-                    
-                    for split_name, data in sub_datasets.items():
-                        if isinstance(data, pd.DataFrame):
-                            data.to_csv(os.path.join(sub_task_dir, f'{split_name}.csv'), index=False)
-                        elif isinstance(data, pd.Series):
-                            data.to_csv(os.path.join(sub_task_dir, f'{split_name}.csv'), index=False)
+            # Single dataset (game prediction)
+            for split_name, data in datasets.items():
+                if isinstance(data, pd.DataFrame):
+                    data.to_csv(os.path.join(task_dir, f'{split_name}.csv'), index=False)
+                elif isinstance(data, pd.Series):
+                    data.to_csv(os.path.join(task_dir, f'{split_name}.csv'), index=False)
         
         logger.info(f"Processed data saved to {processed_dir}")
 
