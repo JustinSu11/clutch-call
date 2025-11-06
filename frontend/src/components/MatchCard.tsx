@@ -92,7 +92,7 @@ export default function MatchCard({ awayTeam, homeTeam, matchDate, league, gameI
                     <div className="text-3xl sm:text-4xl font-bold text-white drop-shadow-lg">
                         {liveData.score.away}
                     </div>
-                    <span className="font-extrabold text-2xl sm:text-3xl text-white/80 drop-shadow-lg">
+                    <span className="font-extrabold text-2xl sm:text-3xl text-white drop-shadow-lg">
                         VS
                     </span>
                     <div className="text-3xl sm:text-4xl font-bold text-white drop-shadow-lg">
@@ -112,7 +112,7 @@ export default function MatchCard({ awayTeam, homeTeam, matchDate, league, gameI
 
                 {/* Row 2 — Names + Date */}
                 <div className="row-start-2 col-start-1">
-                <span className="font-semibold text-lg sm:text-xl tracking-tight text-white/90">
+                <span className="font-semibold text-xl sm:text-xl tracking-tight text-white/90">
                     {awayTeam.displayName}
                 </span>
                 </div>
@@ -143,7 +143,7 @@ export default function MatchCard({ awayTeam, homeTeam, matchDate, league, gameI
                 </div>
 
                 <div className="row-start-2 col-start-3">
-                <span className="font-semibold text-lg sm:text-xl tracking-tight text-white/90">
+                <span className="font-semibold text-xl sm:text-xl tracking-tight text-white/90">
                     {homeTeam.displayName}
                 </span>
                 </div>
