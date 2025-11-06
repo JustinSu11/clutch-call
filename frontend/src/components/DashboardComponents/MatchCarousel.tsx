@@ -1,8 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* 
 Author: Justin Nguyen
-Last Updated: 10/08/2025 by Justin Nguyen
+Last Updated: 11/06/2025 by GitHub Copilot
 Purpose: Carousel for upcoming and live matches for the selected sport.
+         Includes mock live game for testing purposes.
 */
 
 'use client'
@@ -14,7 +15,33 @@ import Slider from "react-slick"
 import "slick-carousel/slick/slick.css"
 import "slick-carousel/slick/slick-theme.css"
 import MatchCard from "../MatchCard"
-import { UpcomingGame } from "@/utils/data_class"
+import { UpcomingGame, Team } from "@/utils/data_class"
+
+// Mock live game for testing purposes
+const createMockLiveGame = (): UpcomingGame => {
+    const mockHomeTeam: Team = {
+        displayName: "Los Angeles Lakers",
+        abbreviation: "LAL",
+        color: "552583",
+        alternateColor: "FDB927"
+    };
+    
+    const mockAwayTeam: Team = {
+        displayName: "Boston Celtics",
+        abbreviation: "BOS",
+        color: "007A33",
+        alternateColor: "BA9653"
+    };
+    
+    return {
+        homeTeam: mockHomeTeam,
+        awayTeam: mockAwayTeam,
+        gameDate: new Date(),
+        dateAndTime: new Date(),
+        league: "NBA",
+        gameId: "mock-live-game-123"
+    };
+};
 
 //returns the upcoming matches as arrays of the UpcomingMatch type
 const fetchAllMatches = async (): Promise<UpcomingGame[]> => {
@@ -30,7 +57,8 @@ const fetchAllMatches = async (): Promise<UpcomingGame[]> => {
         homeTeam: game.homeTeam,
         gameDate: new Date(game.gameDate),
         dateAndTime: new Date(game.dateAndTime),
-        league: game.league
+        league: game.league,
+        gameId: game.gameId
     }))
 
     return [...normalize(nba), ...normalize(nfl), ...normalize(mls)]
@@ -73,6 +101,13 @@ export default function MatchCarousel({ selectedLeagues }: { selectedLeagues: st
             if(!mounted) {
                 return
             }
+            
+            // Add mock live game for testing (only in development)
+            const isDevelopment = process.env.NODE_ENV === 'development';
+            if (isDevelopment) {
+                all.unshift(createMockLiveGame());
+            }
+            
             const today = new Date()
             const matchesWithinDays = all.filter((game) => upcomingMatchesWithinXDays(game.gameDate, today))
 

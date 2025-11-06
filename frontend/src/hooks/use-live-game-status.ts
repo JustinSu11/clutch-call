@@ -126,6 +126,64 @@ const parseLiveGameData = (data: any, league: string): LiveGameData => {
     };
 };
 
+// Mock live game data for testing
+const getMockLiveData = (gameId: string, league: string): LiveGameData => {
+    if (gameId !== 'mock-live-game-123') {
+        return { status: 'UPCOMING' };
+    }
+
+    // Return mock live data based on league
+    if (league === 'NBA') {
+        return {
+            status: 'LIVE',
+            periodLabel: 'Q3',
+            clock: '7:42',
+            score: {
+                home: 89,
+                away: 92
+            },
+            leaders: {
+                home: {
+                    points: {
+                        name: 'LeBron James',
+                        photo: 'https://a.espncdn.com/i/headshots/nba/players/full/1966.png',
+                        stats: { PTS: 28 }
+                    },
+                    rebounds: {
+                        name: 'Anthony Davis',
+                        photo: 'https://a.espncdn.com/i/headshots/nba/players/full/6583.png',
+                        stats: { REB: 12 }
+                    },
+                    assists: {
+                        name: 'D\'Angelo Russell',
+                        photo: 'https://a.espncdn.com/i/headshots/nba/players/full/3136195.png',
+                        stats: { AST: 8 }
+                    }
+                },
+                away: {
+                    points: {
+                        name: 'Jayson Tatum',
+                        photo: 'https://a.espncdn.com/i/headshots/nba/players/full/4065648.png',
+                        stats: { PTS: 31 }
+                    },
+                    rebounds: {
+                        name: 'Al Horford',
+                        photo: 'https://a.espncdn.com/i/headshots/nba/players/full/3213.png',
+                        stats: { REB: 10 }
+                    },
+                    assists: {
+                        name: 'Derrick White',
+                        photo: 'https://a.espncdn.com/i/headshots/nba/players/full/2991230.png',
+                        stats: { AST: 7 }
+                    }
+                }
+            }
+        };
+    }
+
+    return { status: 'UPCOMING' };
+};
+
 export const useLiveGameStatus = (gameId: string | undefined, league: string) => {
     const [liveData, setLiveData] = useState<LiveGameData>({ status: 'UPCOMING' });
     const [isLoading, setIsLoading] = useState(false);
@@ -134,6 +192,13 @@ export const useLiveGameStatus = (gameId: string | undefined, league: string) =>
     useEffect(() => {
         // Don't poll if no gameId
         if (!gameId) {
+            return;
+        }
+
+        // Check if this is a mock game ID and return mock data
+        const isDevelopment = process.env.NODE_ENV === 'development';
+        if (isDevelopment && gameId === 'mock-live-game-123') {
+            setLiveData(getMockLiveData(gameId, league));
             return;
         }
 
