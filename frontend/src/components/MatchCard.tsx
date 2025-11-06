@@ -89,13 +89,13 @@ export default function MatchCard({ awayTeam, homeTeam, matchDate, league, gameI
                 <div className="row-start-1 col-start-2 flex items-center justify-center gap-3">
                 {isLive && liveData.score ? (
                     <>
-                    <div className="text-3xl sm:text-4xl font-bold text-white drop-shadow-lg">
+                    <div className="text-3xl sm:text-6xl font-bold text-white drop-shadow-lg">
                         {liveData.score.away}
                     </div>
-                    <span className="font-extrabold text-2xl sm:text-3xl text-white drop-shadow-lg">
-                        VS
+                    <span className="font-extrabold text-3xl sm:text-5xl text-white drop-shadow-lg">
+                        -
                     </span>
-                    <div className="text-3xl sm:text-4xl font-bold text-white drop-shadow-lg">
+                    <div className="text-3xl sm:text-6xl font-bold text-white drop-shadow-lg">
                         {liveData.score.home}
                     </div>
                     </>
@@ -151,7 +151,7 @@ export default function MatchCard({ awayTeam, homeTeam, matchDate, league, gameI
             </div>
 
             {/* Expand/Collapse Button - Only shown for LIVE games */}
-            {isLive && (
+            {isLive ? (
                 <button
                     onClick={handleToggleExpand}
                     aria-expanded={isExpanded}
@@ -162,6 +162,8 @@ export default function MatchCard({ awayTeam, homeTeam, matchDate, league, gameI
                         className={`w-6 h-6 text-white transition-transform duration-300 motion-reduce:transition-none ${isExpanded ? 'rotate-180' : ''}`}
                     />
                 </button>
+            ) : (
+                <div className="h-10" />  // Placeholder to maintain layout consistency
             )}
 
             {/* Expandable Panel - Only shown for LIVE games when expanded */}
