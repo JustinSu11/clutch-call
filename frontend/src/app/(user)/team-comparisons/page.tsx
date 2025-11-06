@@ -466,7 +466,7 @@ function App() {
   const handleTeam2Change = (event: React.ChangeEvent<HTMLSelectElement>) => {
     setSelectedTeam2Key(event.target.value as TeamKey);
   };
-
+  
   const team1 = currentSportData[selectedTeam1Key];
   const team2 = currentSportData[selectedTeam2Key];
 
@@ -498,15 +498,15 @@ function App() {
           onTeam1Change={handleTeam1Change}
           onTeam2Change={handleTeam2Change}
         />
-        <TeamMatchup team1={team1} team2={team2} />
-        <StatsComparison team1={team1} team2={team2} sport={activeSport} />
+                <TeamMatchup team1={team1} team2={team2} />
+                <StatsComparison team1={team1} team2={team2} sport={activeSport} />
         <AiInsights team1={team1} team2={team2} />
-        <HistoricalChart 
-          team1Data={team1.performance}
-          team2Data={team2.performance}
-          team1Name={team1.name}
-          team2Name={team2.name}
-        />
+                <HistoricalChart 
+                  team1Data={team1.performance}
+                  team2Data={team2.performance}
+                  team1Name={team1.name}
+                  team2Name={team2.name}
+                />
       </div>
     </main>
   );
