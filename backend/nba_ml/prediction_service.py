@@ -651,11 +651,24 @@ class NBAMLPredictor:
         if not force_refresh:
             cached = self.cache.get_game_predictions(days_ahead, include_details)
             if cached:
+                if cached.get("games_count", 0) > 0:
+                    logger.info(
+                        "Serving NBA predictions from cache (days_ahead=%s, include_details=%s)",
+                        days_ahead,
+                        include_details,
+                    )
+                    return cached
+
                 logger.info(
-                    "Serving NBA predictions from cache (days_ahead=%s, include_details=%s)",
+                    "Cached NBA predictions are empty; attempting refresh (days_ahead=%s, include_details=%s)",
                     days_ahead,
                     include_details,
                 )
+                refreshed = self.refresh_prediction_cache(days_ahead=days_ahead, include_details=include_details)
+                if refreshed and refreshed.get("games_count", 0) > 0:
+                    return refreshed
+
+                logger.info("Refresh still returned no NBA predictions; returning cached response")
                 return cached
 
         return self.refresh_prediction_cache(days_ahead=days_ahead, include_details=include_details)
