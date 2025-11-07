@@ -1,7 +1,11 @@
 /*
     File: frontend/src/utils/nfl_parser.tsx
     Created: 09/30/2025 by CJ Quintero
+<<<<<<< HEAD
+    Last Updated: 11/06/2025 by CJ Quintero
+=======
     Last Updated: 10/13/2025 by Justin Nguyen
+>>>>>>> e61d0a3ad994c2da72dd576eb411a6492fdfa85d
 
     Description: This file contains methods 
     to parse each response from the nfl backend methods provided
@@ -181,16 +185,10 @@ export const parseNFLTeamStats = async (teamName: string) => {
     return { wins, losses, ties, totalGames};
 };
 
-export const parseNFLTeamLogo = async (teamName: string) => {
+export const parseNFLPreviousGameStats = async (teamName: string) => {
     /*
-        parseNFLTeamLogo:
-        This method gets a team's logo and returns the url
-
-        params:
-            teamName: String - the name of the team to get the logo for.
-
-        returns:
-            logoUrl: String - the url of the team's logo
+        parseNFLPreviousGameStats:
+        This method gets a team's score from their previous games this season
     */
 
     // makes the local date in YYYY-MM-DD using the local timezone
@@ -208,23 +206,42 @@ export const parseNFLTeamLogo = async (teamName: string) => {
         endDate: `${todaysDateLocal}`,             
     });
 
-    // for the logo url, we just have to check 1 game
-    const gameData = responseData['data']['events'][0];
+    // parse major header
+    const events = responseData['data']['events'];
 
-    // the team logo we want varies if the team is home or away
-    // so we have to check both teams for a matching name
-    const team0 = gameData['competitions'][0]['competitors'][0]['team']['displayName'];
-    const team1 = gameData['competitions'][0]['competitors'][1]['team']['displayName'];
+    // Filter out upcoming games first
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const pastEvents = events.filter((event: any) => {
+        const eventDate = new Date(event['date']);
+        return eventDate.getTime() < Date.now();
+    });
 
-    // check the first team, then the second for a name match. Else, log the error
-    if (team0 === teamName) {
-        return gameData['competitions'][0]['competitors'][0]['team']['logo'];
-    } 
-    else if (team1 === teamName) {
-        return gameData['competitions'][0]['competitors'][1]['team']['logo'];
-    }
-    else {
-        console.log(`[ERROR]::Logo for team: ${teamName} could not be found.`);
-        return '';
-    }
-};
+
+    // array to hold the parsed previous game stats (initialize empty array)
+    const gameStats: number[] = [];
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    pastEvents.forEach((event: any) => {
+        
+        // home team stuff is always ['competitions'][0]['competitors'][0]
+        // away team stuff is always ['competitions'][0]['competitors'][1]
+        const homeTeam = event['competitions'][0]['competitors'][0]['team']['displayName'];
+        const awayTeam = event['competitions'][0]['competitors'][1]['team']['displayName'];
+
+        const homeScore = parseInt(event['competitions'][0]['competitors'][0]['score']);
+        const awayScore = parseInt(event['competitions'][0]['competitors'][1]['score']);
+
+        // determine if the requested team is home or away for this specific game
+        if (homeTeam === teamName) {
+            gameStats.push(homeScore);
+        }
+        else if (awayTeam === teamName) {
+            gameStats.push(awayScore);
+        }
+    });
+
+    return gameStats;
+}
+
+    
+
