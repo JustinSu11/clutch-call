@@ -13,7 +13,7 @@
 */
 import * as nfl_methods from '../backend_methods/nfl_methods';
 import * as sports_stats_methods from '../backend_methods/sports_stats_methods';
-import { UpcomingGame } from './data_class';
+import { UpcomingGame, Team } from './data_class';
 import formatDate from './date-formatter-for-matches';
 
 // globals
@@ -27,6 +27,8 @@ type Game = {
     date: string; // Formatted date string (MM-DD-YYYY)
     gameDate?: string; // Formatted date string (MM-DD-YYYY) - PR#63 property
     dateAndTime?: string; // Raw date from event - PR#63 property
+    homeTeamLogo?: string; // Team logo URL
+    awayTeamLogo?: string; // Team logo URL
     league?: string; // PR#63 property
     gameId?: string; // PR#63 property (alias for id)
     status?: {
@@ -103,6 +105,8 @@ export const parseNFLGamesFromEvents = (events: any[]): Game[] => {
             date: formattedDate,
             gameDate: formattedGameDate, // PR#63 property
             dateAndTime: dateAndTime, // PR#63 property
+            homeTeamLogo: homeTeamData.team?.logo || '',
+            awayTeamLogo: awayTeamData.team?.logo || '',
             league: "NFL", // PR#63 property
             gameId: eventId, // PR#63 property (alias for id)
             status: gameStatus 
@@ -111,14 +115,14 @@ export const parseNFLGamesFromEvents = (events: any[]): Game[] => {
     }).filter((game): game is Game => game !== null);
 };
 
-export const parseUpcomingNFLGames = async () => {
+export const parseUpcomingNFLGames = async (): Promise<UpcomingGame[]> => {
     /*
         parseUpcomingNFLGames:
         This method gets the upcoming NFL games from the backend method
         and parses the response to return the upcoming games.
 
         returns:
-            games: an array where each object has id, homeTeam, awayTeam, date, and status
+            games: an array where each object has homeTeam, awayTeam (as Team objects), gameDate, dateAndTime, and league
     */
     // await the response from the backend method
     const responseData = await nfl_methods.getUpcomingNFLGames();
@@ -135,8 +139,64 @@ export const parseUpcomingNFLGames = async () => {
     const events = responseData["events"];
     console.log(`Found ${events.length} events in upcoming games response`);
 
-    // Use unified, robust parsing logic for upcoming NFL games
-    return parseNFLGamesFromEvents(events);
+    // Map events to UpcomingGame format with Team objects
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const games: UpcomingGame[] = events.map((event: any): UpcomingGame | null => {
+        const competition = event.competitions?.[0];
+        const competitors = competition?.competitors;
+        if (!competitors || competitors.length < 2) {
+            console.warn("Event is missing competitor data:", event);
+            return null;
+        }
+        
+        // Use find to be safer about home/away order
+        const homeTeamData = competitors.find((c: any) => c.homeAway === 'home');
+        const awayTeamData = competitors.find((c: any) => c.homeAway === 'away');
+
+        if (!homeTeamData || !awayTeamData) {
+            console.warn("Could not find both home and away team data:", event);
+            return null;
+        }
+
+        // Extract team data as Team objects
+        const homeTeam: Team = {
+            abbreviation: homeTeamData.team?.abbreviation || '',
+            color: homeTeamData.team?.color || '000000',
+            alternateColor: homeTeamData.team?.alternateColor || 'FFFFFF',
+            displayName: homeTeamData.team?.displayName || 'TBD',
+        };
+        
+        const awayTeam: Team = {
+            abbreviation: awayTeamData.team?.abbreviation || '',
+            color: awayTeamData.team?.color || '000000',
+            alternateColor: awayTeamData.team?.alternateColor || 'FFFFFF',
+            displayName: awayTeamData.team?.displayName || 'TBD',
+        };
+
+        // Extract date of match
+        const dateAndTime = event.date || '';
+        const gameDate = dateAndTime ? new Date(dateAndTime) : new Date();
+        
+        // Format date to MM-DD-YYYY for display
+        let formattedGameDate = '';
+        if (dateAndTime) {
+            const dateObj = new Date(dateAndTime);
+            const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+            const day = String(dateObj.getDate()).padStart(2, '0');
+            const year = dateObj.getFullYear();
+            formattedGameDate = `${month}-${day}-${year}`;
+        }
+
+        return {
+            homeTeam,
+            awayTeam,
+            gameDate: gameDate,
+            dateAndTime: dateAndTime ? new Date(dateAndTime) : new Date(),
+            league: "NFL"
+        };
+    }).filter((game: UpcomingGame | null): game is UpcomingGame => game !== null);
+
+    return games;
 };
 
 export const parseTodayNFLGames = async () => {

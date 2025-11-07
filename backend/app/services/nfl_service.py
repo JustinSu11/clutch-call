@@ -31,6 +31,51 @@ except Exception as e:
     model = None
 
 
+def _get_nfl_team_logos():
+    """Get NFL team logos mapping.
+    
+    Returns static mapping of NFL team abbreviations to ESPN logo URLs.
+    Returns:
+        Dictionary mapping team abbreviations to logo URLs
+    """
+    # Static mapping of NFL team abbreviations to ESPN logo URLs
+    logo_map = {
+        "ARI": "https://a.espncdn.com/i/teamlogos/nfl/500/ari.png",
+        "ATL": "https://a.espncdn.com/i/teamlogos/nfl/500/atl.png",
+        "BAL": "https://a.espncdn.com/i/teamlogos/nfl/500/bal.png",
+        "BUF": "https://a.espncdn.com/i/teamlogos/nfl/500/buf.png",
+        "CAR": "https://a.espncdn.com/i/teamlogos/nfl/500/car.png",
+        "CHI": "https://a.espncdn.com/i/teamlogos/nfl/500/chi.png",
+        "CIN": "https://a.espncdn.com/i/teamlogos/nfl/500/cin.png",
+        "CLE": "https://a.espncdn.com/i/teamlogos/nfl/500/cle.png",
+        "DAL": "https://a.espncdn.com/i/teamlogos/nfl/500/dal.png",
+        "DEN": "https://a.espncdn.com/i/teamlogos/nfl/500/den.png",
+        "DET": "https://a.espncdn.com/i/teamlogos/nfl/500/det.png",
+        "GB": "https://a.espncdn.com/i/teamlogos/nfl/500/gb.png",
+        "HOU": "https://a.espncdn.com/i/teamlogos/nfl/500/hou.png",
+        "IND": "https://a.espncdn.com/i/teamlogos/nfl/500/ind.png",
+        "JAX": "https://a.espncdn.com/i/teamlogos/nfl/500/jax.png",
+        "KC": "https://a.espncdn.com/i/teamlogos/nfl/500/kc.png",
+        "LV": "https://a.espncdn.com/i/teamlogos/nfl/500/lv.png",
+        "LAC": "https://a.espncdn.com/i/teamlogos/nfl/500/lac.png",
+        "LAR": "https://a.espncdn.com/i/teamlogos/nfl/500/lar.png",
+        "MIA": "https://a.espncdn.com/i/teamlogos/nfl/500/mia.png",
+        "MIN": "https://a.espncdn.com/i/teamlogos/nfl/500/min.png",
+        "NE": "https://a.espncdn.com/i/teamlogos/nfl/500/ne.png",
+        "NO": "https://a.espncdn.com/i/teamlogos/nfl/500/no.png",
+        "NYG": "https://a.espncdn.com/i/teamlogos/nfl/500/nyg.png",
+        "NYJ": "https://a.espncdn.com/i/teamlogos/nfl/500/nyj.png",
+        "PHI": "https://a.espncdn.com/i/teamlogos/nfl/500/phi.png",
+        "PIT": "https://a.espncdn.com/i/teamlogos/nfl/500/pit.png",
+        "SF": "https://a.espncdn.com/i/teamlogos/nfl/500/sf.png",
+        "SEA": "https://a.espncdn.com/i/teamlogos/nfl/500/sea.png",
+        "TB": "https://a.espncdn.com/i/teamlogos/nfl/500/tb.png",
+        "TEN": "https://a.espncdn.com/i/teamlogos/nfl/500/ten.png",
+        "WAS": "https://a.espncdn.com/i/teamlogos/nfl/500/wsh.png",
+    }
+    return logo_map
+
+
 def generate_prediction_for_game(event_id: str):
     """Generate prediction using actual game yard statistics."""
     print(f"\n{'='*60}")
@@ -417,6 +462,9 @@ def get_standings(season: Optional[str] = None):
             
         data = _get(STANDINGS, params)
         
+        # Fetch team logos from static mapping
+        logo_map = _get_nfl_team_logos()
+        
         # ESPN API returns data with children array directly at top level
         afc_standings = []
         nfc_standings = []
@@ -431,6 +479,21 @@ def get_standings(season: Optional[str] = None):
                 "afc_standings": [],
                 "nfc_standings": []
             }
+        
+        # Helper function to parse stat value (handle strings and numbers)
+        def parse_stat_value(value):
+            """Convert stat value to appropriate type."""
+            if value is None:
+                return 0
+            if isinstance(value, (int, float)):
+                return float(value)
+            if isinstance(value, str):
+                # Try to convert string to float
+                try:
+                    return float(value)
+                except (ValueError, TypeError):
+                    return 0
+            return 0
         
         # Process each conference
         for conference in conferences:
@@ -450,34 +513,95 @@ def get_standings(season: Optional[str] = None):
                         team = entry.get("team", {})
                         stats = entry.get("stats", [])
                         
-                        # Parse stats array into a dictionary
+                        team_abbr = team.get("abbreviation", "")
+                        # Get logo from mapping
+                        team_logo = logo_map.get(team_abbr) or team.get("logo", "")
+                        
+                        # Create stats dictionary with normalized names (like soccer service does)
                         stats_dict = {}
                         for stat in stats:
-                            stat_name = stat.get("name", "").lower().replace(" ", "_")
-                            stat_value = stat.get("value", 0)
+                            stat_name = stat.get("name", "").lower().replace(" ", "_").replace("-", "_").replace("%", "pct")
+                            stat_value = stat.get("value")
                             stats_dict[stat_name] = stat_value
+                        
+                        # Debug: Print first team's stats to see actual names
+                        if team_abbr == "DEN" and not hasattr(get_standings, '_debug_printed'):
+                            print(f"\nDEBUG: Stats for {team.get('displayName')}:")
+                            for stat in stats:
+                                print(f"  - {stat.get('name')}: {stat.get('value')} (type: {type(stat.get('value'))})")
+                            print(f"\nDEBUG: Normalized stats_dict keys: {list(stats_dict.keys())}")
+                            get_standings._debug_printed = True
+                        
+                        # Extract stats using normalized dictionary lookup
+                        wins = parse_stat_value(stats_dict.get("wins") or stats_dict.get("win"))
+                        losses = parse_stat_value(stats_dict.get("losses") or stats_dict.get("loss"))
+                        ties = parse_stat_value(stats_dict.get("ties") or stats_dict.get("tie"))
+                        
+                        # Debug output for first team
+                        if team_abbr == "DEN" and hasattr(get_standings, '_debug_printed'):
+                            print(f"DEBUG: Parsed values - wins: {wins}, losses: {losses}, ties: {ties}")
+                        
+                        # Calculate win percentage from wins/losses/ties if we have game data
+                        # NFL formula: wins / (wins + losses + ties)
+                        total_games = wins + losses + ties
+                        if total_games > 0:
+                            win_pct = wins / total_games
+                        else:
+                            # Fallback to API value if no games played
+                            win_pct = parse_stat_value(
+                                stats_dict.get("win_percentage") or 
+                                stats_dict.get("win_pct") or 
+                                stats_dict.get("winpct")
+                            )
+                        points_for = parse_stat_value(
+                            stats_dict.get("points_for") or 
+                            stats_dict.get("pointsfor") or
+                            stats_dict.get("pf") or
+                            stats_dict.get("points_scored")
+                        )
+                        points_against = parse_stat_value(
+                            stats_dict.get("points_against") or 
+                            stats_dict.get("pointsagainst") or
+                            stats_dict.get("pa") or
+                            stats_dict.get("points_allowed")
+                        )
+                        point_differential = parse_stat_value(
+                            stats_dict.get("point_differential") or 
+                            stats_dict.get("pointdifferential") or
+                            stats_dict.get("diff") or
+                            stats_dict.get("net_points") or
+                            stats_dict.get("netpoints")
+                        )
+                        
+                        # Get string stats
+                        home_record = str(stats_dict.get("home_record", "") or stats_dict.get("homerecord", ""))
+                        road_record = str(stats_dict.get("road_record", "") or stats_dict.get("roadrecord", "") or stats_dict.get("away_record", ""))
+                        division_record = str(stats_dict.get("division_record", "") or stats_dict.get("divisionrecord", ""))
+                        conference_record = str(stats_dict.get("conference_record", "") or stats_dict.get("conferencerecord", ""))
+                        streak = str(stats_dict.get("streak", "") or stats_dict.get("current_streak", ""))
+                        last_5 = str(stats_dict.get("last_5", "") or stats_dict.get("last5", "") or stats_dict.get("l10", ""))
                         
                         team_data = {
                             "team_id": team.get("id"),
                             "team_name": team.get("displayName"),
-                            "team_abbreviation": team.get("abbreviation"),
-                            "team_logo": team.get("logo"),
+                            "team_abbreviation": team_abbr,
+                            "team_logo": team_logo,
                             "conference": conference_name,
                             "conference_abbr": conference_abbr,
                             "division": division_name,
-                            "wins": stats_dict.get("wins", 0),
-                            "losses": stats_dict.get("losses", 0),
-                            "ties": stats_dict.get("ties", 0),
-                            "win_pct": stats_dict.get("win_percentage", 0.0),
-                            "points_for": stats_dict.get("points_for", 0),
-                            "points_against": stats_dict.get("points_against", 0),
-                            "point_differential": stats_dict.get("point_differential", 0),
-                            "home_record": stats_dict.get("home_record", ""),
-                            "road_record": stats_dict.get("road_record", ""),
-                            "division_record": stats_dict.get("division_record", ""),
-                            "conference_record": stats_dict.get("conference_record", ""),
-                            "streak": stats_dict.get("streak", ""),
-                            "last_5": stats_dict.get("last_5", "")
+                            "wins": int(wins),
+                            "losses": int(losses),
+                            "ties": int(ties),
+                            "win_pct": float(win_pct),
+                            "points_for": int(points_for),
+                            "points_against": int(points_against),
+                            "point_differential": int(point_differential),
+                            "home_record": home_record,
+                            "road_record": road_record,
+                            "division_record": division_record,
+                            "conference_record": conference_record,
+                            "streak": streak,
+                            "last_5": last_5
                         }
                         
                         if conference_abbr == "AFC":
@@ -492,33 +616,83 @@ def get_standings(season: Optional[str] = None):
                     team = entry.get("team", {})
                     stats = entry.get("stats", [])
                     
+                    team_abbr = team.get("abbreviation", "")
+                    # Get logo from mapping
+                    team_logo = logo_map.get(team_abbr) or team.get("logo", "")
+                    
+                    # Create stats dictionary with normalized names
                     stats_dict = {}
                     for stat in stats:
-                        stat_name = stat.get("name", "").lower().replace(" ", "_")
-                        stat_value = stat.get("value", 0)
+                        stat_name = stat.get("name", "").lower().replace(" ", "_").replace("-", "_").replace("%", "pct")
+                        stat_value = stat.get("value")
                         stats_dict[stat_name] = stat_value
+                    
+                    # Extract stats using normalized dictionary lookup
+                    wins = parse_stat_value(stats_dict.get("wins") or stats_dict.get("win"))
+                    losses = parse_stat_value(stats_dict.get("losses") or stats_dict.get("loss"))
+                    ties = parse_stat_value(stats_dict.get("ties") or stats_dict.get("tie"))
+                    
+                    # Calculate win percentage from wins/losses/ties if we have game data
+                    # NFL formula: wins / (wins + losses + ties)
+                    total_games = wins + losses + ties
+                    if total_games > 0:
+                        win_pct = wins / total_games
+                    else:
+                        # Fallback to API value if no games played
+                        win_pct = parse_stat_value(
+                            stats_dict.get("win_percentage") or 
+                            stats_dict.get("win_pct") or 
+                            stats_dict.get("winpct")
+                        )
+                    points_for = parse_stat_value(
+                        stats_dict.get("points_for") or 
+                        stats_dict.get("pointsfor") or
+                        stats_dict.get("pf") or
+                        stats_dict.get("points_scored")
+                    )
+                    points_against = parse_stat_value(
+                        stats_dict.get("points_against") or 
+                        stats_dict.get("pointsagainst") or
+                        stats_dict.get("pa") or
+                        stats_dict.get("points_allowed")
+                    )
+                    point_differential = parse_stat_value(
+                        stats_dict.get("point_differential") or 
+                        stats_dict.get("pointdifferential") or
+                        stats_dict.get("diff") or
+                        stats_dict.get("net_points") or
+                        stats_dict.get("netpoints")
+                    )
+                    
+                    # Get string stats
+                    home_record = str(stats_dict.get("home_record", "") or stats_dict.get("homerecord", ""))
+                    road_record = str(stats_dict.get("road_record", "") or stats_dict.get("roadrecord", "") or stats_dict.get("away_record", ""))
+                    division_record = str(stats_dict.get("division_record", "") or stats_dict.get("divisionrecord", ""))
+                    conference_record = str(stats_dict.get("conference_record", "") or stats_dict.get("conferencerecord", ""))
+                    streak = str(stats_dict.get("streak", "") or stats_dict.get("current_streak", ""))
+                    last_5 = str(stats_dict.get("last_5", "") or stats_dict.get("last5", "") or stats_dict.get("l10", ""))
                     
                     team_data = {
                         "team_id": team.get("id"),
                         "team_name": team.get("displayName"),
-                        "team_abbreviation": team.get("abbreviation"),
-                        "team_logo": team.get("logo"),
+                        "team_abbreviation": team_abbr,
+                        "team_logo": team_logo,
                         "conference": conference_name,
                         "conference_abbr": conference_abbr,
                         "division": None,
-                        "wins": stats_dict.get("wins", 0),
-                        "losses": stats_dict.get("losses", 0),
-                        "ties": stats_dict.get("ties", 0),
-                        "win_pct": stats_dict.get("win_percentage", 0.0),
-                        "points_for": stats_dict.get("points_for", 0),
-                        "points_against": stats_dict.get("points_against", 0),
-                        "point_differential": stats_dict.get("point_differential", 0),
-                        "home_record": stats_dict.get("home_record", ""),
-                        "road_record": stats_dict.get("road_record", ""),
-                        "division_record": stats_dict.get("division_record", ""),
-                        "conference_record": stats_dict.get("conference_record", ""),
-                        "streak": stats_dict.get("streak", ""),
-                        "last_5": stats_dict.get("last_5", "")
+                        "wins": int(wins),
+                        "losses": int(losses),
+                        "ties": int(ties),
+                        "win_pct": float(win_pct),
+                        "points_for": int(points_for),
+                        "points_against": int(points_against),
+                        "point_differential": int(point_differential),
+                        "home_record": home_record,
+                        "road_record": road_record,
+                        "division_record": division_record,
+                        "conference_record": conference_record,
+                        "streak": streak,
+                        "last_5": last_5
                     }
                     
                     if conference_abbr == "AFC":
@@ -526,9 +700,34 @@ def get_standings(season: Optional[str] = None):
                     else:
                         nfc_standings.append(team_data)
         
+        # Calculate division ranks and playoff seeds
+        # Group by division to calculate division ranks
+        division_groups = {}
+        for team in afc_standings + nfc_standings:
+            div = team.get("division")
+            if div:
+                if div not in division_groups:
+                    division_groups[div] = []
+                division_groups[div].append(team)
+        
+        # Calculate division rank for each team
+        for div, teams in division_groups.items():
+            teams.sort(key=lambda x: (x["wins"], x["win_pct"]), reverse=True)
+            for idx, team in enumerate(teams):
+                team["division_rank"] = idx + 1
+        
         # Sort by wins descending, then win percentage
         afc_standings.sort(key=lambda x: (x["wins"], x["win_pct"]), reverse=True)
         nfc_standings.sort(key=lambda x: (x["wins"], x["win_pct"]), reverse=True)
+        
+        # Calculate conference rank and playoff seed
+        for idx, team in enumerate(afc_standings):
+            team["conference_rank"] = idx + 1
+            team["playoff_seed"] = idx + 1 if idx < 7 else 0
+        
+        for idx, team in enumerate(nfc_standings):
+            team["conference_rank"] = idx + 1
+            team["playoff_seed"] = idx + 1 if idx < 7 else 0
         
         return {
             "league": "NFL",

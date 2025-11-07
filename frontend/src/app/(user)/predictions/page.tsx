@@ -30,6 +30,9 @@ type Game = {
     homeTeam: string;
     awayTeam: string;
     date?: string; // Formatted date string
+    dateAndTime?: string;
+    homeTeamLogo?: string; 
+    awayTeamLogo?: string;
     status?: {
         state?: string;
         type?: string;
@@ -38,7 +41,10 @@ type Game = {
 
 type Prediction = {
     match: string;
-    date?: string;           // Make optional since not all predictions have it
+    date?: string;           // Keep for backward compatibility
+    dateAndTime?: string | Date;  // Add dateAndTime property for proper time display
+    homeTeamLogo?: string;
+    awayTeamLogo?: string;
     prediction: string;
     confidence: number;
     analysis?: string;        // Add this field
@@ -57,13 +63,16 @@ const buildNFLPredictions = async (): Promise<Prediction[]> => {
     console.log('Starting NFL predictions build...');
     
     // Fetch upcoming, today's, and historical games (last 2 days for completed games)
-    let upcomingGames: Game[] = [];
+    // Note: parseUpcomingNFLGames returns UpcomingGame[], but we only use it for filtering
+    // The actual predictions use parseNFLGamesFromEvents which returns Game[]
+    let upcomingGames: any[] = [];
     let todayGames: Game[] = [];
     let historicalGames: Game[] = [];
     
     try {
         console.log('Fetching upcoming NFL games...');
-        upcomingGames = await parseUpcomingNFLGames();
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        upcomingGames = await parseUpcomingNFLGames() as any[];
         console.log(`Fetched ${upcomingGames.length} upcoming games`);
     } catch (error) {
         console.error('Error fetching upcoming games:', error);
@@ -96,6 +105,7 @@ const buildNFLPredictions = async (): Promise<Prediction[]> => {
             console.log(`Found ${historicalData.events.length} historical events`);
             
             // Filter for only completed games BEFORE parsing
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const completedEvents = historicalData.events.filter((event: any) => {
                 const comp = event.competitions?.[0];
                 const status = comp?.status || event.status || {};
@@ -287,6 +297,7 @@ const predictionPromises = predictableGames.map(async (game) => {
         if (Object.keys(decisionFactors).length > 0) {
             // Sort factors by absolute contribution (most influential first)
             const sortedFactors = Object.entries(decisionFactors)
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 .map(([feature, data]: [string, any]) => ({
                     feature,
                     ...data,
@@ -314,8 +325,10 @@ const predictionPromises = predictableGames.map(async (game) => {
         
         const prediction = {
             match: `${game.awayTeam} at ${game.homeTeam}`,
-            
-            date: game.date || '', // Use game.date if available, otherwise use empty string
+            date: game.date || '', // Keep for backward compatibility
+            dateAndTime: game.dateAndTime || game.date || '', // Use dateAndTime if available for proper time display
+            homeTeamLogo: game.homeTeamLogo || '', // Pass logo URL
+            awayTeamLogo: game.awayTeamLogo || '', // Pass logo URL
             prediction: winnerName + ' to win',
             confidence: isNaN(confidenceValue) ? 0 : confidenceValue,
             analysis: analysisText,
@@ -324,6 +337,7 @@ const predictionPromises = predictableGames.map(async (game) => {
         
         console.log(` Successfully built prediction for game ${game.id}:`, prediction);
         return prediction;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
         // Handle network errors or 422 errors in the catch block
         const errorMessage = error?.message || '';
@@ -366,7 +380,8 @@ const buildMLSPredictions = async (): Promise<Prediction[]> => {
     // map each game to a Prediction object
     return upcomingMLSGames.map((game) => ({
         match: `${game.awayTeam.displayName} at ${game.homeTeam.displayName}`,
-        date: `${game.dateAndTime}`,
+        date: game.dateAndTime ? String(game.dateAndTime) : '', // Keep for backward compatibility
+        dateAndTime: game.dateAndTime || '', // Use dateAndTime for proper time display
         prediction: `${game.homeTeam.displayName} predicted to win`,
         confidence: 100,
         sport: 'MLS'
@@ -383,7 +398,8 @@ const buildNBAPredictions = async (): Promise<Prediction[]> => {
     // map each game to a Prediction object
     return upcomingNBAGames.map((game) => ({
         match: `${game.awayTeam} at ${game.homeTeam}`,
-        date: `${game.gameDate}`,
+        date: game.gameDate ? String(game.gameDate) : '', // Keep for backward compatibility
+        dateAndTime: game.dateAndTime || game.gameDate || '', // Use dateAndTime if available for proper time display
         prediction: `${game.homeTeam} predicted to win`,
         confidence: 100,
         sport: 'NBA'
@@ -473,30 +489,57 @@ const SportsFilter: React.FC<{
     </div>
 );
 
-const PredictionRow: React.FC<{ item: Prediction; onClick?: () => void }> = ({ item, onClick }) => (
-    <tr onClick={onClick} className="bg-secondary-background hover:bg-secondary cursor-pointer">
-        <td className="text-center px-6 py-4 whitespace-nowrap">
-            <div className="text-md font-medium text-text-primary">{item.match}</div>
-        </td>
-        <td className="text-center px-6 py-4 whitespace-nowrap">
-        <div className="text-md font-medium text-text-primary">{item.date ? formatDate(item.date) : 'N/A'}</div>
-        </td>
-        <td className="text-center px-6 py-4 whitespace-nowrap">
-            <div className="text-md font-medium text-text-primary">{item.prediction}</div>
-        </td>
-        <td className="text-center px-6 py-4 whitespace-nowrap">
-            <div className="flex items-center justify-center">
-                <div className="w-24 bg-gray-200 rounded-full h-2.5 mr-3">
-                    <div
-                        className="h-2.5 rounded-full"
-                        style={{ ...getConfidenceStyle(item.confidence), width: `${item.confidence}%` }}
-                    ></div>
+const PredictionRow: React.FC<{ item: Prediction; onClick?: () => void }> = ({ item, onClick }) => {
+    // Parse match string to get team names
+    const [awayTeamName, homeTeamName] = item.match.split(' at ');
+    
+    return (
+        <tr onClick={onClick} className="bg-secondary-background hover:bg-secondary cursor-pointer">
+            <td className="text-center px-6 py-4 whitespace-nowrap">
+                <div className="flex items-center justify-center gap-3">
+                    {/* Away team logo */}
+                    {item.awayTeamLogo && (
+                        <img 
+                            src={item.awayTeamLogo} 
+                            alt={awayTeamName} 
+                            className="w-8 h-8 object-contain"
+                        />
+                    )}
+                    <div className="text-md font-medium text-text-primary">
+                        {item.match}
+                    </div>
+                    {/* Home team logo */}
+                    {item.homeTeamLogo && (
+                        <img 
+                            src={item.homeTeamLogo} 
+                            alt={homeTeamName} 
+                            className="w-8 h-8 object-contain"
+                        />
+                    )}
                 </div>
-                <span className="text-md font-medium text-text-primary">{item.confidence.toFixed(0)}%</span> {/* Show confidence as integer */}
-            </div>
-        </td>
-    </tr>
-);
+            </td>
+            <td className="text-center px-6 py-4 whitespace-nowrap">
+                <div className="text-md font-medium text-text-primary">
+                    {item.dateAndTime ? formatDate(item.dateAndTime) : (item.date ? formatDate(item.date) : 'N/A')}
+                </div>
+            </td>
+            <td className="text-center px-6 py-4 whitespace-nowrap">
+                <div className="text-md font-medium text-text-primary">{item.prediction}</div>
+            </td>
+            <td className="text-center px-6 py-4 whitespace-nowrap">
+                <div className="flex items-center justify-center">
+                    <div className="w-24 bg-gray-200 rounded-full h-2.5 mr-3">
+                        <div
+                            className="h-2.5 rounded-full"
+                            style={{ ...getConfidenceStyle(item.confidence), width: `${item.confidence}%` }}
+                        ></div>
+                    </div>
+                    <span className="text-md font-medium text-text-primary">{item.confidence.toFixed(0)}%</span>
+                </div>
+            </td>
+        </tr>
+    );
+};
 
 // --- Main App Component ---
 export default function PredictionsScreen() {
@@ -682,7 +725,9 @@ export default function PredictionsScreen() {
                                     >
                                         <div className="flex justify-between items-start mb-2">
                                             <div className="font-medium text-text-primary">{item.match}</div>
-                                            <div className="text-sm text-text-secondary">{item.date ? formatDate(item.date) : 'N/A'}</div>
+                                            <div className="text-sm text-text-secondary">
+                                                {item.dateAndTime ? formatDate(item.dateAndTime) : (item.date ? formatDate(item.date) : 'N/A')}
+                                            </div>
                                         </div>
                                         <div className="text-sm text-text-primary mb-3">{item.prediction}</div>
                                         <div className="flex items-center">

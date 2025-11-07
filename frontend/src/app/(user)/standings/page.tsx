@@ -233,8 +233,56 @@ const NFLStandingsDisplay: React.FC<{ standings: { afc_standings: NFLTeam[], nfc
             return b.win_pct - a.win_pct;
         });
         
-        // Top 7 teams make playoffs
-        const playoffTeams = sortedTeams.slice(0, 7);
+        // Group teams by division to determine division winners
+        // Division winners are teams ranked #1 in their division (typically top 4 seeds)
+        // Wildcard teams are the remaining playoff teams (typically seeds 5-7)
+        const divisionWinners: NFLTeam[] = [];
+        const wildcardTeams: NFLTeam[] = [];
+        const nonPlayoffTeams: NFLTeam[] = [];
+        
+        // Group teams by division
+        const divisionGroups: { [key: string]: NFLTeam[] } = {};
+        sortedTeams.forEach(team => {
+            const division = team.division || 'Unknown';
+            if (!divisionGroups[division]) {
+                divisionGroups[division] = [];
+            }
+            divisionGroups[division].push(team);
+        });
+        
+        // Get division winners (top team in each division)
+        Object.values(divisionGroups).forEach(divisionTeams => {
+            if (divisionTeams.length > 0) {
+                // Sort division teams by wins
+                divisionTeams.sort((a, b) => {
+                    if (b.wins !== a.wins) return b.wins - a.wins;
+                    return b.win_pct - a.win_pct;
+                });
+                divisionWinners.push(divisionTeams[0]);
+            }
+        });
+        
+        // Sort division winners by wins
+        divisionWinners.sort((a, b) => {
+            if (b.wins !== a.wins) return b.wins - a.wins;
+            return b.win_pct - a.win_pct;
+        });
+        
+        // Get wildcard teams (remaining playoff teams that aren't division winners)
+        const divisionWinnerIds = new Set(divisionWinners.map(t => t.team_id));
+        sortedTeams.forEach(team => {
+            if (divisionWinnerIds.has(team.team_id)) {
+                // Already in division winners
+            } else if (divisionWinners.length + wildcardTeams.length < 7) {
+                // Top 7 teams make playoffs, so add to wildcard if we haven't reached 7 yet
+                wildcardTeams.push(team);
+            } else {
+                nonPlayoffTeams.push(team);
+            }
+        });
+        
+        // Combine: division winners first, then wildcard teams, then non-playoff
+        const finalSortedTeams = [...divisionWinners, ...wildcardTeams, ...nonPlayoffTeams];
         
         return (
             <div className="mb-12">
@@ -261,20 +309,27 @@ const NFLStandingsDisplay: React.FC<{ standings: { afc_standings: NFLTeam[], nfc
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-secondary">
-                                {sortedTeams.map((team, idx) => {
-                                    const isPlayoffTeam = idx < 7;
+                                {finalSortedTeams.map((team, idx) => {
+                                    const isDivisionWinner = divisionWinners.some(dw => dw.team_id === team.team_id);
+                                    const isWildcardTeam = wildcardTeams.some(wt => wt.team_id === team.team_id);
+                                    const isPlayoffTeam = isDivisionWinner || isWildcardTeam;
                                     
                                     return (
                                         <tr 
                                             key={team.team_id}
                                             className={`hover:bg-secondary transition-colors ${
-                                                isPlayoffTeam ? 'border-l-4 border-l-green-500' : ''
+                                                isDivisionWinner ? 'border-l-4 border-l-green-500' :
+                                                isWildcardTeam ? 'border-l-4 border-l-yellow-500' : ''
                                             }`}
                                         >
                                             <td className="px-4 py-4 text-center">
                                                 <div className="flex items-center gap-2 justify-center">
-                                                    {isPlayoffTeam && <Trophy size={16} className="text-green-500" />}
-                                                    <span className={`font-bold ${isPlayoffTeam ? 'text-green-500' : 'text-text-secondary'}`}>
+                                                    {isPlayoffTeam && <Trophy size={16} className={isDivisionWinner ? "text-green-500" : "text-yellow-500"} />}
+                                                    <span className={`font-bold ${
+                                                        isDivisionWinner ? 'text-green-500' : 
+                                                        isWildcardTeam ? 'text-yellow-500' : 
+                                                        'text-text-secondary'
+                                                    }`}>
                                                         {idx + 1}
                                                     </span>
                                                 </div>
@@ -316,7 +371,11 @@ const NFLStandingsDisplay: React.FC<{ standings: { afc_standings: NFLTeam[], nfc
                 <div className="flex flex-wrap gap-4 mt-4 text-sm">
                     <div className="flex items-center gap-2">
                         <div className="w-4 h-4 bg-green-500 rounded"></div>
-                        <span className="text-text-secondary">Playoff Teams (Top 7)</span>
+                        <span className="text-text-secondary">Division Winners (Top 4)</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <div className="w-4 h-4 bg-yellow-500 rounded"></div>
+                        <span className="text-text-secondary">Wildcard Teams (5-7)</span>
                     </div>
                 </div>
             </div>

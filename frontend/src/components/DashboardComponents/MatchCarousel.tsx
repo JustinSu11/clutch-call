@@ -28,8 +28,8 @@ const fetchAllMatches = async (): Promise<UpcomingGame[]> => {
     const normalize = (arr: any[]) => (arr || []).map((game: any) => ({
         awayTeam: game.awayTeam,
         homeTeam: game.homeTeam,
-        gameDate: new Date(game.gameDate),
-        dateAndTime: new Date(game.dateAndTime),
+        gameDate: game.gameDate instanceof Date ? game.gameDate : new Date(game.gameDate),
+        dateAndTime: game.dateAndTime instanceof Date ? game.dateAndTime : new Date(game.dateAndTime),
         league: game.league
     }))
 
