@@ -18,7 +18,7 @@ import MatchDialog, { TeamStats } from '@/components/DashboardComponents/Dialog'
 import formatDate from '@/utils/date-formatter-for-matches';
 
 // Import the method that calls your backend prediction API
-import { getNFLPrediction, getHistoricalNFLGames } from '@/backend_methods/nfl_methods';
+import { getNFLPrediction, getHistoricalNFLGames, getUpcomingNFLGames } from '@/backend_methods/nfl_methods';
 
 
 
@@ -57,23 +57,20 @@ const buildNFLPredictions = async (): Promise<Prediction[]> => {
         buildNFLPredictions:
         This method builds a list of Prediction objects for NFL games
         by calling the AI backend for each game.
-        Fetches upcoming, today's, and historical games to get in-progress/completed games.
+        Now supports both upcoming (pre-game) and in-progress games.
     */
    
     console.log('Starting NFL predictions build...');
     
-    // Fetch upcoming, today's, and historical games (last 2 days for completed games)
-    // Note: parseUpcomingNFLGames returns UpcomingGame[], but we only use it for filtering
-    // The actual predictions use parseNFLGamesFromEvents which returns Game[]
-    let upcomingGames: any[] = [];
+    // Fetch upcoming and today's games
+    let upcomingGamesRaw: any = null;
     let todayGames: Game[] = [];
-    let historicalGames: Game[] = [];
     
     try {
         console.log('Fetching upcoming NFL games...');
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        upcomingGames = await parseUpcomingNFLGames() as any[];
-        console.log(`Fetched ${upcomingGames.length} upcoming games`);
+        // Get raw response to access event IDs
+        upcomingGamesRaw = await getUpcomingNFLGames();
+        console.log(`Fetched upcoming games response`);
     } catch (error) {
         console.error('Error fetching upcoming games:', error);
     }
@@ -86,177 +83,73 @@ const buildNFLPredictions = async (): Promise<Prediction[]> => {
         console.error('Error fetching today\'s games:', error);
     }
     
-    // Fetch historical games from the last week to get completed games
-    try {
-        console.log('Fetching historical NFL games (last 7 days)...');
-        const today = new Date();
-        const weekAgo = new Date(today);
-        weekAgo.setDate(weekAgo.getDate() - 7); // Go back 7 days to find completed games
+    // Combine and filter for future games only
+    const now = new Date();
+    const allGames: Game[] = [];
+    
+    // Convert upcoming games to Game format - use parseNFLGamesFromEvents to get IDs
+    if (upcomingGamesRaw && upcomingGamesRaw.events) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const upcomingEvents = upcomingGamesRaw.events.filter((event: any) => {
+            const eventDate = event.date ? new Date(event.date) : null;
+            return eventDate && eventDate > now;
+        });
         
-        const startDateStr = weekAgo.toISOString().split('T')[0]; // YYYY-MM-DD
-        const endDateStr = today.toISOString().split('T')[0];
-        
-        console.log(`Fetching games from ${startDateStr} to ${endDateStr}`);
-        
-        const historicalData = await getHistoricalNFLGames(startDateStr, endDateStr);
-        console.log('Raw historical games response:', historicalData);
-        
-        if (historicalData && historicalData.events && historicalData.events.length > 0) {
-            console.log(`Found ${historicalData.events.length} historical events`);
-            
-            // Filter for only completed games BEFORE parsing
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const completedEvents = historicalData.events.filter((event: any) => {
-                const comp = event.competitions?.[0];
-                const status = comp?.status || event.status || {};
-                const statusType = status.type?.name?.toLowerCase() || '';
-                const statusState = status.type?.state?.toLowerCase() || '';
-                
-                // Only include completed/finished games
-                const isCompleted = statusState === 'post' || 
-                                  statusType.includes('final') ||
-                                  statusType.includes('finished') ||
-                                  statusType.includes('complete') ||
-                                  statusType === 'status_final' ||
-                                  statusType === 'status_completed';
-                
-                if (isCompleted) {
-                    console.log(`Found completed game: ${event.id} - status: ${statusType} (${statusState})`);
+        if (upcomingEvents.length > 0) {
+            const upcomingGamesWithIds = parseNFLGamesFromEvents(upcomingEvents);
+            upcomingGamesWithIds.forEach((game) => {
+                const gameDate = game.dateAndTime ? new Date(game.dateAndTime) : 
+                                game.date ? new Date(game.date) : null;
+                if (gameDate && gameDate > now) {
+                    allGames.push(game);
                 }
-                
-                return isCompleted;
             });
-            
-            console.log(`Filtered to ${completedEvents.length} completed games out of ${historicalData.events.length} total`);
-            
-            if (completedEvents.length > 0) {
-                historicalGames = parseNFLGamesFromEvents(completedEvents);
-                console.log(`Parsed ${historicalGames.length} completed historical games`);
-            } else {
-                console.log('No completed games found in historical data');
-            }
-        } else {
-            console.log('No historical games found');
-        }
-    } catch (error) {
-        console.error('Error fetching historical games:', error);
-    }
-
-// Combine games and remove duplicates by ID
-const allGamesMap = new Map<string, Game>();
-[...upcomingGames, ...todayGames, ...historicalGames].forEach(game => {
-    if (game.id && !allGamesMap.has(game.id)) {
-        allGamesMap.set(game.id, game);
-    }
-});
-const allGames = Array.from(allGamesMap.values());
-
-// Ensure we only process games that have a valid ID string
-const validGames = allGames.filter(game => typeof game.id === 'string' && game.id.length > 0);
-
-console.log(` Found ${validGames.length} total NFL games (${upcomingGames.length} upcoming, ${todayGames.length} today, ${historicalGames.length} historical)`);
-console.log(' All games with status:', validGames.map(g => ({
-    id: g.id,
-    match: `${g.awayTeam} @ ${g.homeTeam}`,
-    statusState: g.status?.state,
-    statusType: g.status?.type
-})));
-
-// Filter games by status - only predict in-progress or completed games
-// TEMPORARY: For debugging, let's be more lenient and see what we get
-const predictableGames = validGames.filter(game => {
-    const statusState = game.status?.state?.toLowerCase() || 'unknown';
-    const statusType = game.status?.type?.toLowerCase() || 'unknown';
-    
-    console.log(` Checking game ${game.id} (${game.awayTeam} @ ${game.homeTeam}): state="${statusState}", type="${statusType}"`);
-    
-    // Skip games that haven't started (pre/scheduled status)
-    if (statusState === 'pre' || 
-        statusType === 'scheduled' || 
-        statusType === 'pre' ||
-        statusType === 'status_scheduled' ||
-        statusType.includes('scheduled')) {
-        console.log(` Skipping game ${game.id} - status: state="${statusState}", type="${statusType}" (game hasn't started yet)`);
-        return false;
-    }
-    
-    // Include games that are in-progress or completed
-    // Status states: "in" (in-progress), "post" (completed), etc.
-    // Status types: "in-progress", "final", "finished", "status_in_progress", "status_final", etc.
-    // Also check for completed games by looking for status that indicates game ended
-    const isPlayable = statusState === 'in' || 
-                      statusState === 'post' ||
-                      statusType.includes('in-progress') ||
-                      statusType.includes('in_progress') ||
-                      statusType.includes('final') ||
-                      statusType.includes('finished') ||
-                      statusType.includes('live') ||
-                      statusType.includes('complete') ||
-                      statusType.includes('closed') ||
-                      statusType === 'status_final' ||
-                      statusType === 'status_completed' ||
-                      (statusState === 'post' && statusType !== 'unknown'); // If state is post, it's completed
-    
-    if (isPlayable) {
-        console.log(` Including game ${game.id} (${game.awayTeam} @ ${game.homeTeam}) - status: state="${statusState}", type="${statusType}"`);
-    } else {
-        console.log(` Excluding game ${game.id} - status doesn't match playable criteria: state="${statusState}", type="${statusType}"`);
-        // Log the full status object for debugging
-        console.log(`   Full status object:`, game.status);
-    }
-    
-    return isPlayable;
-});
-
-console.log(`Found ${predictableGames.length} games eligible for prediction out of ${validGames.length} total games`);
-
-if (predictableGames.length === 0) {
-    console.log(' No games in progress or completed. Predictions require games that have started.');
-    console.log(' All game statuses for debugging:', validGames.map(g => ({
-        id: g.id,
-        match: `${g.awayTeam} @ ${g.homeTeam}`,
-        statusState: g.status?.state,
-        statusType: g.status?.type,
-        fullStatus: g.status
-    })));
-    
-    // TEMPORARY TEST: Try to get predictions for ANY game that's not explicitly "pre" to test if model works
-    // This will help us see if the issue is with filtering or with the model itself
-    console.log(' TESTING: Attempting to get prediction for first available game (even if status is unknown)...');
-    if (validGames.length > 0) {
-        const testGame = validGames[0];
-        console.log(` Testing with game ${testGame.id} (${testGame.awayTeam} @ ${testGame.homeTeam})`);
-        try {
-            const testPrediction = await getNFLPrediction(testGame.id);
-            console.log(' Test prediction result:', testPrediction);
-        } catch (error) {
-            console.error(' Test prediction error:', error);
         }
     }
     
-    // TEMPORARY: If no predictable games, try to get predictions for any game that's not explicitly "pre"
-    // This helps debug if the status filtering is too strict
-    const fallbackGames = validGames.filter(game => {
-        const statusState = game.status?.state?.toLowerCase() || 'unknown';
-        const statusType = game.status?.type?.toLowerCase() || 'unknown';
-        // Only exclude if explicitly "pre" or "scheduled"
-        return !(statusState === 'pre' && statusType.includes('scheduled'));
+    // Add today's games that are in the future
+    todayGames.forEach((game) => {
+        const gameDate = game.dateAndTime ? new Date(game.dateAndTime) : 
+                        game.date ? new Date(game.date) : null;
+        if (gameDate && gameDate > now) {
+            allGames.push(game);
+        }
     });
     
-    if (fallbackGames.length > 0 && fallbackGames.length !== validGames.length) {
-        console.log(` Trying fallback: ${fallbackGames.length} games (excluding only explicitly pre-game)`);
-        // Use fallback games but continue with normal flow
-        // We'll set predictableGames to fallbackGames for this attempt
-        const originalPredictable = predictableGames;
-        // For now, just log - we'll try the fallback approach
+    // Remove duplicates based on game ID
+    const uniqueGames = Array.from(
+        new Map(allGames.map(game => [game.id, game])).values()
+    );
+    
+    console.log(`Total unique future games: ${uniqueGames.length}`);
+    
+    // Filter for games we can predict (upcoming or in-progress)
+    const predictableGames = uniqueGames.filter((game) => {
+        // Only include games with valid IDs
+        if (!game.id || game.id === '') {
+            console.warn(`Skipping game without ID: ${game.awayTeam} @ ${game.homeTeam}`);
+            return false;
+        }
+        
+        const statusState = (game.status?.state || '').toLowerCase();
+        const statusType = (game.status?.type || '').toLowerCase();
+        const isUpcoming = statusState === 'pre' || statusType === 'scheduled' || statusType === 'pre';
+        const isInProgress = ['in', 'live', 'inprogress'].includes(statusState) || 
+                            statusType.includes('in-progress') || 
+                            statusType.includes('live');
+        return isUpcoming || isInProgress;
+    });
+    
+    console.log(`Games available for prediction: ${predictableGames.length}`);
+    
+    if (predictableGames.length === 0) {
+        console.log('No games available for prediction');
+        return [];
     }
     
-    return [];
-}
-
-// Map over the predictableGames array (only games that have started)
-console.log(` Starting prediction requests for ${predictableGames.length} games...`);
-const predictionPromises = predictableGames.map(async (game) => {
+    // Map over the predictableGames array
+    console.log(`Starting prediction requests for ${predictableGames.length} games...`);
+    const predictionPromises = predictableGames.map(async (game) => {
     try {
         console.log(` Requesting prediction for game ${game.id} (${game.awayTeam} @ ${game.homeTeam})...`);
         // We know game.id is a string here
@@ -309,7 +202,11 @@ const predictionPromises = predictableGames.map(async (game) => {
             const topFactors = sortedFactors.slice(0, 2); // Top 2 most influential
             
             const factors = topFactors.map((factor) => {
-                const featureName = factor.feature === 'HomeYards' ? 'Home yards' :
+                const featureName = factor.feature === 'WinPercentage' ? 'Win percentage' :
+                                  factor.feature === 'PointDifferential' ? 'Point differential' :
+                                  factor.feature === 'OffensiveStrength' ? 'Offensive strength' :
+                                  factor.feature === 'HomeFieldAdvantage' ? 'Home field advantage' :
+                                  factor.feature === 'HomeYards' ? 'Home yards' :
                                   factor.feature === 'AwayYards' ? 'Away yards' :
                                   'Yard differential';
                 // Use actual team names instead of "home" or "away"

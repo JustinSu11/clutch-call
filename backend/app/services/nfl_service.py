@@ -117,29 +117,27 @@ def generate_prediction_for_game(event_id: str):
         print(f" Game Status: '{status_type}' (state: '{status_state}')")
         
         # Check if game is scheduled/upcoming
-        if status_state == "pre":
-            print(f"  Game has NOT started - status_state is 'pre'")
-            return {
-                "error": "Cannot predict upcoming games",
-                "message": "This model predicts outcomes based on in-game yard statistics. The game must be in progress or completed.",
-                "game_status": status_type,
-                "status_state": status_state,
-                "event_id": event_id,
-                "suggestion": "Please wait until the game starts to get a prediction."
-            }
+        if status_state == "pre" or status_type in ["scheduled", "pre"]:
+            print(f"  Game has NOT started - using pre-game prediction model")
+            
+            # Get team names for pre-game prediction
+            competitors = comp.get("competitors", [])
+            home = next((c for c in competitors if c.get("homeAway") == "home"), None)
+            away = next((c for c in competitors if c.get("homeAway") == "away"), None)
+            
+            if not home or not away:
+                return {
+                    "error": "Cannot find teams for pre-game prediction",
+                    "event_id": event_id
+                }
+            
+            home_team_name = home.get("team", {}).get("displayName", "Unknown")
+            away_team_name = away.get("team", {}).get("displayName", "Unknown")
+            
+            # Use pre-game prediction model
+            return generate_pre_game_prediction(home_team_name, away_team_name)
         
-        if status_type in ["scheduled", "pre"]:
-            print(f"  Game has NOT started - status_type is '{status_type}'")
-            return {
-                "error": "Cannot predict upcoming games",
-                "message": "This model predicts outcomes based on in-game yard statistics. The game must be in progress or completed.",
-                "game_status": status_type,
-                "status_state": status_state,
-                "event_id": event_id,
-                "suggestion": "Please wait until the game starts to get a prediction."
-            }
-        
-        print(f" Game is live or completed - proceeding with prediction")
+        print(f" Game is live or completed - proceeding with in-game prediction")
         
         # Step 4: Get competitors
         competitors = comp.get("competitors", [])
@@ -230,7 +228,7 @@ def generate_prediction_for_game(event_id: str):
             columns=['HomeYards', 'AwayYards', 'YardDiff']
         )
         
-                # Predict
+        # Predict
         prediction = model.predict(features)
         proba = model.predict_proba(features)
         
@@ -302,6 +300,154 @@ def generate_prediction_for_game(event_id: str):
         print(f" EXCEPTION: {str(e)}")
         print(f" ERROR: {traceback.format_exc()}")
         return {"error": str(e), "event_id": event_id}
+
+
+def generate_pre_game_prediction(home_team_name: str, away_team_name: str):
+    """
+    Generate prediction for an upcoming game using team season statistics.
+    
+    Args:
+        home_team_name: Display name of home team (e.g., "Denver Broncos")
+        away_team_name: Display name of away team (e.g., "Kansas City Chiefs")
+    
+    Returns:
+        Dictionary with prediction data (same format as in-game predictions)
+    """
+    print(f"\n{'='*60}")
+    print(f" PRE-GAME PREDICTION: {away_team_name} @ {home_team_name}")
+    
+    try:
+        # Step 1: Get standings to fetch team stats
+        standings_data = get_standings()
+        
+        if "error" in standings_data:
+            return {"error": "Could not fetch team statistics"}
+        
+        # Step 2: Find both teams in standings
+        home_team_stats = None
+        away_team_stats = None
+        
+        # Search in both AFC and NFC standings
+        all_teams = standings_data.get("afc_standings", []) + standings_data.get("nfc_standings", [])
+        
+        for team in all_teams:
+            if team.get("team_name") == home_team_name:
+                home_team_stats = team
+            if team.get("team_name") == away_team_name:
+                away_team_stats = team
+        
+        if not home_team_stats or not away_team_stats:
+            return {
+                "error": f"Could not find team statistics for {home_team_name} or {away_team_name}"
+            }
+        
+        # Step 3: Extract key statistics
+        home_win_pct = home_team_stats.get("win_pct", 0.5)
+        away_win_pct = away_team_stats.get("win_pct", 0.5)
+        
+        home_pf = home_team_stats.get("points_for", 0)
+        home_pa = home_team_stats.get("points_against", 0)
+        away_pf = away_team_stats.get("points_for", 0)
+        away_pa = away_team_stats.get("points_against", 0)
+        
+        home_diff = home_team_stats.get("point_differential", 0)
+        away_diff = away_team_stats.get("point_differential", 0)
+        
+        # Calculate averages (points per game)
+        home_games = home_team_stats.get("wins", 0) + home_team_stats.get("losses", 0) + home_team_stats.get("ties", 0)
+        away_games = away_team_stats.get("wins", 0) + away_team_stats.get("losses", 0) + away_team_stats.get("ties", 0)
+        
+        home_ppg = home_pf / home_games if home_games > 0 else 0
+        home_papg = home_pa / home_games if home_games > 0 else 0
+        away_ppg = away_pf / away_games if away_games > 0 else 0
+        away_papg = away_pa / away_games if away_games > 0 else 0
+        
+        # Step 4: Simple prediction algorithm
+        # Factors:
+        # 1. Win percentage difference (weighted 40%)
+        # 2. Point differential (weighted 30%)
+        # 3. Offensive/Defensive strength (weighted 20%)
+        # 4. Home field advantage (weighted 10% - small boost)
+        
+        win_pct_diff = home_win_pct - away_win_pct
+        point_diff_advantage = (home_diff - away_diff) / 100.0  # Normalize
+        
+        # Offensive advantage: home PPG vs away PAPG
+        # Defensive advantage: away PPG vs home PAPG
+        offensive_advantage = (home_ppg - away_papg) / 10.0
+        defensive_advantage = (away_papg - home_ppg) / 10.0
+        net_offensive = offensive_advantage - defensive_advantage
+        
+        # Home field advantage (typically worth ~2-3 points)
+        home_advantage = 0.02
+        
+        # Calculate composite score
+        composite_score = (
+            win_pct_diff * 0.4 +
+            point_diff_advantage * 0.3 +
+            net_offensive * 0.2 +
+            home_advantage * 0.1
+        )
+        
+        # Convert to probability (sigmoid-like function)
+        # Higher composite = higher home win probability
+        home_win_prob = 0.5 + (composite_score * 0.4)  # Scale to 0.1-0.9 range
+        home_win_prob = max(0.1, min(0.9, home_win_prob))  # Clamp between 10% and 90%
+        away_win_prob = 1.0 - home_win_prob
+        
+        # Determine predicted winner
+        if home_win_prob >= 0.5:
+            predicted_winner = "home"
+            confidence = home_win_prob
+        else:
+            predicted_winner = "away"
+            confidence = away_win_prob
+        
+        # Build decision factors for analysis
+        decision_factors = {
+            "WinPercentage": {
+                "importance": 40.0,
+                "value": round(win_pct_diff * 100, 1),
+                "contribution": round(win_pct_diff * 0.4 * 100, 2)
+            },
+            "PointDifferential": {
+                "importance": 30.0,
+                "value": round(home_diff - away_diff, 1),
+                "contribution": round(point_diff_advantage * 0.3 * 100, 2)
+            },
+            "OffensiveStrength": {
+                "importance": 20.0,
+                "value": round(home_ppg - away_papg, 1),
+                "contribution": round(net_offensive * 0.2 * 100, 2)
+            },
+            "HomeFieldAdvantage": {
+                "importance": 10.0,
+                "value": 2.5,  # Typical home field advantage
+                "contribution": round(home_advantage * 0.1 * 100, 2)
+            }
+        }
+        
+        print(f"\n PRE-GAME PREDICTION:")
+        print(f"   Home: {home_team_name} (Win%: {home_win_pct:.1%}, PPG: {home_ppg:.1f}, Diff: {home_diff:+d})")
+        print(f"   Away: {away_team_name} (Win%: {away_win_pct:.1%}, PPG: {away_ppg:.1f}, Diff: {away_diff:+d})")
+        print(f"   Winner: {predicted_winner.upper()}")
+        print(f"   Home: {home_win_prob:.1%}, Away: {away_win_prob:.1%}")
+        print(f"   Confidence: {confidence:.1%}")
+        print(f"{'='*60}\n")
+        
+        return {
+            "prediction": predicted_winner,
+            "predicted_winner": predicted_winner,
+            "confidence": round(confidence * 100, 1),
+            "home_win_probability": round(home_win_prob * 100, 1),
+            "away_win_probability": round(away_win_prob * 100, 1),
+            "decision_factors": decision_factors,
+            "prediction_type": "pre_game"
+        }
+        
+    except Exception as e:
+        print(f" Error in pre-game prediction: {str(e)}")
+        return {"error": f"Failed to generate pre-game prediction: {str(e)}"}
 
 
 def _get(url: str, params: Optional[Dict[str, Any]] = None):
