@@ -13,8 +13,9 @@ import { parseNBATeamStats } from '@/utils/nba_parser';
 import { parseUpcomingMLSGames, parseMLSTeamStats } from '@/utils/mls_parser';
 import MatchDialog, { TeamStats } from '@/components/DashboardComponents/Dialog';
 import { getNBAGamePredictions, getNBAMLStatus } from '@/backend_methods/nba_methods';
+import { getNBAStandings } from '@/backend_methods/standings_methods';
 import { GamePrediction, DecisionFactor } from '@/utils/nba_prediction_parser';
-import { getNBATeamName } from '@/utils/nba_team_mapping';
+import { getNBATeamName, getNBATeamAbbreviation, getNBATeamPalette } from '@/utils/nba_team_mapping';
 import formatDate from '@/utils/date-formatter-for-matches';
 
 
@@ -47,6 +48,25 @@ type NBATrainingStatus = {
     last_message?: string | null;
     last_error?: string | null;
     requested_seasons?: string[];
+};
+
+type NBAMLStatusResponse = {
+    training_status?: NBATrainingStatus;
+};
+
+type NBAGamePredictionsResponse = {
+    games?: GamePrediction[];
+};
+
+type NBAStandingsResponse = {
+    eastern_conference?: Array<{
+        team_id: number;
+        team_logo?: string | null;
+    }>;
+    western_conference?: Array<{
+        team_id: number;
+        team_logo?: string | null;
+    }>;
 };
 
 const buildNFLPredictions = async (): Promise<Prediction[]> => {
@@ -136,8 +156,8 @@ const formatTimestamp = (iso?: string | null): string | null => {
 
 const buildNBAPredictions = async (): Promise<Prediction[]> => {
     try {
-        const response = await getNBAGamePredictions(3, true);
-        const games: GamePrediction[] = Array.isArray(response?.games) ? response.games : [];
+    const response = await getNBAGamePredictions(3, true) as NBAGamePredictionsResponse | null | undefined;
+    const games: GamePrediction[] = Array.isArray(response?.games) ? response.games : [];
 
         return games.map((game) => {
             const homeName = getNBATeamName(game.home_team_id);
@@ -330,8 +350,60 @@ const formatFactorValue = (factor: DecisionFactor): string => {
     return value.toFixed(1);
 };
 
-const PredictionRow: React.FC<{ item: Prediction; onClick?: () => void }> = ({ item, onClick }) => {
+const buildFallbackAbbreviation = (name: string): string => {
+    if (!name) {
+        return 'NBA';
+    }
+    const initials = name
+        .split(' ')
+        .filter(Boolean)
+        .map((part) => part[0] ?? '')
+        .join('');
+    const fallback = initials || name.substring(0, 3);
+    return fallback.toUpperCase().slice(0, 3);
+};
+
+const NBATeamDisplay: React.FC<{ teamId?: number; name: string; logoUrl?: string }> = ({ teamId, name, logoUrl }) => {
+    const { primary, secondary } = typeof teamId === 'number'
+        ? getNBATeamPalette(teamId)
+        : { primary: '#1F2937', secondary: '#F9FAFB' };
+    const abbreviation = typeof teamId === 'number'
+        ? (getNBATeamAbbreviation(teamId) ?? buildFallbackAbbreviation(name))
+        : buildFallbackAbbreviation(name);
+
+    return (
+        <div className="flex min-w-[150px] items-center gap-3">
+            {logoUrl ? (
+                <img
+                    src={logoUrl}
+                    alt={`${name} logo`}
+                    className="h-10 w-10 object-contain"
+                />
+            ) : (
+                <div
+                    className="flex h-10 w-10 items-center justify-center rounded-full text-xs font-bold uppercase"
+                    style={{ backgroundColor: primary, color: secondary }}
+                >
+                    {abbreviation}
+                </div>
+            )}
+            <span className="text-sm font-semibold text-text-primary text-left leading-snug">
+                {name}
+            </span>
+        </div>
+    );
+};
+
+const PredictionRow: React.FC<{ item: Prediction; onClick?: () => void; nbaTeamLogos?: Record<number, string> }> = ({ item, onClick, nbaTeamLogos }) => {
     const decisionFactors = item.meta?.decisionFactors;
+    const [awayMatchName = '', homeMatchName = ''] = item.match.split(' at ').map((part) => part?.trim() ?? '');
+    const isNBA = item.sport === 'NBA';
+    const homeTeamId = typeof item.meta?.homeTeamId === 'number' ? item.meta?.homeTeamId : undefined;
+    const awayTeamId = typeof item.meta?.awayTeamId === 'number' ? item.meta?.awayTeamId : undefined;
+    const homeTeamName = isNBA && homeTeamId ? getNBATeamName(homeTeamId) : homeMatchName;
+    const awayTeamName = isNBA && awayTeamId ? getNBATeamName(awayTeamId) : awayMatchName;
+    const homeLogoUrl = isNBA && homeTeamId ? nbaTeamLogos?.[homeTeamId] : undefined;
+    const awayLogoUrl = isNBA && awayTeamId ? nbaTeamLogos?.[awayTeamId] : undefined;
     
     const renderDecisionFactors = () => {
         if (item.sport !== 'NBA' || !Array.isArray(decisionFactors) || decisionFactors.length === 0) {
@@ -366,29 +438,37 @@ const PredictionRow: React.FC<{ item: Prediction; onClick?: () => void }> = ({ i
     
     return (
         <tr onClick={onClick} className="bg-secondary-background hover:bg-secondary cursor-pointer">
-            <td className="text-center px-6 py-4 whitespace-nowrap">
-                <div className="text-md font-medium text-text-primary">{item.match}</div>
+            <td className="px-4 py-4 align-middle">
+                {isNBA ? (
+                    <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
+                        <NBATeamDisplay teamId={awayTeamId} name={awayTeamName} logoUrl={awayLogoUrl} />
+                        <span className="text-xs font-semibold uppercase text-text-secondary">@</span>
+                        <NBATeamDisplay teamId={homeTeamId} name={homeTeamName} logoUrl={homeLogoUrl} />
+                    </div>
+                ) : (
+                    <div className="text-sm font-semibold text-text-primary text-center whitespace-normal">{item.match}</div>
+                )}
             </td>
-            <td className="text-center px-6 py-4 whitespace-nowrap">
-                <div className="text-md font-medium text-text-primary">{formatDate(item.date)}</div>
+            <td className="px-4 py-4 text-center align-middle">
+                <div className="text-sm font-medium text-text-primary">{formatDate(item.date)}</div>
             </td>
-            <td className="text-center px-6 py-4 whitespace-nowrap">
-                <div className="text-md font-medium text-text-primary">{item.prediction}</div>
+            <td className="px-4 py-4 text-center align-middle">
+                <div className="text-sm font-medium text-text-primary leading-snug">{item.prediction}</div>
             </td>
-            <td className="text-center px-6 py-4 whitespace-nowrap">
-                <div className="flex items-center justify-center">
-                    <div className="w-24 bg-gray-200 rounded-full h-2.5 mr-3">
+            <td className="px-4 py-4 text-center align-middle">
+                <div className="flex items-center justify-center gap-3">
+                    <div className="h-2 w-20 rounded-full bg-gray-200">
                         <div
-                            className="h-2.5 rounded-full"
+                            className="h-2 rounded-full"
                             style={{ ...getConfidenceStyle(item.confidence), width: `${item.confidence}%` }}
                         ></div>
                     </div>
-                    <span className="text-md font-medium text-text-primary">{item.confidence}%</span>
+                    <span className="text-sm font-semibold text-text-primary">{item.confidence}%</span>
                 </div>
             </td>
-            <td className="px-6 py-4">
+            <td className="px-4 py-4 align-top">
                 <div className="flex justify-center">
-                    <div className="inline-block">
+                    <div className="inline-block max-w-[260px] text-left">
                         {renderDecisionFactors()}
                     </div>
                 </div>
@@ -411,6 +491,7 @@ export default function PredictionsScreen() {
     const [homeStats, setHomeStats] = useState<TeamStats | null>(null);
     const [awayStats, setAwayStats] = useState<TeamStats | null>(null);
     const [nbaTrainingStatus, setNbaTrainingStatus] = useState<NBATrainingStatus | null>(null);
+    const [nbaTeamLogos, setNbaTeamLogos] = useState<Record<number, string>>({});
     const [homeLogo, setHomeLogo] = useState<string>('');
     const [awayLogo, setAwayLogo] = useState<string>('');
 
@@ -488,13 +569,55 @@ export default function PredictionsScreen() {
     useEffect(() => {
         let isMounted = true;
 
+        const loadLogos = async () => {
+            try {
+                const standings = await getNBAStandings();
+                if (!isMounted || !standings) {
+                    return;
+                }
+
+                const parsed = standings as NBAStandingsResponse;
+                const allTeams = [
+                    ...(parsed.eastern_conference ?? []),
+                    ...(parsed.western_conference ?? []),
+                ];
+
+                if (allTeams.length === 0) {
+                    return;
+                }
+
+                const logoMap: Record<number, string> = {};
+                for (const team of allTeams) {
+                    if (typeof team.team_id === 'number' && team.team_logo) {
+                        logoMap[team.team_id] = team.team_logo;
+                    }
+                }
+
+                if (isMounted && Object.keys(logoMap).length > 0) {
+                    setNbaTeamLogos(prev => ({ ...prev, ...logoMap }));
+                }
+            } catch (err) {
+                console.warn('Failed to load NBA team logos for predictions view', err);
+            }
+        };
+
+        loadLogos();
+
+        return () => {
+            isMounted = false;
+        };
+    }, []);
+
+    useEffect(() => {
+        let isMounted = true;
+
         const loadStatus = async () => {
             try {
                 const statusResponse = await getNBAMLStatus();
                 if (!isMounted) {
                     return;
                 }
-                const trainingData = statusResponse?.training_status as NBATrainingStatus | undefined;
+                const trainingData = (statusResponse as NBAMLStatusResponse | null | undefined)?.training_status;
                 setNbaTrainingStatus(trainingData ?? null);
             } catch {
                 if (isMounted) {
@@ -521,11 +644,11 @@ export default function PredictionsScreen() {
     const trainingMessage = nbaTrainingStatus?.last_message ?? 'NBA models are currently retraining.';
 
     return (
-        <div className="overflow-x-auto">
+    <div className="px-3 sm:px-6 lg:px-8">
             <header className="">
                 {/* header code */}
             </header>
-            <main className="">
+            <main className="mx-auto max-w-6xl">
                 <div className="mb-8">
                     <h2 className="text-3xl font-bold text-text-primary mb-4">Predictions</h2>
                     <p className="text-text-primary mb-4">AI-powered predictions for upcoming sports matches.</p>
@@ -543,15 +666,15 @@ export default function PredictionsScreen() {
                 <SportsFilter sports={sports} activeSport={activeSport} setActiveSport={setActiveSport} />
                 <div className="rounded-lg overflow-hidden">
                     {/* Desktop table */}
-                    <div className="hidden sm:block overflow-x-auto">
-                        <table className="min-w-full divide-y divide-secondary">
+                    <div className="hidden sm:block">
+                        <table className="w-full table-auto divide-y divide-secondary">
                             <thead className="bg-secondary-background rounded-xl shadow-sm">
                                 <tr>
-                                    <th className="px-6 py-4 text-sm font-semibold text-text-secondary uppercase tracking-wider text-center">Match</th>
-                                    <th className="px-6 py-4 text-sm font-semibold text-text-secondary uppercase tracking-wider text-center">Date</th>
-                                    <th className="px-6 py-4 text-sm font-semibold text-text-secondary uppercase tracking-wider text-center">Prediction</th>
-                                    <th className="px-6 py-4 text-sm font-semibold text-text-secondary uppercase tracking-wider text-center">Confidence</th>
-                                    <th className="px-6 py-4 text-sm font-semibold text-text-secondary uppercase tracking-wider text-center">Decision Factors</th>
+                                    <th className="px-4 py-3 text-xs font-semibold text-text-secondary uppercase tracking-wider text-center">Match</th>
+                                    <th className="px-4 py-3 text-xs font-semibold text-text-secondary uppercase tracking-wider text-center">Date</th>
+                                    <th className="px-4 py-3 text-xs font-semibold text-text-secondary uppercase tracking-wider text-center">Prediction</th>
+                                    <th className="px-4 py-3 text-xs font-semibold text-text-secondary uppercase tracking-wider text-center">Confidence</th>
+                                    <th className="px-4 py-3 text-xs font-semibold text-text-secondary uppercase tracking-wider text-center">Decision Factors</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-secondary">
@@ -575,6 +698,7 @@ export default function PredictionsScreen() {
                                                 key={idx}
                                                 item={item}
                                                 onClick={() => openMatchDialog(homeTeam ?? '', awayTeam ?? '', item.sport)}
+                                                nbaTeamLogos={nbaTeamLogos}
                                             />
                                         );
                                     })
