@@ -14,6 +14,7 @@ from .scheduler import (
     start_model_retraining_scheduler,
     stop_scheduler,
     get_scheduler,
+    refresh_predictions_cache,
 )
 from .training_state import (
     mark_training_start,
@@ -34,6 +35,7 @@ __all__ = [
     "start_model_retraining_scheduler",
     "stop_scheduler",
     "get_scheduler",
+    "refresh_predictions_cache",
     "mark_training_start",
     "mark_training_complete",
     "mark_training_failed",

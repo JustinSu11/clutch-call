@@ -217,55 +217,19 @@ def nba_game_predictions():
         
         # Initialize predictor
         predictor = NBAMLPredictor(data_dir=ML_DATA_DIR)
-        
-        # Check cache first
-        cached_result = predictor.cache.get_game_predictions(days_ahead, include_details)
-        if cached_result:
-            logger.info(f"Returning cached game predictions for days_ahead={days_ahead}")
-            return jsonify(cached_result)
-        
-        # Generate predictions (cache miss)
-        logger.info(f"Cache miss - generating new predictions for days_ahead={days_ahead}")
-        predictions = predictor.generate_comprehensive_predictions(days_ahead=days_ahead)
-        
-        if not predictions:
+        payload = predictor.get_prediction_payload(
+            days_ahead=days_ahead,
+            include_details=include_details,
+        )
+
+        if payload is None:
             return jsonify({
                 "message": "No upcoming games found for prediction",
                 "days_ahead": days_ahead,
                 "predictions": []
             })
-        
-        # Format response
-        response_data = {
-            "prediction_date": datetime.now().isoformat(),
-            "days_ahead": days_ahead,
-            "games_count": len(predictions.get('game_outcomes', [])),
-            "games": []
-        }
-        
-        # Process game predictions
-        for game in predictions.get('game_outcomes', []):
-            game_data = {
-                "game_id": game.get('game_id'),
-                "game_date": game.get('game_date'),
-                "home_team_id": game.get('home_team_id'),
-                "away_team_id": game.get('away_team_id'),
-                "predicted_winner": game.get('predicted_winner'),
-                "confidence": round(game.get('confidence', 0), 3),
-                "home_win_probability": round(game.get('home_team_win_probability', 0), 3),
-                "away_win_probability": round(game.get('away_team_win_probability', 0), 3),
-                "decision_factors": game.get('decision_factors', [])
-            }
-            
-            if include_details:
-                game_data['prediction_timestamp'] = game.get('prediction_timestamp')
-                
-            response_data['games'].append(game_data)
-        
-        # Cache the result
-        predictor.cache.set_game_predictions(days_ahead, include_details, response_data)
-        
-        return jsonify(response_data)
+
+        return jsonify(payload)
         
     except Exception as e:
         return jsonify({"error": f"Error generating game predictions: {str(e)}"}), 500

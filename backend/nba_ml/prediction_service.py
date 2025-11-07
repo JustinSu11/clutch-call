@@ -571,6 +571,94 @@ class NBAMLPredictor:
             logger.error(f"Error in game outcome prediction: {e}")
         
         return predictions
+
+    def _build_prediction_payload(
+        self,
+        predictions: Dict[str, Any],
+        days_ahead: int,
+        include_details: bool,
+    ) -> Dict[str, Any]:
+        """Normalize predictions into the cached/response payload shape."""
+
+        games_payload: List[Dict[str, Any]] = []
+        for game in predictions.get('game_outcomes', []) or []:
+            game_payload = {
+                "game_id": game.get('game_id'),
+                "game_date": game.get('game_date'),
+                "home_team_id": game.get('home_team_id'),
+                "away_team_id": game.get('away_team_id'),
+                "predicted_winner": game.get('predicted_winner'),
+                "confidence": round(game.get('confidence', 0.0), 3),
+                "home_win_probability": round(game.get('home_team_win_probability', 0.0), 3),
+                "away_win_probability": round(game.get('away_team_win_probability', 0.0), 3),
+                "decision_factors": game.get('decision_factors', []),
+            }
+
+            if include_details:
+                game_payload['prediction_timestamp'] = game.get('prediction_timestamp')
+
+            games_payload.append(game_payload)
+
+        payload = {
+            "prediction_date": datetime.now().isoformat(),
+            "days_ahead": days_ahead,
+            "games_count": len(games_payload),
+            "games": games_payload,
+        }
+
+        return payload
+
+    def refresh_prediction_cache(
+        self,
+        days_ahead: int = 1,
+        include_details: bool = False,
+    ) -> Optional[Dict[str, Any]]:
+        """Force regeneration and caching of predictions for the requested window."""
+
+        logger.info(
+            "Refreshing NBA predictions cache (days_ahead=%s, include_details=%s)",
+            days_ahead,
+            include_details,
+        )
+
+        predictions = self.generate_comprehensive_predictions(days_ahead=days_ahead)
+
+        if not isinstance(predictions, dict):
+            logger.warning(
+                "Prediction generation returned unexpected payload type %s", type(predictions)
+            )
+            return None
+
+        payload = self._build_prediction_payload(predictions, days_ahead, include_details)
+
+        # Persist payload regardless of game count so future requests can reuse it.
+        self.cache.set_game_predictions(days_ahead, include_details, payload)
+        logger.info(
+            "Cached NBA predictions for days_ahead=%s (%s games)",
+            days_ahead,
+            payload["games_count"],
+        )
+        return payload
+
+    def get_prediction_payload(
+        self,
+        days_ahead: int = 1,
+        include_details: bool = False,
+        force_refresh: bool = False,
+    ) -> Optional[Dict[str, Any]]:
+        """Return predictions data, optionally forcing a cache refresh."""
+
+        if not force_refresh:
+            cached = self.cache.get_game_predictions(days_ahead, include_details)
+            if cached:
+                logger.info(
+                    "Serving NBA predictions from cache (days_ahead=%s, include_details=%s)",
+                    days_ahead,
+                    include_details,
+                )
+                return cached
+
+        return self.refresh_prediction_cache(days_ahead=days_ahead, include_details=include_details)
     
     def generate_comprehensive_predictions(self, days_ahead: int = 7) -> Dict:
         """Generate comprehensive predictions for upcoming games"""
