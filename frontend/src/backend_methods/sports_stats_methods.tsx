@@ -358,6 +358,402 @@ export const getStatisticalTrends = async (filters: StatisticalTrendsFilters = {
     }
 };
 
+// ==================== NEW HISTORICAL DATA METHODS ====================
+
+export const getHistoricalNBAAllTeams = async (season?: string, page = 1, perPage = 50) => {
+    /**
+     * Get historical NBA data for all teams from last season.
+     * 
+     * @param season - Optional season (e.g., "2023-24")
+     * @param page - Page number for pagination
+     * @param perPage - Number of items per page
+     */
+    try {
+        await checkBackendHealth();
+        let url = ROUTES.historical_nba_all_teams;
+        const params = new URLSearchParams();
+        
+        if (season) params.append('season', season);
+        if (page !== 1) params.append('page', page.toString());
+        if (perPage !== 50) params.append('per_page', perPage.toString());
+        
+        if (params.toString()) {
+            url += `?${params.toString()}`;
+        }
+        
+        return makeBackendRequest('GET', url);
+    } catch (error) {
+        console.error("Error fetching historical NBA all teams data:", error);
+        throw error;
+    }
+};
+
+export const getHistoricalNFLAllTeams = async (season?: string, page = 1, perPage = 50) => {
+    /**
+     * Get historical NFL data for all teams from last season.
+     * 
+     * @param season - Optional season (e.g., "2023")
+     * @param page - Page number for pagination
+     * @param perPage - Number of items per page
+     */
+    try {
+        await checkBackendHealth();
+        let url = ROUTES.historical_nfl_all_teams;
+        const params = new URLSearchParams();
+        
+        if (season) params.append('season', season);
+        if (page !== 1) params.append('page', page.toString());
+        if (perPage !== 50) params.append('per_page', perPage.toString());
+        
+        if (params.toString()) {
+            url += `?${params.toString()}`;
+        }
+        
+        return makeBackendRequest('GET', url);
+    } catch (error) {
+        console.error("Error fetching historical NFL all teams data:", error);
+        throw error;
+    }
+};
+
+export const getHistoricalSoccerAllTeams = async (leagues?: string[], page = 1, perPage = 50) => {
+    /**
+     * Get historical Soccer data for all MLS teams from last season.
+     * 
+     * @param leagues - Optional array of leagues (default: ["MLS"])
+     * @param page - Page number for pagination
+     * @param perPage - Number of items per page
+     */
+    try {
+        await checkBackendHealth();
+        let url = ROUTES.historical_soccer_all_teams;
+        const params = new URLSearchParams();
+        
+        if (leagues && leagues.length > 0) {
+            leagues.forEach(league => params.append('leagues', league));
+        }
+        if (page !== 1) params.append('page', page.toString());
+        if (perPage !== 50) params.append('per_page', perPage.toString());
+        
+        if (params.toString()) {
+            url += `?${params.toString()}`;
+        }
+        
+        return makeBackendRequest('GET', url);
+    } catch (error) {
+        console.error("Error fetching historical Soccer all teams data:", error);
+        throw error;
+    }
+};
+
+export const getHistoricalNBATeamByName = async (teamName: string, options?: {
+    season?: string;
+    startDate?: string;
+    endDate?: string;
+    page?: number;
+    perPage?: number;
+}) => {
+    /**
+     * Get historical NBA data for a specific team by name.
+     * 
+     * @param teamName - Team name (e.g., "los angeles lakers", "Lakers")
+     * @param options - Optional filters
+     */
+    try {
+        await checkBackendHealth();
+        let url = ROUTES.historical_nba_team_by_name(teamName);
+        const params = new URLSearchParams();
+        
+        if (options?.season) params.append('season', options.season);
+        if (options?.startDate) params.append('start_date', options.startDate);
+        if (options?.endDate) params.append('end_date', options.endDate);
+        if (options?.page && options.page !== 1) params.append('page', options.page.toString());
+        if (options?.perPage && options.perPage !== 50) params.append('per_page', options.perPage.toString());
+        
+        if (params.toString()) {
+            url += `?${params.toString()}`;
+        }
+        
+        return makeBackendRequest('GET', url);
+    } catch (error) {
+        console.error(`Error fetching historical NBA team data for ${teamName}:`, error);
+        throw error;
+    }
+};
+
+export const getHistoricalNFLTeamByName = async (teamName: string, options?: {
+    season?: string;
+    startDate?: string;
+    endDate?: string;
+    page?: number;
+    perPage?: number;
+}) => {
+    /**
+     * Get historical NFL data for a specific team by name.
+     * 
+     * @param teamName - Team name (e.g., "kansas city chiefs", "Chiefs")
+     * @param options - Optional filters
+     */
+    try {
+        await checkBackendHealth();
+        let url = ROUTES.historical_nfl_team_by_name(teamName);
+        const params = new URLSearchParams();
+        
+        if (options?.season) params.append('season', options.season);
+        if (options?.startDate) params.append('start_date', options.startDate);
+        if (options?.endDate) params.append('end_date', options.endDate);
+        if (options?.page && options.page !== 1) params.append('page', options.page.toString());
+        if (options?.perPage && options.perPage !== 50) params.append('per_page', options.perPage.toString());
+        
+        if (params.toString()) {
+            url += `?${params.toString()}`;
+        }
+        
+        return makeBackendRequest('GET', url);
+    } catch (error) {
+        console.error(`Error fetching historical NFL team data for ${teamName}:`, error);
+        throw error;
+    }
+};
+
+export const getHistoricalSoccerTeamByName = async (teamName: string, options?: {
+    leagues?: string[];
+    startDate?: string;
+    endDate?: string;
+    page?: number;
+    perPage?: number;
+}) => {
+    /**
+     * Get historical Soccer data for a specific team by name.
+     * 
+     * @param teamName - Team name (e.g., "atlanta united", "LAFC")
+     * @param options - Optional filters
+     */
+    try {
+        await checkBackendHealth();
+        let url = ROUTES.historical_soccer_team_by_name(teamName);
+        const params = new URLSearchParams();
+        
+        if (options?.leagues && options.leagues.length > 0) {
+            options.leagues.forEach(league => params.append('leagues', league));
+        }
+        if (options?.startDate) params.append('start_date', options.startDate);
+        if (options?.endDate) params.append('end_date', options.endDate);
+        if (options?.page && options.page !== 1) params.append('page', options.page.toString());
+        if (options?.perPage && options.perPage !== 50) params.append('per_page', options.perPage.toString());
+        
+        if (params.toString()) {
+            url += `?${params.toString()}`;
+        }
+        
+        return makeBackendRequest('GET', url);
+    } catch (error) {
+        console.error(`Error fetching historical Soccer team data for ${teamName}:`, error);
+        throw error;
+    }
+};
+
+export const getHistoricalNBASeason = async (season: string, options?: {
+    teamName?: string;
+    startDate?: string;
+    endDate?: string;
+    page?: number;
+    perPage?: number;
+}) => {
+    /**
+     * Get NBA historical data for a specific season with optional team filtering.
+     * 
+     * @param season - Season year (e.g., "2023-24")
+     * @param options - Optional filters
+     */
+    try {
+        await checkBackendHealth();
+        let url = ROUTES.historical_nba_season(season);
+        const params = new URLSearchParams();
+        
+        if (options?.teamName) params.append('team_name', options.teamName);
+        if (options?.startDate) params.append('start_date', options.startDate);
+        if (options?.endDate) params.append('end_date', options.endDate);
+        if (options?.page && options.page !== 1) params.append('page', options.page.toString());
+        if (options?.perPage && options.perPage !== 100) params.append('per_page', options.perPage.toString());
+        
+        if (params.toString()) {
+            url += `?${params.toString()}`;
+        }
+        
+        return makeBackendRequest('GET', url);
+    } catch (error) {
+        console.error(`Error fetching NBA season ${season} data:`, error);
+        throw error;
+    }
+};
+
+export const getHistoricalNFLSeason = async (season: string, options?: {
+    teamName?: string;
+    startDate?: string;
+    endDate?: string;
+    page?: number;
+    perPage?: number;
+}) => {
+    /**
+     * Get NFL historical data for a specific season with optional team filtering.
+     * 
+     * @param season - Season year (e.g., "2023")
+     * @param options - Optional filters
+     */
+    try {
+        await checkBackendHealth();
+        let url = ROUTES.historical_nfl_season(season);
+        const params = new URLSearchParams();
+        
+        if (options?.teamName) params.append('team_name', options.teamName);
+        if (options?.startDate) params.append('start_date', options.startDate);
+        if (options?.endDate) params.append('end_date', options.endDate);
+        if (options?.page && options.page !== 1) params.append('page', options.page.toString());
+        if (options?.perPage && options.perPage !== 100) params.append('per_page', options.perPage.toString());
+        
+        if (params.toString()) {
+            url += `?${params.toString()}`;
+        }
+        
+        return makeBackendRequest('GET', url);
+    } catch (error) {
+        console.error(`Error fetching NFL season ${season} data:`, error);
+        throw error;
+    }
+};
+
+export const getHistoricalSoccerSeason = async (season: string, options?: {
+    teamName?: string;
+    leagues?: string[];
+    startDate?: string;
+    endDate?: string;
+    page?: number;
+    perPage?: number;
+}) => {
+    /**
+     * Get Soccer historical data for a specific season with optional team filtering.
+     * 
+     * @param season - Season year (e.g., "2023")
+     * @param options - Optional filters
+     */
+    try {
+        await checkBackendHealth();
+        let url = ROUTES.historical_soccer_season(season);
+        const params = new URLSearchParams();
+        
+        if (options?.teamName) params.append('team_name', options.teamName);
+        if (options?.leagues && options.leagues.length > 0) {
+            options.leagues.forEach(league => params.append('leagues', league));
+        }
+        if (options?.startDate) params.append('start_date', options.startDate);
+        if (options?.endDate) params.append('end_date', options.endDate);
+        if (options?.page && options.page !== 1) params.append('page', options.page.toString());
+        if (options?.perPage && options.perPage !== 100) params.append('per_page', options.perPage.toString());
+        
+        if (params.toString()) {
+            url += `?${params.toString()}`;
+        }
+        
+        return makeBackendRequest('GET', url);
+    } catch (error) {
+        console.error(`Error fetching Soccer season ${season} data:`, error);
+        throw error;
+    }
+};
+
+export const getNBATeamStats = async (options?: {
+    teamName?: string;
+    season?: string;
+    statType?: string;
+}) => {
+    /**
+     * Get aggregated NBA team performance statistics from historical data.
+     * 
+     * @param options - Optional filters
+     */
+    try {
+        await checkBackendHealth();
+        let url = ROUTES.historical_nba_team_stats;
+        const params = new URLSearchParams();
+        
+        if (options?.teamName) params.append('team_name', options.teamName);
+        if (options?.season) params.append('season', options.season);
+        if (options?.statType) params.append('stat_type', options.statType);
+        
+        if (params.toString()) {
+            url += `?${params.toString()}`;
+        }
+        
+        return makeBackendRequest('GET', url);
+    } catch (error) {
+        console.error("Error fetching NBA team stats:", error);
+        throw error;
+    }
+};
+
+export const getNFLTeamStats = async (options?: {
+    teamName?: string;
+    season?: string;
+    statType?: string;
+}) => {
+    /**
+     * Get aggregated NFL team performance statistics from historical data.
+     * 
+     * @param options - Optional filters
+     */
+    try {
+        await checkBackendHealth();
+        let url = ROUTES.historical_nfl_team_stats;
+        const params = new URLSearchParams();
+        
+        if (options?.teamName) params.append('team_name', options.teamName);
+        if (options?.season) params.append('season', options.season);
+        if (options?.statType) params.append('stat_type', options.statType);
+        
+        if (params.toString()) {
+            url += `?${params.toString()}`;
+        }
+        
+        return makeBackendRequest('GET', url);
+    } catch (error) {
+        console.error("Error fetching NFL team stats:", error);
+        throw error;
+    }
+};
+
+export const getSoccerTeamStats = async (options?: {
+    teamName?: string;
+    leagues?: string[];
+    statType?: string;
+}) => {
+    /**
+     * Get aggregated Soccer team performance statistics from historical data.
+     * 
+     * @param options - Optional filters
+     */
+    try {
+        await checkBackendHealth();
+        let url = ROUTES.historical_soccer_team_stats;
+        const params = new URLSearchParams();
+        
+        if (options?.teamName) params.append('team_name', options.teamName);
+        if (options?.leagues && options.leagues.length > 0) {
+            options.leagues.forEach(league => params.append('leagues', league));
+        }
+        if (options?.statType) params.append('stat_type', options.statType);
+        
+        if (params.toString()) {
+            url += `?${params.toString()}`;
+        }
+        
+        return makeBackendRequest('GET', url);
+    } catch (error) {
+        console.error("Error fetching Soccer team stats:", error);
+        throw error;
+    }
+};
+
 // ==================== UTILITY METHODS ====================
 
 export const refreshLiveData = async () => {
@@ -402,6 +798,30 @@ export const getDashboardData = async () => {
         };
     } catch (error) {
         console.error("Error fetching dashboard data:", error);
+        throw error;
+    }
+};
+
+export const getHistoricalDashboardData = async () => {
+    /**
+     * Convenience method to fetch comprehensive historical data for dashboard display.
+     * Includes all teams data and statistical trends across leagues.
+     */
+    try {
+        const [nbaAllTeams, nflAllTeams, soccerAllTeams] = await Promise.all([
+            getHistoricalNBAAllTeams(),
+            getHistoricalNFLAllTeams(),
+            getHistoricalSoccerAllTeams()
+        ]);
+        
+        return {
+            nba: nbaAllTeams,
+            nfl: nflAllTeams,
+            soccer: soccerAllTeams,
+            dashboardTimestamp: new Date().toISOString()
+        };
+    } catch (error) {
+        console.error("Error fetching historical dashboard data:", error);
         throw error;
     }
 };

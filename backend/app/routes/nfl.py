@@ -19,6 +19,7 @@ from ..services.nfl_service import (
     get_upcoming_games,
     get_today_games,
     generate_prediction_for_game,
+    get_standings,
 )
 
 bp = Blueprint("nfl", __name__)
@@ -108,5 +109,16 @@ def nfl_upcoming():
 
 @bp.get("/today")
 def nfl_today():
-    """Get today's NFL games."""
+    """List NFL games for today."""
     return get_today_games()
+
+
+@bp.get("/standings")
+def nfl_standings():
+    """Get NFL standings.
+    
+    Query params:
+        season (str): Optional season year (e.g., 2024)
+    """
+    season = request.args.get("season")
+    return get_standings(season=season)

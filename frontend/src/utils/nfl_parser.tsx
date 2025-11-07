@@ -1,7 +1,7 @@
 /*
     File: frontend/src/utils/nfl_parser.tsx
     Created: 09/30/2025 by CJ Quintero
-    Last Updated: 09/30/2025 by CJ Quintero
+    Last Updated: 10/08/2025 by CJ Quintero
 
     Description: This file contains methods 
     to parse each response from the nfl backend methods provided
@@ -11,8 +11,11 @@
     an object by the backend method. We just need to call the backend method here
     without the extra validation step.
 */
+import { ClassDictionary } from 'clsx';
 import * as nfl_methods from '../backend_methods/nfl_methods';
-import formatDate from './date-formatter-for-matches';
+import * as sports_stats_methods from '../backend_methods/sports_stats_methods';
+import { HistoricalGameFilters } from '../backend_methods/sports_stats_methods';
+import { UpcomingGame } from './data_class';
 
 // Game type definition
 type Game = {
@@ -25,6 +28,9 @@ type Game = {
         type?: string;  // e.g., "STATUS_SCHEDULED", "STATUS_IN_PROGRESS", "STATUS_FINAL"
     };
 };
+
+// globals
+const seasonStartDate = '2025-09-04'; // NFL season started on Sep 4, 2025
 
 // Helper function to parse events from any NFL games response
 export const parseNFLGamesFromEvents = (events: any[]): Game[] => {
@@ -56,7 +62,12 @@ export const parseNFLGamesFromEvents = (events: any[]): Game[] => {
         const awayTeam = awayTeamData.team?.displayName || 'TBD';
         
         // extract date of match
-        const date = formatDate(event.date);
+        const gameDate = event.date?.split('T')[0] || ''; // Extract date only, ignore time
+        let date = '';
+        if (gameDate) {
+            const [year, month, day] = gameDate.split('-');
+            date = `${month}-${day}-${year}`; // MM-DD-YYYY format
+        }
 
         // Extract status information - check multiple possible locations
         const status = event.status || {};
@@ -110,6 +121,7 @@ export const parseUpcomingNFLGames = async () => {
     const events = responseData["events"];
     console.log(`📋 Found ${events.length} events in upcoming games response`);
 
+    // Use unified, robust parsing logic for upcoming NFL games
     return parseNFLGamesFromEvents(events);
 };
 
@@ -124,7 +136,7 @@ export const parseTodayNFLGames = async () => {
     */
     try {
         const responseData = await nfl_methods.getTodayNFLGames();
-        
+
         console.log('📥 Raw response from getTodayNFLGames:', responseData);
 
         // Check if events array exists and is not empty
@@ -135,7 +147,7 @@ export const parseTodayNFLGames = async () => {
 
         const events = responseData["events"];
         console.log(`📋 Found ${events.length} events in today's games response`);
-        
+
         return parseNFLGamesFromEvents(events);
     } catch (error) {
         console.error("❌ Error parsing today's NFL games:", error);

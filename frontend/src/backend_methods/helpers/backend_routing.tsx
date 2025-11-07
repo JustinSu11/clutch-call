@@ -49,24 +49,47 @@ export const ROUTES = {
     historical_soccer_games: `/historical/soccer`,
     statistical_trends: `/historical/trends`,
     
-    // Individual League Routes (relative paths)
-    nba_games: `/nba/games`,
-    specific_nba_game_details: (gameId: string) => `/nba/game/${gameId}`,
-    specific_nba_game_boxscore: (gameId: string) => `/nba/game/${gameId}/boxscore`,
-    specific_nba_team_last_game: (teamId: string) => `/nba/teams/${teamId}/last`,
-    upcoming_nba_games: `/nba/upcoming`,
+    // New Historical Routes for All Teams
+    historical_nba_all_teams: `${BASE_URL}/historical/nba/all-teams`,
+    historical_nfl_all_teams: `${BASE_URL}/historical/nfl/all-teams`,
+    historical_soccer_all_teams: `${BASE_URL}/historical/soccer/all-teams`,
     
-    nfl_games: `/nfl/games`,
-    specific_nfl_game_details: (gameId: string) => `/nfl/game/${gameId}`,
-    specific_nfl_game_boxscore: (gameId: string) => `/nfl/game/${gameId}/boxscore`,
-    upcoming_nfl_games: `/nfl/upcoming`,
+    // Historical Routes for Specific Teams by Name
+    historical_nba_team_by_name: (teamName: string) => `${BASE_URL}/historical/nba/team/${encodeURIComponent(teamName)}`,
+    historical_nfl_team_by_name: (teamName: string) => `${BASE_URL}/historical/nfl/team/${encodeURIComponent(teamName)}`,
+    historical_soccer_team_by_name: (teamName: string) => `${BASE_URL}/historical/soccer/team/${encodeURIComponent(teamName)}`,
+    
+    // Season-Specific Historical Routes
+    historical_nba_season: (season: string) => `${BASE_URL}/historical/nba/season/${encodeURIComponent(season)}`,
+    historical_nfl_season: (season: string) => `${BASE_URL}/historical/nfl/season/${encodeURIComponent(season)}`,
+    historical_soccer_season: (season: string) => `${BASE_URL}/historical/soccer/season/${encodeURIComponent(season)}`,
+    
+    // Team Stats and Performance Routes
+    historical_nba_team_stats: `${BASE_URL}/historical/nba/team-stats`,
+    historical_nfl_team_stats: `${BASE_URL}/historical/nfl/team-stats`,
+    historical_soccer_team_stats: `${BASE_URL}/historical/soccer/team-stats`,
+    
+    // Individual League Routes
+    nba_games: `${BASE_URL}/nba/games`,
+    specific_nba_game_details: (gameId: string) => `${BASE_URL}/nba/game/${gameId}`,
+    specific_nba_game_boxscore: (gameId: string) => `${BASE_URL}/nba/game/${gameId}/boxscore`,
+    specific_nba_team_last_game: (teamId: string) => `${BASE_URL}/nba/teams/${teamId}/last`,
+    upcoming_nba_games: `${BASE_URL}/nba/upcoming`,
+    nba_standings: `${BASE_URL}/nba/standings`,
+    
+    nfl_games: `${BASE_URL}/nfl/games`,
+    specific_nfl_game_details: (gameId: string) => `${BASE_URL}/nfl/game/${gameId}`,
+    specific_nfl_game_boxscore: (gameId: string) => `${BASE_URL}/nfl/game/${gameId}/boxscore`,
+    upcoming_nfl_games: `${BASE_URL}/nfl/upcoming`,
     // Add the relative path definition for NFL prediction
-    specific_nfl_prediction: (gameId: string) => `/nfl/predict/${gameId}`, 
+    specific_nfl_prediction: (gameId: string) => `${BASE_URL}/nfl/predict/${gameId}`,
+    nfl_standings: `${BASE_URL}/nfl/standings`,
     
-    soccer_matches: `/soccer/matches`,
-    specific_soccer_match_details: (matchId: string) => `/soccer/game/${matchId}`,
-    specific_soccer_match_boxscore: (matchId: string) => `/soccer/game/${matchId}/boxscore`,
-    upcoming_soccer_matches: `/soccer/upcoming`,
+    soccer_matches: `${BASE_URL}/soccer/matches`,
+    specific_soccer_match_details: (matchId: string) => `${BASE_URL}/soccer/game/${matchId}`,
+    specific_soccer_match_boxscore: (matchId: string) => `${BASE_URL}/soccer/game/${matchId}/boxscore`,
+    upcoming_soccer_matches: `${BASE_URL}/soccer/upcoming`,
+    soccer_standings: (league: string) => `${BASE_URL}/soccer/standings?league=${league}`,
 };
 // --- END UPDATE ---
 

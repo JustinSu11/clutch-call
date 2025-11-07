@@ -9,14 +9,13 @@ Purpose: Thin service layer for NBA data using the python package `nba_api` (whi
 
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
-import pandas as pd
-import joblib
-import os
+import requests
 
 from nba_api.stats.endpoints import (
     boxscoretraditionalv2,
     boxscoresummaryv2,
     leaguegamelog,
+    leaguestandingsv3,
     scoreboardv2,
     teamgamelog,
 )
@@ -304,3 +303,163 @@ def get_historical_games(start_date=None, end_date=None, season=None, team_id=No
         return data
     except Exception as e:
         return {"error": str(e), "data": [], "meta": {"page": page, "per_page": per_page, "total": 0}}
+
+
+def _get_nba_team_logos():
+    """Get NBA team logos mapping.
+    
+    Returns static mapping since ESPN API may not be accessible from backend.
+    Returns:
+        Dictionary mapping team slugs to logo URLs
+    """
+    # Static mapping of team slugs to ESPN logo URLs
+    logo_map = {
+        "atlanta-hawks": "https://a.espncdn.com/i/teamlogos/nba/500/atl.png",
+        "boston-celtics": "https://a.espncdn.com/i/teamlogos/nba/500/bos.png",
+        "brooklyn-nets": "https://a.espncdn.com/i/teamlogos/nba/500/bkn.png",
+        "charlotte-hornets": "https://a.espncdn.com/i/teamlogos/nba/500/cha.png",
+        "chicago-bulls": "https://a.espncdn.com/i/teamlogos/nba/500/chi.png",
+        "cleveland-cavaliers": "https://a.espncdn.com/i/teamlogos/nba/500/cle.png",
+        "dallas-mavericks": "https://a.espncdn.com/i/teamlogos/nba/500/dal.png",
+        "denver-nuggets": "https://a.espncdn.com/i/teamlogos/nba/500/den.png",
+        "detroit-pistons": "https://a.espncdn.com/i/teamlogos/nba/500/det.png",
+        "golden-state-warriors": "https://a.espncdn.com/i/teamlogos/nba/500/gs.png",
+        "houston-rockets": "https://a.espncdn.com/i/teamlogos/nba/500/hou.png",
+        "indiana-pacers": "https://a.espncdn.com/i/teamlogos/nba/500/ind.png",
+        "la-clippers": "https://a.espncdn.com/i/teamlogos/nba/500/lac.png",
+        "los-angeles-lakers": "https://a.espncdn.com/i/teamlogos/nba/500/lal.png",
+        "memphis-grizzlies": "https://a.espncdn.com/i/teamlogos/nba/500/mem.png",
+        "miami-heat": "https://a.espncdn.com/i/teamlogos/nba/500/mia.png",
+        "milwaukee-bucks": "https://a.espncdn.com/i/teamlogos/nba/500/mil.png",
+        "minnesota-timberwolves": "https://a.espncdn.com/i/teamlogos/nba/500/min.png",
+        "new-orleans-pelicans": "https://a.espncdn.com/i/teamlogos/nba/500/no.png",
+        "new-york-knicks": "https://a.espncdn.com/i/teamlogos/nba/500/ny.png",
+        "oklahoma-city-thunder": "https://a.espncdn.com/i/teamlogos/nba/500/okc.png",
+        "orlando-magic": "https://a.espncdn.com/i/teamlogos/nba/500/orl.png",
+        "philadelphia-76ers": "https://a.espncdn.com/i/teamlogos/nba/500/phi.png",
+        "phoenix-suns": "https://a.espncdn.com/i/teamlogos/nba/500/phx.png",
+        "portland-trail-blazers": "https://a.espncdn.com/i/teamlogos/nba/500/por.png",
+        "sacramento-kings": "https://a.espncdn.com/i/teamlogos/nba/500/sac.png",
+        "san-antonio-spurs": "https://a.espncdn.com/i/teamlogos/nba/500/sa.png",
+        "toronto-raptors": "https://a.espncdn.com/i/teamlogos/nba/500/tor.png",
+        "utah-jazz": "https://a.espncdn.com/i/teamlogos/nba/500/utah.png",
+        "washington-wizards": "https://a.espncdn.com/i/teamlogos/nba/500/wsh.png",
+        # Also add lowercase slug versions
+        "hawks": "https://a.espncdn.com/i/teamlogos/nba/500/atl.png",
+        "celtics": "https://a.espncdn.com/i/teamlogos/nba/500/bos.png",
+        "nets": "https://a.espncdn.com/i/teamlogos/nba/500/bkn.png",
+        "hornets": "https://a.espncdn.com/i/teamlogos/nba/500/cha.png",
+        "bulls": "https://a.espncdn.com/i/teamlogos/nba/500/chi.png",
+        "cavaliers": "https://a.espncdn.com/i/teamlogos/nba/500/cle.png",
+        "mavericks": "https://a.espncdn.com/i/teamlogos/nba/500/dal.png",
+        "nuggets": "https://a.espncdn.com/i/teamlogos/nba/500/den.png",
+        "pistons": "https://a.espncdn.com/i/teamlogos/nba/500/det.png",
+        "warriors": "https://a.espncdn.com/i/teamlogos/nba/500/gs.png",
+        "rockets": "https://a.espncdn.com/i/teamlogos/nba/500/hou.png",
+        "pacers": "https://a.espncdn.com/i/teamlogos/nba/500/ind.png",
+        "clippers": "https://a.espncdn.com/i/teamlogos/nba/500/lac.png",
+        "lakers": "https://a.espncdn.com/i/teamlogos/nba/500/lal.png",
+        "grizzlies": "https://a.espncdn.com/i/teamlogos/nba/500/mem.png",
+        "heat": "https://a.espncdn.com/i/teamlogos/nba/500/mia.png",
+        "bucks": "https://a.espncdn.com/i/teamlogos/nba/500/mil.png",
+        "timberwolves": "https://a.espncdn.com/i/teamlogos/nba/500/min.png",
+        "pelicans": "https://a.espncdn.com/i/teamlogos/nba/500/no.png",
+        "knicks": "https://a.espncdn.com/i/teamlogos/nba/500/ny.png",
+        "thunder": "https://a.espncdn.com/i/teamlogos/nba/500/okc.png",
+        "magic": "https://a.espncdn.com/i/teamlogos/nba/500/orl.png",
+        "76ers": "https://a.espncdn.com/i/teamlogos/nba/500/phi.png",
+        "suns": "https://a.espncdn.com/i/teamlogos/nba/500/phx.png",
+        "trail-blazers": "https://a.espncdn.com/i/teamlogos/nba/500/por.png",
+        "blazers": "https://a.espncdn.com/i/teamlogos/nba/500/por.png",
+        "kings": "https://a.espncdn.com/i/teamlogos/nba/500/sac.png",
+        "spurs": "https://a.espncdn.com/i/teamlogos/nba/500/sa.png",
+        "raptors": "https://a.espncdn.com/i/teamlogos/nba/500/tor.png",
+        "jazz": "https://a.espncdn.com/i/teamlogos/nba/500/utah.png",
+        "wizards": "https://a.espncdn.com/i/teamlogos/nba/500/wsh.png",
+    }
+    
+    return logo_map
+
+
+def get_standings(season: Optional[str] = None):
+    """Fetch NBA standings using LeagueStandingsV3.
+    
+    Args:
+        season: Optional season string (e.g., '2024' or '2024-25')
+    
+    Returns:
+        Dictionary containing standings data organized by conference and division
+    """
+    try:
+        season_fmt = _season_to_nba_format(season)
+        standings_data = leaguestandingsv3.LeagueStandingsV3(
+            league_id="00",
+            season=season_fmt if season_fmt else "2025-26",
+            season_type="Regular Season"
+        ).get_normalized_dict()
+        
+        standings = standings_data.get("Standings", [])
+        
+        # Fetch team logos from ESPN
+        logo_map = _get_nba_team_logos()
+        
+        # Organize by conference and division
+        eastern_conf = []
+        western_conf = []
+        
+        for team in standings:
+            team_abbreviation = team.get("TeamAbbreviation") or team.get("TeamSlug", "").upper()
+            team_slug = team.get("TeamSlug", "")
+            # Get logo from ESPN API - try multiple variations
+            team_logo = (logo_map.get(team_abbreviation) or 
+                        logo_map.get(team_abbreviation.lower()) or
+                        logo_map.get(team_slug) or 
+                        logo_map.get(team_slug.lower()) or
+                        logo_map.get(team_slug.upper()))
+            
+            if not team_logo:
+                print(f"No logo found for team: {team.get('TeamCity')} {team.get('TeamName')} (abbr: {team_abbreviation}, slug: {team_slug})")
+            
+            team_data = {
+                "team_id": team.get("TeamID"),
+                "team_name": team.get("TeamName"),
+                "team_city": team.get("TeamCity"),
+                "team_abbreviation": team_abbreviation,
+                "team_logo": team_logo,
+                "team_slug": team.get("TeamSlug"),
+                "conference": team.get("Conference"),
+                "division": team.get("Division"),
+                "wins": team.get("WINS"),
+                "losses": team.get("LOSSES"),
+                "win_pct": team.get("WinPCT"),
+                "conference_rank": team.get("ConferenceRecord"),
+                "division_rank": team.get("DivisionRank"),
+                "home_record": team.get("HOME"),
+                "road_record": team.get("ROAD"),
+                "last_10": team.get("L10"),
+                "streak": team.get("CurrentStreak"),
+                "games_back": team.get("ConferenceGamesBack")
+            }
+            
+            if team.get("Conference") == "East":
+                eastern_conf.append(team_data)
+            else:
+                western_conf.append(team_data)
+        
+        # Sort by wins descending
+        eastern_conf.sort(key=lambda x: (x["wins"], x["win_pct"]), reverse=True)
+        western_conf.sort(key=lambda x: (x["wins"], x["win_pct"]), reverse=True)
+        
+        return {
+            "league": "NBA",
+            "season": season_fmt if season_fmt else "2025-26",
+            "eastern_conference": eastern_conf,
+            "western_conference": western_conf
+        }
+    except Exception as e:
+        return {
+            "error": str(e),
+            "league": "NBA",
+            "eastern_conference": [],
+            "western_conference": []
+        }

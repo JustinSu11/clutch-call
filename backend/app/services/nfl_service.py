@@ -19,6 +19,7 @@ import traceback
 
 SCOREBOARD = "https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard"
 EVENT = "https://site.api.espn.com/apis/site/v2/sports/football/nfl/summary"
+STANDINGS = "https://site.api.espn.com/apis/v2/sports/football/nfl/standings"
 
 MODEL_PATH = os.path.join(os.path.dirname(__file__), '../../models/saved_models/nfl_model.pkl')
 try:
@@ -397,4 +398,148 @@ def get_historical_games(start_date=None, end_date=None, season=None, team_id=No
             return result
         return data
     except Exception as e:
-        return {"error": str(e), "events": []}
+        return {"error": str(e), "events": [], "meta": {"page": page, "per_page": per_page, "total": 0}}
+
+
+def get_standings(season: Optional[str] = None):
+    """Fetch NFL standings from ESPN API.
+    
+    Args:
+        season: Optional season year (e.g., '2024')
+    
+    Returns:
+        Dictionary containing standings data organized by conference and division
+    """
+    try:
+        params = {}
+        if season:
+            params["season"] = season
+            
+        data = _get(STANDINGS, params)
+        
+        # ESPN API returns data with children array directly at top level
+        afc_standings = []
+        nfc_standings = []
+        
+        # Get the children array (conferences)
+        conferences = data.get("children", [])
+        
+        if not conferences:
+            return {
+                "error": "No children data in API response",
+                "league": "NFL",
+                "afc_standings": [],
+                "nfc_standings": []
+            }
+        
+        # Process each conference
+        for conference in conferences:
+            conference_name = conference.get("name", "")
+            conference_abbr = conference.get("abbreviation", "")
+            
+            # Check if this conference has divisions as children
+            divisions = conference.get("children", [])
+            
+            if divisions:
+                # Process divisions within conference
+                for division in divisions:
+                    division_name = division.get("name", "")
+                    standings_entries = division.get("standings", {}).get("entries", [])
+                    
+                    for entry in standings_entries:
+                        team = entry.get("team", {})
+                        stats = entry.get("stats", [])
+                        
+                        # Parse stats array into a dictionary
+                        stats_dict = {}
+                        for stat in stats:
+                            stat_name = stat.get("name", "").lower().replace(" ", "_")
+                            stat_value = stat.get("value", 0)
+                            stats_dict[stat_name] = stat_value
+                        
+                        team_data = {
+                            "team_id": team.get("id"),
+                            "team_name": team.get("displayName"),
+                            "team_abbreviation": team.get("abbreviation"),
+                            "team_logo": team.get("logo"),
+                            "conference": conference_name,
+                            "conference_abbr": conference_abbr,
+                            "division": division_name,
+                            "wins": stats_dict.get("wins", 0),
+                            "losses": stats_dict.get("losses", 0),
+                            "ties": stats_dict.get("ties", 0),
+                            "win_pct": stats_dict.get("win_percentage", 0.0),
+                            "points_for": stats_dict.get("points_for", 0),
+                            "points_against": stats_dict.get("points_against", 0),
+                            "point_differential": stats_dict.get("point_differential", 0),
+                            "home_record": stats_dict.get("home_record", ""),
+                            "road_record": stats_dict.get("road_record", ""),
+                            "division_record": stats_dict.get("division_record", ""),
+                            "conference_record": stats_dict.get("conference_record", ""),
+                            "streak": stats_dict.get("streak", ""),
+                            "last_5": stats_dict.get("last_5", "")
+                        }
+                        
+                        if conference_abbr == "AFC":
+                            afc_standings.append(team_data)
+                        else:
+                            nfc_standings.append(team_data)
+            else:
+                # If no divisions, process teams directly in conference
+                standings_entries = conference.get("standings", {}).get("entries", [])
+                
+                for entry in standings_entries:
+                    team = entry.get("team", {})
+                    stats = entry.get("stats", [])
+                    
+                    stats_dict = {}
+                    for stat in stats:
+                        stat_name = stat.get("name", "").lower().replace(" ", "_")
+                        stat_value = stat.get("value", 0)
+                        stats_dict[stat_name] = stat_value
+                    
+                    team_data = {
+                        "team_id": team.get("id"),
+                        "team_name": team.get("displayName"),
+                        "team_abbreviation": team.get("abbreviation"),
+                        "team_logo": team.get("logo"),
+                        "conference": conference_name,
+                        "conference_abbr": conference_abbr,
+                        "division": None,
+                        "wins": stats_dict.get("wins", 0),
+                        "losses": stats_dict.get("losses", 0),
+                        "ties": stats_dict.get("ties", 0),
+                        "win_pct": stats_dict.get("win_percentage", 0.0),
+                        "points_for": stats_dict.get("points_for", 0),
+                        "points_against": stats_dict.get("points_against", 0),
+                        "point_differential": stats_dict.get("point_differential", 0),
+                        "home_record": stats_dict.get("home_record", ""),
+                        "road_record": stats_dict.get("road_record", ""),
+                        "division_record": stats_dict.get("division_record", ""),
+                        "conference_record": stats_dict.get("conference_record", ""),
+                        "streak": stats_dict.get("streak", ""),
+                        "last_5": stats_dict.get("last_5", "")
+                    }
+                    
+                    if conference_abbr == "AFC":
+                        afc_standings.append(team_data)
+                    else:
+                        nfc_standings.append(team_data)
+        
+        # Sort by wins descending, then win percentage
+        afc_standings.sort(key=lambda x: (x["wins"], x["win_pct"]), reverse=True)
+        nfc_standings.sort(key=lambda x: (x["wins"], x["win_pct"]), reverse=True)
+        
+        return {
+            "league": "NFL",
+            "season": season or "2024",
+            "afc_standings": afc_standings,
+            "nfc_standings": nfc_standings
+        }
+    except Exception as e:
+        return {
+            "error": str(e),
+            "league": "NFL",
+            "afc_standings": [],
+            "nfc_standings": []
+        }

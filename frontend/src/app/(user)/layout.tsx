@@ -11,7 +11,7 @@
 
 import { cookies } from 'next/headers'
 import type { Metadata } from 'next'
-import Sidebar from '@/components/DashboardComponents/Sidebar'
+import Sidebar from '@/components/DashboardComponents/MainDashboardComponents/Sidebar'
 
 export const metadata: Metadata = {
   title: 'ClutchCall - Dashboard',

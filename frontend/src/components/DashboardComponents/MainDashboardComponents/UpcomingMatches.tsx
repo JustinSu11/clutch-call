@@ -11,7 +11,6 @@
 */
 
 export default function UpcomingMatches() {
-
     return (
         <div>
             {/* Upcoming Matches Section */}

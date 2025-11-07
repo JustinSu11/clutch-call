@@ -12,7 +12,7 @@ from ..services.nba_service import (
     get_team_last_games,
     get_upcoming_games,
     get_today_games,
-    generate_prediction_for_game,  # <--- 1. Prediction function
+    get_standings,
 )
 
 # Blueprint for NBA-related routes; mounted by the app factory at /api/v1/nba
@@ -69,3 +69,14 @@ def nba_upcoming():
 def nba_today():
     """List NBA games for today."""
     return get_today_games()
+
+
+@bp.get("/standings")
+def nba_standings():
+    """Get NBA standings.
+    
+    Query params:
+        season (str): Optional season year (e.g., 2024)
+    """
+    season = request.args.get("season")
+    return get_standings(season=season)
