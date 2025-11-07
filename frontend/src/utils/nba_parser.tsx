@@ -60,6 +60,9 @@ export const parseUpcomingNBAGames = async () => {
         const homeTeam = event['competitions'][0]['competitors'][0]['team']['displayName'];
         const awayTeam = event['competitions'][0]['competitors'][1]['team']['displayName'];
         const gameDate = event['date'].split('T')[0]; // extract date only, ignore time
+        
+        // extract game ID
+        const gameId = event['id'];
 
         // the official game name for reference
         const officialGameName = event['name'];
@@ -83,7 +86,7 @@ export const parseUpcomingNBAGames = async () => {
         const formattedGameDate = `${month}-${day}-${year}`;
 
         // return { homeTeam, awayTeam, gameDate: formattedGameDate };
-        return { homeTeam, awayTeam, gameDate: formattedGameDate, date, league };
+        return { homeTeam, awayTeam, gameDate: formattedGameDate, dateAndTime: date, league, gameId };
     });
 
     return games;
