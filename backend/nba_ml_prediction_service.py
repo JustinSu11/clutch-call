@@ -33,9 +33,10 @@ class NBAMLPredictor:
     def __init__(self, data_dir: str = "nba_ml_data"):
         self.data_dir = data_dir
         self.models_dir = os.path.join(data_dir, 'models')
-        
+
         # Models
         self.game_model = None
+        self.feature_directions: Dict[str, float] = {}
         
         # Preprocessors
         self.preprocessor = NBADataPreprocessor(data_dir)
@@ -104,10 +105,8 @@ class NBAMLPredictor:
             games_file = os.path.join(processed_dir, 'all_games.csv')
             if os.path.exists(games_file):
                 recent_games = pd.read_csv(games_file)
-                # Get recent games (last 30 days)
+                # Use historical games to build form metrics; filter handled later per matchup
                 recent_games['GAME_DATE'] = pd.to_datetime(recent_games['GAME_DATE'])
-                cutoff_date = datetime.now() - timedelta(days=30)
-                recent_games = recent_games[recent_games['GAME_DATE'] >= cutoff_date]
             else:
                 logger.warning("No recent games found")
                 recent_games = pd.DataFrame()
@@ -120,21 +119,45 @@ class NBAMLPredictor:
                 available_team_ids = current_team_stats['TEAM_ID'].unique()
                 logger.info(f"Available team IDs in stats: {available_team_ids[:10]}... (total: {len(available_team_ids)})")
             
+            # Ensure game dates are datetime for downstream calculations
+            game_date_col = None
+            if 'game_date' in upcoming_games.columns:
+                game_date_col = 'game_date'
+                upcoming_games[game_date_col] = pd.to_datetime(upcoming_games[game_date_col])
+            elif 'GAME_DATE' in upcoming_games.columns:
+                game_date_col = 'GAME_DATE'
+                upcoming_games[game_date_col] = pd.to_datetime(upcoming_games[game_date_col])
+
             for _, game in upcoming_games.iterrows():
                 home_team_id = game.get('home_team_id')
                 away_team_id = game.get('away_team_id')
+                raw_game_date = game.get(game_date_col) if game_date_col else None
                 
                 logger.info(f"Processing game: home_team_id={home_team_id}, away_team_id={away_team_id}")
                 
                 # Get features for HOME team only (matches training format)
                 # During training, the model learns: given a team's stats and IS_HOME flag, predict if they win
                 # So we predict from the home team's perspective with IS_HOME=1
-                home_stats = self.get_team_features(home_team_id, current_team_stats, recent_games, is_home=True)
+                home_stats = self.get_team_features(
+                    team_id=home_team_id,
+                    team_stats=current_team_stats,
+                    recent_games=recent_games,
+                    game_date=raw_game_date,
+                    is_home=True
+                )
                 
+                # Convert game date to ISO string for downstream serialization
+                if isinstance(raw_game_date, (pd.Timestamp, datetime)):
+                    display_game_date = raw_game_date.isoformat()
+                elif raw_game_date is not None:
+                    display_game_date = str(raw_game_date)
+                else:
+                    display_game_date = ''
+
                 # Create feature row for home team (matching training format exactly)
                 game_feature = {
                     'game_id': game.get('game_id', 'unknown'),
-                    'game_date': game.get('game_date', ''),
+                    'game_date': display_game_date,
                     'home_team_id': home_team_id,
                     'away_team_id': away_team_id,
                     **home_stats  # Only home team features, IS_HOME=1
@@ -148,8 +171,9 @@ class NBAMLPredictor:
             logger.error(f"Error preparing game features: {e}")
             return pd.DataFrame()
     
-    def get_team_features(self, team_id: int, team_stats: pd.DataFrame, 
-                         recent_games: pd.DataFrame, is_home: bool = True) -> Dict:
+    def get_team_features(self, team_id: int, team_stats: pd.DataFrame,
+                         recent_games: pd.DataFrame, game_date: Optional[Any] = None,
+                         is_home: bool = True) -> Dict:
         """Get features for a specific team - MUST match training feature set exactly"""
         
         # Essential game features - MUST match training exactly (23 features)
@@ -185,7 +209,7 @@ class NBAMLPredictor:
         features['WIN_PCT_LAST_10'] = 0.5
         features['WIN_STREAK'] = 0
         
-        # Update with actual data if available
+        # Update with actual season data if available
         if not team_stats.empty and team_id is not None:
             team_data = team_stats[team_stats['TEAM_ID'] == team_id]
             if not team_data.empty:
@@ -212,13 +236,51 @@ class NBAMLPredictor:
         
         # Get recent form if available
         if not recent_games.empty and team_id is not None:
-            team_recent = recent_games[recent_games['TEAM_ID'] == team_id].sort_values('GAME_DATE').tail(10)
+            if isinstance(game_date, pd.Timestamp):
+                cutoff_date = game_date
+            elif isinstance(game_date, str) and game_date:
+                cutoff_date = pd.to_datetime(game_date)
+            else:
+                cutoff_date = datetime.now()
+
+            team_recent = (
+                recent_games[recent_games['TEAM_ID'] == team_id]
+                .sort_values('GAME_DATE')
+            )
+
+            # Only use games that occurred before the matchup we are predicting
+            team_recent = team_recent[team_recent['GAME_DATE'] < cutoff_date]
+
             if not team_recent.empty:
-                wins = sum(1 for w in team_recent['WL'].tail(5) if w == 'W')
-                features['WIN_PCT_LAST_5'] = wins / 5
-                
-                wins_10 = sum(1 for w in team_recent['WL'] if w == 'W')
-                features['WIN_PCT_LAST_10'] = wins_10 / len(team_recent)
+                recent_wins_flag = team_recent['WL'].apply(lambda x: 1 if x == 'W' else 0)
+
+                last_5 = recent_wins_flag.tail(5)
+                last_10 = recent_wins_flag.tail(10)
+
+                if not last_5.empty:
+                    features['WIN_PCT_LAST_5'] = last_5.mean()
+                if not last_10.empty:
+                    features['WIN_PCT_LAST_10'] = last_10.mean()
+
+                # Days of rest based on last played game
+                last_game_date = team_recent['GAME_DATE'].iloc[-1]
+                features['DAYS_REST'] = max((cutoff_date - last_game_date).days, 1)
+
+                # Win streak heading into the matchup
+                features['WIN_STREAK'] = self._calculate_current_streak(recent_wins_flag)
+
+                # Rolling feature blocks aligned with training definitions
+                for window in [5, 10, 15]:
+                    window_games = team_recent.tail(window)
+                    if window_games.empty:
+                        continue
+
+                    if 'PTS' in window_games.columns:
+                        features[f'TEAM_PTS_ROLL_{window}'] = window_games['PTS'].mean()
+                    if 'WL' in window_games.columns:
+                        features[f'TEAM_WIN_ROLL_{window}'] = window_games['WL'].apply(lambda x: 1 if x == 'W' else 0).mean()
+                    if 'FG_PCT' in window_games.columns:
+                        features[f'TEAM_FG_PCT_ROLL_{window}'] = window_games['FG_PCT'].mean()
         
         # Add rolling features - EXACTLY match training
         for window in [5, 10, 15]:
@@ -231,37 +293,60 @@ class NBAMLPredictor:
                     features[f'{base_feature}_ROLL_{window}'] = features.get('TEAM_FG_PCT', 0.45)
         
         return features
+
+    def _calculate_current_streak(self, recent_results: pd.Series) -> int:
+        """Calculate win/loss streak entering the next game."""
+        streak = 0
+        for result in recent_results:
+            if result:
+                streak = streak + 1 if streak >= 0 else 1
+            else:
+                streak = streak - 1 if streak <= 0 else -1
+        return streak
     
     def get_feature_importance(self) -> Dict[str, float]:
         """Get feature importance from the game outcome model"""
         if self.game_model is None:
             return {}
-        
-        # Check if model has feature_importances_ attribute (tree-based models)
+
+        base_feature_columns = [
+            'IS_HOME', 'TEAM_PPG', 'TEAM_FG_PCT', 'TEAM_FG3_PCT', 'TEAM_FT_PCT',
+            'TEAM_REB_PG', 'TEAM_AST_PG', 'TEAM_TOV_PG', 'TEAM_STL_PG', 'TEAM_BLK_PG',
+            'DAYS_REST', 'WIN_PCT_LAST_5', 'WIN_PCT_LAST_10', 'WIN_STREAK'
+        ]
+
+        rolling_feature_columns = []
+        for window in [5, 10, 15]:
+            for base_feature in ['TEAM_PTS', 'TEAM_WIN', 'TEAM_FG_PCT']:
+                rolling_feature_columns.append(f'{base_feature}_ROLL_{window}')
+
+        feature_columns = base_feature_columns + rolling_feature_columns
+        feature_importance: Dict[str, float] = {}
+        self.feature_directions = {}
+
+        # Tree-based models expose feature_importances_
         if hasattr(self.game_model, 'feature_importances_'):
-            base_feature_columns = [
-                'IS_HOME', 'TEAM_PPG', 'TEAM_FG_PCT', 'TEAM_FG3_PCT', 'TEAM_FT_PCT',
-                'TEAM_REB_PG', 'TEAM_AST_PG', 'TEAM_TOV_PG', 'TEAM_STL_PG', 'TEAM_BLK_PG',
-                'DAYS_REST', 'WIN_PCT_LAST_5', 'WIN_PCT_LAST_10', 'WIN_STREAK'
-            ]
-            
-            rolling_feature_columns = []
-            for window in [5, 10, 15]:
-                for base_feature in ['TEAM_PTS', 'TEAM_WIN', 'TEAM_FG_PCT']:
-                    rolling_feature_columns.append(f'{base_feature}_ROLL_{window}')
-            
-            feature_columns = base_feature_columns + rolling_feature_columns
             importances = self.game_model.feature_importances_
-            
-            # Create feature importance dictionary
-            feature_importance = {}
             for i, feature in enumerate(feature_columns):
                 if i < len(importances):
                     feature_importance[feature] = float(importances[i])
-            
-            return feature_importance
-        
-        return {}
+                    self.feature_directions[feature] = 1.0  # direction unavailable for trees
+
+        # Linear models (e.g., logistic regression) expose coef_
+        elif hasattr(self.game_model, 'coef_'):
+            coefficients = getattr(self.game_model, 'coef_')
+            if coefficients is not None:
+                coeffs = coefficients[0] if len(coefficients.shape) > 1 else coefficients
+                abs_coeffs = np.abs(coeffs)
+                total = abs_coeffs.sum()
+
+                for i, feature in enumerate(feature_columns):
+                    if i < len(abs_coeffs):
+                        importance_value = abs_coeffs[i] if total == 0 else abs_coeffs[i] / total
+                        feature_importance[feature] = float(importance_value)
+                        self.feature_directions[feature] = float(np.sign(coeffs[i])) if coeffs[i] != 0 else 0.0
+
+        return feature_importance
     
     def get_top_decision_factors(self, feature_values: Dict, top_n: int = 5) -> List[Dict]:
         """Get top factors influencing a prediction based on feature importance and values"""
@@ -277,33 +362,15 @@ class NBAMLPredictor:
         for feature, importance in feature_importance.items():
             if feature in feature_values:
                 value = feature_values[feature]
-                
-                # Calculate impact score based on how much the feature deviates from neutral/average
-                if 'PCT' in feature or 'WIN_PCT' in feature:
-                    # For percentages, deviation from 0.5 (50%)
-                    impact = abs(value - 0.5) * 2  # Scale to 0-1
-                elif 'PPG' in feature or 'PTS' in feature:
-                    # For points, deviation from league average (~108)
-                    impact = abs(value - 108) / 20  # Scale by typical deviation
-                    impact = min(impact, 1.0)
-                elif 'REB' in feature:
-                    # Rebounds deviation from average (~45)
-                    impact = abs(value - 45) / 10
-                    impact = min(impact, 1.0)
-                elif 'AST' in feature:
-                    # Assists deviation from average (~25)
-                    impact = abs(value - 25) / 8
-                    impact = min(impact, 1.0)
-                elif 'IS_HOME' in feature:
-                    # Home court advantage - binary but important
-                    impact = 1.0 if value == 1 else 0.5
-                elif 'STREAK' in feature:
-                    # Win streak impact
-                    impact = min(abs(value) / 5, 1.0)
-                else:
-                    # Default: normalize by typical range
-                    impact = min(abs(value) / 10, 1.0)
-                
+                baseline, scale = self._get_feature_baseline(feature)
+                delta = value - baseline
+                normalized_delta = 0.0 if scale == 0 else delta / scale
+                impact = min(abs(normalized_delta), 1.0)
+
+                direction_multiplier = np.sign(delta) if delta != 0 else 0.0
+                model_direction = self.feature_directions.get(feature, 1.0)
+                combined_direction = direction_multiplier * model_direction
+
                 # Weight importance by impact
                 weighted_importance = importance * (1 + impact)
                 total_weighted_importance += weighted_importance
@@ -314,7 +381,9 @@ class NBAMLPredictor:
                     'importance': importance,
                     'value': value,
                     'impact': impact,
-                    'weighted_importance': weighted_importance
+                    'weighted_importance': weighted_importance,
+                    'direction': combined_direction,
+                    'delta': delta
                 })
         
         # Normalize contributions to sum to 100%
@@ -330,12 +399,44 @@ class NBAMLPredictor:
         return [
             {
                 'factor': c['factor'],
-                'importance': round(c['importance'], 4),
-                'value': round(c['value'], 2),
-                'contribution': round(c['contribution'], 4)
+                'importance': float(round(c['importance'], 4)),
+                'value': float(round(c['value'], 2)),
+                'contribution': float(round(c['contribution'], 4)),
+                'impact': float(round(c['impact'], 4)),
+                'effect': 'increases win probability' if c['direction'] > 0 else (
+                    'decreases win probability' if c['direction'] < 0 else 'neutral'),
+                'delta': float(round(c['delta'], 2))
             }
             for c in contributions[:top_n]
         ]
+
+    def _get_feature_baseline(self, feature: str) -> Tuple[float, float]:
+        """Return (baseline, scale) pairs used to contextualize feature deviations."""
+        if feature == 'IS_HOME':
+            return 0.5, 0.5
+        if feature in {'TEAM_PPG', 'TEAM_PTS_ROLL_5', 'TEAM_PTS_ROLL_10', 'TEAM_PTS_ROLL_15'}:
+            return 110.0, 20.0
+        if feature in {'TEAM_FG_PCT', 'TEAM_FG3_PCT', 'TEAM_FG_PCT_ROLL_5', 'TEAM_FG_PCT_ROLL_10', 'TEAM_FG_PCT_ROLL_15'}:
+            return 0.45, 0.08
+        if feature in {'TEAM_FT_PCT'}:
+            return 0.78, 0.1
+        if feature in {'TEAM_REB_PG'}:
+            return 45.0, 8.0
+        if feature in {'TEAM_AST_PG'}:
+            return 25.0, 6.0
+        if feature in {'TEAM_TOV_PG'}:
+            return 14.0, 5.0
+        if feature in {'TEAM_STL_PG'}:
+            return 8.0, 3.0
+        if feature in {'TEAM_BLK_PG'}:
+            return 5.0, 3.0
+        if feature in {'DAYS_REST'}:
+            return 2.0, 3.0
+        if feature in {'WIN_PCT_LAST_5', 'WIN_PCT_LAST_10', 'TEAM_WIN_ROLL_5', 'TEAM_WIN_ROLL_10', 'TEAM_WIN_ROLL_15'}:
+            return 0.5, 0.5
+        if feature == 'WIN_STREAK':
+            return 0.0, 5.0
+        return 0.0, 10.0
     
     def _format_feature_name(self, feature: str) -> str:
         """Convert feature name to human-readable format"""

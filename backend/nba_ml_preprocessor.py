@@ -201,10 +201,15 @@ class NBADataPreprocessor:
         for window in window_sizes:
             for feature in rolling_features:
                 if feature in rolling_df.columns:
+                    # Shift by one game so rolling stats only use past performance
                     rolling_df[f'{feature}_ROLL_{window}'] = (
                         rolling_df.groupby('TEAM_ID')[feature]
-                        .transform(lambda x: x.rolling(window, min_periods=1).mean())
+                        .transform(lambda x: x.shift(1).rolling(window, min_periods=1).mean())
                     )
+
+                    # If insufficient history, fall back to season average for stability
+                    fallback = rolling_df[feature]
+                    rolling_df[f'{feature}_ROLL_{window}'] = rolling_df[f'{feature}_ROLL_{window}'].fillna(fallback)
         
         return rolling_df
     
@@ -219,7 +224,7 @@ class NBADataPreprocessor:
         for window in [5, 10]:
             form_df[f'WINS_LAST_{window}'] = (
                 form_df.groupby('TEAM_ID')['TEAM_WIN']
-                .transform(lambda x: x.rolling(window, min_periods=1).sum())
+                .transform(lambda x: x.shift(1).rolling(window, min_periods=1).sum())
             )
             form_df[f'WIN_PCT_LAST_{window}'] = form_df[f'WINS_LAST_{window}'] / window
         
@@ -233,29 +238,27 @@ class NBADataPreprocessor:
     
     def calculate_win_streaks(self, df: pd.DataFrame) -> pd.Series:
         """Calculate current win/loss streaks"""
-        streaks = []
-        
-        for team_id in df['TEAM_ID'].unique():
-            team_df = df[df['TEAM_ID'] == team_id].sort_values('GAME_DATE')
+        streaks = pd.Series(index=df.index, dtype=float)
+
+        for team_id, team_df in df.groupby('TEAM_ID'):
+            team_df = team_df.sort_values('GAME_DATE')
             team_streaks = []
-            
+
             current_streak = 0
-            last_result = None
-            
+
             for _, row in team_df.iterrows():
-                if last_result is None:
-                    current_streak = 1 if row['TEAM_WIN'] else -1
-                elif (row['TEAM_WIN'] and last_result > 0) or (not row['TEAM_WIN'] and last_result < 0):
-                    current_streak += 1 if row['TEAM_WIN'] else -1
-                else:
-                    current_streak = 1 if row['TEAM_WIN'] else -1
-                
+                # Record streak heading into the current game (pre-game streak)
                 team_streaks.append(current_streak)
-                last_result = current_streak
-            
-            streaks.extend(team_streaks)
-        
-        return pd.Series(streaks, index=df.index)
+
+                if bool(row['TEAM_WIN']):
+                    current_streak = current_streak + 1 if current_streak >= 0 else 1
+                else:
+                    current_streak = current_streak - 1 if current_streak <= 0 else -1
+
+            streaks.loc[team_df.index] = team_streaks
+
+        # Replace any remaining NaNs with 0 (no streak information yet)
+        return streaks.fillna(0)
     
     def prepare_game_outcome_features(self, processed_df: pd.DataFrame) -> Tuple[pd.DataFrame, pd.Series]:
         """Prepare features for game outcome prediction"""
