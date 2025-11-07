@@ -10,6 +10,10 @@ Purpose: Thin service layer for NBA data using the python package `nba_api` (whi
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
 import requests
+import requests
+import os          
+import joblib       
+import pandas as pd
 
 from nba_api.stats.endpoints import (
     boxscoretraditionalv2,

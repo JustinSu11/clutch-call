@@ -15,8 +15,7 @@ Environment variables:
 import os
 from flask import Flask, make_response # Import make_response
 from flask_cors import CORS
-
-from app.routes import nfl, health, soccer, historical 
+from app.routes import nfl, health, soccer, historical, nba
 
 def create_app():
     app = Flask(__name__)
@@ -50,7 +49,8 @@ def create_app():
     app.register_blueprint(nfl.bp, url_prefix=f"{api_prefix}/nfl")
     app.register_blueprint(health.bp, url_prefix=f"{api_prefix}/health")
     app.register_blueprint(soccer.bp, url_prefix=f"{api_prefix}/soccer")
-    app.register_blueprint(historical.bp, url_prefix=f"{api_prefix}/historical") 
+    app.register_blueprint(historical.bp, url_prefix=f"{api_prefix}/historical")
+    app.register_blueprint(nba.bp, url_prefix=f"{api_prefix}/nba") 
 
     @app.get("/")
     def index():
