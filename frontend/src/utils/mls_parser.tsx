@@ -12,8 +12,8 @@
     without the extra validation step.
 */
 import * as mls_methods from '../backend_methods/soccer_methods';
-// import formatDate from './date-formatter-for-matches';
-import { UpcomingGame } from './data_class';
+import formatDate from './date-formatter-for-matches';
+import { UpcomingGame, Team } from './data_class';
 import * as sports_stats_methods from '../backend_methods/sports_stats_methods';
 import * as standings_methods from '../backend_methods/standings_methods';
 
@@ -55,15 +55,25 @@ export const parseUpcomingMLSGames = async () => {
     const games: UpcomingGame[] = events.map((event: any)  => {
 
         // extract home and away team names
-        const homeTeam = event['competitions'][0]['competitors'][0]['team']['displayName'];
-        const awayTeam = event['competitions'][0]['competitors'][1]['team']['displayName'];
+        const homeTeam:Team = {
+            abbreviation: event['competitions'][0]['competitors'][0]['team']['abbreviation'],
+            color: event['competitions'][0]['competitors'][0]['team']['color'],
+            alternateColor: event['competitions'][0]['competitors'][0]['team']['alternateColor'],
+            displayName: event['competitions'][0]['competitors'][0]['team']['displayName'],
+        };
+        const awayTeam:Team = {
+            abbreviation: event['competitions'][0]['competitors'][1]['team']['abbreviation'],
+            color: event['competitions'][0]['competitors'][1]['team']['color'],
+            alternateColor: event['competitions'][0]['competitors'][1]['team']['alternateColor'],
+            displayName: event['competitions'][0]['competitors'][1]['team']['displayName'],
+        }
         const gameDate = event['date'].split('T')[0]; // extract date only, ignore time
 
         // the official game name for reference
         const officialGameName = event['name'];
 
         // extract date of match
-        const date = event['competitions']['date']
+        const dateAndTime = event['date']
 
         //categorize into a league
         const league = "MLS"
@@ -80,7 +90,7 @@ export const parseUpcomingMLSGames = async () => {
         const formattedGameDate = `${month}-${day}-${year}`;
 
         // return { homeTeam, awayTeam, gameDate: formattedGameDate };
-        return { homeTeam, awayTeam, gameDate: formattedGameDate, league };
+        return { homeTeam, awayTeam, gameDate: formattedGameDate, dateAndTime: dateAndTime, league: league };
     });
 
     return games;
@@ -112,6 +122,8 @@ export const parseMLSTeamStats = async (teamName: string) => {
 
     // await the response from the backend method
     const responseData = await standings_methods.getSoccerStandings("2025");
+
+    console.log(responseData);
 
     // parse major header
     const standings = responseData["standings"];

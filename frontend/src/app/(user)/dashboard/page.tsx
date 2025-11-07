@@ -11,15 +11,35 @@
     they will be directed to a different page file, but the layout.tsx file will remain the same.
     The new page is physically located under /dashboard/predictions/page.tsx
 */
-import UpcomingMatches from "@/components/DashboardComponents/MainDashboardComponents/UpcomingMatches";
-import RecentPredictions from "@/components/DashboardComponents/MainDashboardComponents/RecentPredictions";
+'use client'
+import UpcomingMatches from "@/components/DashboardComponents/UpcomingMatches";
+import RecentPredictions from "@/components/DashboardComponents/RecentPredictions";
+import { useState } from 'react'
+import SportsFilterDropdown from "@/components/DashboardComponents/SportsFilterDropdown"
+
 
 
 export default function DashboardMain() {
-  return (
-    <>
-      <UpcomingMatches />
-      <RecentPredictions />
-    </>
-  );
+    const [selectedLeagues, setSelectedLeagues] = useState<string[]>([])
+
+    function handleLeagueSelection(key: string) {
+        setSelectedLeagues((prev: string[]) =>
+            prev.includes(key) 
+                ? prev.filter((league) => league !== key) // remove league from selectedleagues array
+                : [...prev, key] // add league to selectedLeagues array
+        )
+    }
+
+    return (
+        <>
+            <div className="mb-8">
+                    <div className="flex text-3xl font-bold text-text-primary mb-4 items-center gap-7">
+                        Dashboard
+                        <SportsFilterDropdown handleLeagueSelection={handleLeagueSelection} selectedLeagues={selectedLeagues} />
+                    </div>
+            </div>
+            <UpcomingMatches selectedLeagues={selectedLeagues} />
+            <RecentPredictions />
+        </>
+    );
 }
