@@ -182,23 +182,10 @@ export const parseNFLTeamStats = async (teamName: string) => {
     return { wins, losses, ties, totalGames};
 };
 
-<<<<<<< HEAD
 export const parseNFLPreviousGameStats = async (teamName: string) => {
     /*
         parseNFLPreviousGameStats:
         This method gets a team's score from their previous games this season
-=======
-export const parseNFLTeamLogo = async (teamName: string) => {
-    /*
-        parseNFLTeamLogo:
-        This method gets a team's logo and returns the url
-
-        params:
-            teamName: String - the name of the team to get the logo for.
-
-        returns:
-            logoUrl: String - the url of the team's logo
->>>>>>> e61d0a3ad994c2da72dd576eb411a6492fdfa85d
     */
 
     // makes the local date in YYYY-MM-DD using the local timezone
