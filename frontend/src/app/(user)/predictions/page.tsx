@@ -1,20 +1,21 @@
 /*
     File: frontend/src/app/predictions/page.tsx
     Created: 09/29/2025 by Michael Tajchman
-    Last Updated: 10/09/2025 by CJ Quintero
+    Last Updated: 10/28/2025 by CJ Quintero
 
     Description: This file contains the main React component for the Predictions screen of the ClutchCall web application.
     It includes a header with navigation, a filterable list of sports, and a table displaying AI-powered match predictions.
 */
 "use client";
 import React, { useState, useEffect } from 'react';
-import { parseUpcomingNFLGames, parseTodayNFLGames, parseNFLGamesFromEvents, parseNFLTeamStats } from '@/utils/nfl_parser';
+import { parseUpcomingNFLGames, parseNFLTeamStats, parseNFLTeamLogo, parseTodayNFLGames, parseNFLGamesFromEvents } from '@/utils/nfl_parser';
 import { parseUpcomingNBAGames, parseNBATeamStats } from '@/utils/nba_parser';
 import { parseUpcomingMLSGames, parseMLSTeamStats } from '@/utils/mls_parser';
 import { UpcomingGame } from '@/utils/data_class';
 import { get } from 'http';
 import { urlToHttpOptions } from 'url';
 import MatchDialog, { TeamStats } from '@/components/DashboardComponents/Dialog';
+import formatDate from '@/utils/date-formatter-for-matches';
 
 // Import the method that calls your backend prediction API
 import { getNFLPrediction, getHistoricalNFLGames } from '@/backend_methods/nfl_methods';
@@ -364,9 +365,9 @@ const buildMLSPredictions = async (): Promise<Prediction[]> => {
 
     // map each game to a Prediction object
     return upcomingMLSGames.map((game) => ({
-        match: `${game.awayTeam} at ${game.homeTeam}`,
-        date: `${game.gameDate}`,
-        prediction: `${game.homeTeam} predicted to win`,
+        match: `${game.awayTeam.displayName} at ${game.homeTeam.displayName}`,
+        date: `${game.dateAndTime}`,
+        prediction: `${game.homeTeam.displayName} predicted to win`,
         confidence: 100,
         sport: 'MLS'
     }));
@@ -478,7 +479,7 @@ const PredictionRow: React.FC<{ item: Prediction; onClick?: () => void }> = ({ i
             <div className="text-md font-medium text-text-primary">{item.match}</div>
         </td>
         <td className="text-center px-6 py-4 whitespace-nowrap">
-            <div className="text-md font-medium text-text-primary">{item.date}</div>
+        <div className="text-md font-medium text-text-primary">{item.date ? formatDate(item.date) : 'N/A'}</div>
         </td>
         <td className="text-center px-6 py-4 whitespace-nowrap">
             <div className="text-md font-medium text-text-primary">{item.prediction}</div>
@@ -510,6 +511,8 @@ export default function PredictionsScreen() {
     const [selectedAway, setSelectedAway] = useState<string | undefined>(undefined);
     const [homeStats, setHomeStats] = useState<TeamStats | null>(null);
     const [awayStats, setAwayStats] = useState<TeamStats | null>(null);
+    const [homeLogo, setHomeLogo] = useState<string>('');
+    const [awayLogo, setAwayLogo] = useState<string>('');
 
     const openMatchDialog = async (homeTeam: string, awayTeam: string, sport: SportKey) => {
         setSelectedHome(homeTeam);
@@ -518,12 +521,20 @@ export default function PredictionsScreen() {
         setDialogLoading(true);
         setHomeStats(null);
         setAwayStats(null);
+        setHomeLogo('');
+        setAwayLogo('');
+
+        // fetch team stats based on sport
         try {
             let home = { wins: 0, losses: 0, ties: 0, totalGames: 0 };
             let away = { wins: 0, losses: 0, ties: 0, totalGames: 0 };
+            let homeLogo = '';
+            let awayLogo = '';
             if (sport === 'NFL') {
                 home = await getNFLTeamStats(homeTeam);
                 away = await getNFLTeamStats(awayTeam);
+                homeLogo = await parseNFLTeamLogo(homeTeam);
+                awayLogo = await parseNFLTeamLogo(awayTeam);
             }
             else if (sport === 'MLS') {
                 home = await getMLSTeamStats(homeTeam);
@@ -545,9 +556,15 @@ export default function PredictionsScreen() {
                 ties: away.ties,
                 totalGames: away.totalGames,
             });
+
+            // set logos if available
+            setHomeLogo(homeLogo ?? '');
+            setAwayLogo(awayLogo ?? '');
         } catch {
             setHomeStats(null);
             setAwayStats(null);
+            setHomeLogo('');
+            setAwayLogo('');
         } finally {
             setDialogLoading(false);
         }
@@ -598,7 +615,8 @@ export default function PredictionsScreen() {
                 </div>
                 <SportsFilter sports={sports} activeSport={activeSport} setActiveSport={setActiveSport} />
                 <div className="rounded-lg overflow-hidden">
-                    <div className="overflow-x-hidden">
+                    {/* Desktop table */}
+                    <div className="hidden sm:block overflow-x-auto">
                         <table className="min-w-full divide-y divide-secondary">
                             <thead className="bg-secondary-background rounded-xl shadow-sm">
                                 <tr>
@@ -642,17 +660,61 @@ export default function PredictionsScreen() {
                             </tbody>
                         </table>
                     </div>
+
+                    {/* Mobile cards */}
+                    <div className="sm:hidden space-y-4">
+                        {loading ? (
+                            <div className="text-center py-10 text-text-primary bg-secondary-background rounded-lg">
+                                Loading predictions...
+                            </div>
+                        ) : error ? (
+                            <div className="text-center py-10 text-text-primary bg-secondary-background rounded-lg">
+                                {error}
+                            </div>
+                        ) : filteredPredictions.length > 0 ? (
+                            filteredPredictions.map((item, idx) => {
+                                const [awayTeam, homeTeam] = item.match.split(' at ');
+                                return (
+                                    <div
+                                        key={idx}
+                                        className="bg-secondary-background p-4 rounded-lg cursor-pointer hover:bg-secondary"
+                                        onClick={() => openMatchDialog(homeTeam ?? '', awayTeam ?? '', item.sport)}
+                                    >
+                                        <div className="flex justify-between items-start mb-2">
+                                            <div className="font-medium text-text-primary">{item.match}</div>
+                                            <div className="text-sm text-text-secondary">{item.date ? formatDate(item.date) : 'N/A'}</div>
+                                        </div>
+                                        <div className="text-sm text-text-primary mb-3">{item.prediction}</div>
+                                        <div className="flex items-center">
+                                            <div className="flex-1 bg-gray-200 rounded-full h-2 mr-3">
+                                                <div
+                                                    className="h-2 rounded-full"
+                                                    style={{ ...getConfidenceStyle(item.confidence), width: `${item.confidence}%` }}
+                                                ></div>
+                                            </div>
+                                            <span className="text-sm font-medium text-text-primary">{item.confidence}%</span>
+                                        </div>
+                                    </div>
+                                );
+                            })
+                        ) : (
+                            <div className="text-center py-10 text-text-primary bg-secondary-background rounded-lg">
+                                No predictions available for {activeSport}.
+                            </div>
+                        )}
+                    </div>
                 </div>
             </main>
-
             <MatchDialog
-                open={dialogOpen}
+                open ={dialogOpen}
                 onClose={() => setDialogOpen(false)}
                 homeTeam={selectedHome}
                 awayTeam={selectedAway}
                 homeStats={homeStats}
                 awayStats={awayStats}
                 loading={dialogLoading}
+                homeLogo={homeLogo}
+                awayLogo={awayLogo}
             />
         </div>
     );

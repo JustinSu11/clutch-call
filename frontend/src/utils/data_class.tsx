@@ -6,8 +6,17 @@
     This file contains common data classes used throughout the frontend
 */
 
+export type Team = {
+    abbreviation: string
+    alternateColor: string
+    color: string
+    displayName: string
+}
+
 export type UpcomingGame = {
-    homeTeam: string;
-    awayTeam: string;
-    gameDate: string;                       // YYYY-MM-DD
+    homeTeam: Team;
+    awayTeam: Team;
+    gameDate: Date; 
+    dateAndTime: Date; 
+    league: string;                     // YYYY-MM-DD
 };
