@@ -46,7 +46,7 @@ next-env.d.ts
 *.pyd
 
 #ml
-# /nba_ml_data
+/nba_ml_data
 
 *.log
 
