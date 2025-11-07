@@ -163,7 +163,7 @@ export const getNBAModelsInfo = async () => {
 export const trainNBAModels = async (seasons?: string[], forceRetrain: boolean = false) => {
     try {
         await checkBackendHealth();
-        const requestData: any = {
+        const requestData: { force_retrain: boolean; seasons?: string[] } = {
             force_retrain: forceRetrain
         };
         

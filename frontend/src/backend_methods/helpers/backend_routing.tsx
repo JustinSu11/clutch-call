@@ -100,7 +100,11 @@ export const ROUTES = {
 };
 
 //method to make a request to the backend using fetch
-export const makeBackendRequest = async (method: 'GET' | 'POST' | 'DELETE', route: string, data?: any) => {
+export const makeBackendRequest = async <TResponse, TPayload = unknown>(
+    method: 'GET' | 'POST' | 'DELETE',
+    route: string,
+    data?: TPayload
+): Promise<TResponse> => {
     try {
         const response = await fetch(route, {
             method,
@@ -109,7 +113,10 @@ export const makeBackendRequest = async (method: 'GET' | 'POST' | 'DELETE', rout
             },
             body: (method === 'POST' || method === 'DELETE') && data ? JSON.stringify(data) : undefined,
         });
-        return response.json();
+        if (!response.ok) {
+            throw new Error(`Backend request failed with status ${response.status}`);
+        }
+        return response.json() as Promise<TResponse>;
     } catch (error) {
         console.error("Error fetching data:", error);
         throw error;

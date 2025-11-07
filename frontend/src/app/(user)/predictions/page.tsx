@@ -9,13 +9,26 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import { parseUpcomingNFLGames, parseNFLTeamStats, parseNFLTeamLogo } from '@/utils/nfl_parser';
-import { parseUpcomingNBAGames, parseNBATeamStats } from '@/utils/nba_parser';
+import { parseNBATeamStats } from '@/utils/nba_parser';
 import { parseUpcomingMLSGames, parseMLSTeamStats } from '@/utils/mls_parser';
 import MatchDialog, { TeamStats } from '@/components/DashboardComponents/Dialog';
+import { getNBAGamePredictions, getNBAMLStatus } from '@/backend_methods/nba_methods';
+import { GamePrediction, DecisionFactor } from '@/utils/nba_prediction_parser';
+import { getNBATeamName } from '@/utils/nba_team_mapping';
+import formatDate from '@/utils/date-formatter-for-matches';
 
 
 // declare data types
 type SportKey = 'All Sports' | 'NFL' | 'NBA' | 'MLS';
+
+type PredictionMeta = {
+    gameId?: string;
+    homeTeamId?: number;
+    awayTeamId?: number;
+    confidenceDecimal?: number;
+    decisionFactors?: DecisionFactor[];
+    [key: string]: unknown;
+};
 
 type Prediction = {
     match: string;          // gets built from homeTeam and awayTeam 
@@ -23,7 +36,7 @@ type Prediction = {
     prediction: string;     // the eventual prediction text
     confidence: number;     // a number between 0 and 100 showing how confident the AI prediction is
     sport: SportKey;        // the sport this prediction belongs to used for filtering (NFL, NBA, MLS)
-    meta?: Record<string, unknown>;
+    meta?: PredictionMeta;
 };
 
 type NBATrainingStatus = {
@@ -282,7 +295,7 @@ const formatFactorName = (factor: string): string => {
         .join(' ');
 };
 
-const formatFactorValue = (factor: any): string => {
+const formatFactorValue = (factor: DecisionFactor): string => {
     // Format the actual value of the factor for display
     const value = factor.value;
     const factorName = factor.factor;
@@ -318,7 +331,7 @@ const formatFactorValue = (factor: any): string => {
 };
 
 const PredictionRow: React.FC<{ item: Prediction; onClick?: () => void }> = ({ item, onClick }) => {
-    const decisionFactors = item.meta?.decisionFactors as any[] | undefined;
+    const decisionFactors = item.meta?.decisionFactors;
     
     const renderDecisionFactors = () => {
         if (item.sport !== 'NBA' || !Array.isArray(decisionFactors) || decisionFactors.length === 0) {
@@ -326,7 +339,7 @@ const PredictionRow: React.FC<{ item: Prediction; onClick?: () => void }> = ({ i
         }
         
         // Sort by contribution and take top 3
-        const topFactors = decisionFactors
+        const topFactors = [...decisionFactors]
             .sort((a, b) => (b.contribution || 0) - (a.contribution || 0))
             .slice(0, 3);
         

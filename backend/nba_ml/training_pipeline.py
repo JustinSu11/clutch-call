@@ -51,6 +51,7 @@ class NBAMLPipeline:
                 seasons = self.data_collector.get_seasons_list(start_year=2020, end_year=2024)
             
             logger.info(f"Collecting data for seasons: {seasons}")
+            _ = days_back  # reserved for potential future incremental updates
             
             # Check if data already exists
             processed_file = os.path.join(self.data_dir, 'processed', 'all_games.csv')
@@ -61,15 +62,12 @@ class NBAMLPipeline:
                 # Collect historical data
                 self.data_collector.collect_historical_data(seasons, collect_detailed_games=False)
             
-            # Always collect recent games for up-to-date training
-            recent_games = self.data_collector.collect_recent_games_with_details(days_back=days_back)
-            
             # Get upcoming games for prediction
             upcoming_games = self.data_collector.get_upcoming_games(days_ahead=7)
             
             self.pipeline_results['data_collection'] = {
                 'seasons_collected': seasons,
-                'recent_games_count': len(recent_games),
+                'recent_games_count': 0,
                 'upcoming_games_count': len(upcoming_games),
                 'status': 'success'
             }
@@ -253,14 +251,16 @@ class NBAMLPipeline:
             self.pipeline_results['prediction_service'] = {'status': 'failed', 'error': str(e)}
             return False
     
-    def run_full_pipeline(self, seasons: List[str] = None, 
-                         epochs_game: int = 50) -> Dict:
+    def run_full_pipeline(self, seasons: List[str] = None,
+                         epochs_game: int = 50,
+                         epochs_player: int | None = None) -> Dict:
         """Run the complete NBA ML pipeline"""
         logger.info("🏀 STARTING NBA ML PIPELINE")
         logger.info(f"Pipeline started at: {datetime.now()}")
         logger.info("=" * 80)
-        
+
         pipeline_start_time = datetime.now()
+        _ = epochs_player  # reserved for future player-level training parameters
         
         # Step 1: Data Collection
         if not self.step_1_collect_data(seasons):

@@ -120,29 +120,40 @@ class NBADataCollector:
         
         try:
             # Get traditional box score
-            traditional = boxscoretraditionalv2.BoxScoreTraditionalV2(game_id=game_id)
+            try:
+                traditional = boxscoretraditionalv2.BoxScoreTraditionalV2(game_id=game_id)
+            except Exception as e:
+                logger.warning(f"Game {game_id}: Traditional box score request failed ({e})")
+                return {}
+
             try:
                 traditional_dfs = traditional.get_data_frames()
             except (KeyError, AttributeError, TypeError) as e:
-                logger.warning(f"Game {game_id}: Traditional box score unavailable (likely game hasn't started yet)")
+                logger.warning(f"Game {game_id}: Traditional box score unavailable ({e})")
                 return {}
             
             # Get advanced box score
             self.rate_limit()
-            advanced = boxscoreadvancedv2.BoxScoreAdvancedV2(game_id=game_id)
             try:
+                advanced = boxscoreadvancedv2.BoxScoreAdvancedV2(game_id=game_id)
                 advanced_dfs = advanced.get_data_frames()
             except (KeyError, AttributeError, TypeError) as e:
-                logger.warning(f"Game {game_id}: Advanced box score unavailable")
+                logger.warning(f"Game {game_id}: Advanced box score unavailable ({e})")
+                advanced_dfs = []
+            except Exception as e:
+                logger.warning(f"Game {game_id}: Advanced box score request failed ({e})")
                 advanced_dfs = []
             
             # Get game summary
             self.rate_limit()
-            summary = boxscoresummaryv2.BoxScoreSummaryV2(game_id=game_id)
             try:
+                summary = boxscoresummaryv2.BoxScoreSummaryV2(game_id=game_id)
                 summary_dfs = summary.get_data_frames()
             except (KeyError, AttributeError, TypeError) as e:
-                logger.warning(f"Game {game_id}: Game summary unavailable")
+                logger.warning(f"Game {game_id}: Game summary unavailable ({e})")
+                summary_dfs = []
+            except Exception as e:
+                logger.warning(f"Game {game_id}: Game summary request failed ({e})")
                 summary_dfs = []
             
             return {

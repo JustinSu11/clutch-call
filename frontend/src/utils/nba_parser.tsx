@@ -132,10 +132,10 @@ export const parseNBATeamStats = async (teamName: string) => {
         const games = responseData.data.data;
 
         // vars to hold the stats
-        let totalGames = 0;
-        let wins = 0;
-        let losses = 0;
-        let ties = 0;
+    let totalGames = 0;
+    let wins = 0;
+    let losses = 0;
+    const ties = 0;
 
         // for each game, check the W/L status
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
