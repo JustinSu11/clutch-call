@@ -48,4 +48,4 @@ with open('nfl_games.csv', 'w', newline='') as f:
             home_win
         ])
 
-print("✅ nfl_games.csv created successfully.")
+print(" nfl_games.csv created successfully.")

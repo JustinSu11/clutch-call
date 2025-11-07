@@ -48,7 +48,7 @@ def nfl_predict_game(event_id: str):
             
             # Model not loaded is a 500 error (server issue)
             if "Model not loaded" in error_msg:
-                print(f"❌ [Route] Model not loaded - returning 500")
+                print(f" [Route] Model not loaded - returning 500")
                 return result, 500
             
             # Upcoming/insufficient data games - 422 Unprocessable Entity
@@ -63,20 +63,20 @@ def nfl_predict_game(event_id: str):
             
             # Competition/team data issues - 400 (bad request)
             if "No competitions data" in error_msg or "Cannot find teams" in error_msg:
-                print(f"⚠️  [Route] Invalid game data - returning 400")
+                print(f"  [Route] Invalid game data - returning 400")
                 return result, 400
             
             # Other errors are 400 (bad request)
-            print(f"⚠️  [Route] Other error - returning 400: {error_msg}")
+            print(f"  [Route] Other error - returning 400: {error_msg}")
             return result, 400
         
         # Success - return prediction
-        print(f"✅ [Route] Prediction successful - returning 200")
+        print(f" [Route] Prediction successful - returning 200")
         return result, 200
         
     except Exception as e:
         # Unexpected server errors
-        print(f"❌ [Route] Exception caught: {str(e)}")
+        print(f" [Route] Exception caught: {str(e)}")
         return {
             "error": "Internal server error generating prediction.",
             "details": str(e)

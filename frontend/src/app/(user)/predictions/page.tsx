@@ -54,7 +54,7 @@ const buildNFLPredictions = async (): Promise<Prediction[]> => {
         Fetches upcoming, today's, and historical games to get in-progress/completed games.
     */
    
-    console.log('🏈 Starting NFL predictions build...');
+    console.log('Starting NFL predictions build...');
     
     // Fetch upcoming, today's, and historical games (last 2 days for completed games)
     let upcomingGames: Game[] = [];
@@ -62,24 +62,24 @@ const buildNFLPredictions = async (): Promise<Prediction[]> => {
     let historicalGames: Game[] = [];
     
     try {
-        console.log('📡 Fetching upcoming NFL games...');
+        console.log('Fetching upcoming NFL games...');
         upcomingGames = await parseUpcomingNFLGames();
-        console.log(`✅ Fetched ${upcomingGames.length} upcoming games`);
+        console.log(`Fetched ${upcomingGames.length} upcoming games`);
     } catch (error) {
-        console.error('❌ Error fetching upcoming games:', error);
+        console.error('Error fetching upcoming games:', error);
     }
     
     try {
-        console.log('📡 Fetching today\'s NFL games...');
+        console.log('Fetching today\'s NFL games...');
         todayGames = await parseTodayNFLGames();
-        console.log(`✅ Fetched ${todayGames.length} today's games`);
+        console.log(`Fetched ${todayGames.length} today's games`);
     } catch (error) {
-        console.error('❌ Error fetching today\'s games:', error);
+        console.error('Error fetching today\'s games:', error);
     }
     
     // Fetch historical games from the last week to get completed games
     try {
-        console.log('📡 Fetching historical NFL games (last 7 days)...');
+        console.log('Fetching historical NFL games (last 7 days)...');
         const today = new Date();
         const weekAgo = new Date(today);
         weekAgo.setDate(weekAgo.getDate() - 7); // Go back 7 days to find completed games
@@ -87,13 +87,13 @@ const buildNFLPredictions = async (): Promise<Prediction[]> => {
         const startDateStr = weekAgo.toISOString().split('T')[0]; // YYYY-MM-DD
         const endDateStr = today.toISOString().split('T')[0];
         
-        console.log(`📅 Fetching games from ${startDateStr} to ${endDateStr}`);
+        console.log(`Fetching games from ${startDateStr} to ${endDateStr}`);
         
         const historicalData = await getHistoricalNFLGames(startDateStr, endDateStr);
-        console.log('📥 Raw historical games response:', historicalData);
+        console.log('Raw historical games response:', historicalData);
         
         if (historicalData && historicalData.events && historicalData.events.length > 0) {
-            console.log(`📋 Found ${historicalData.events.length} historical events`);
+            console.log(`Found ${historicalData.events.length} historical events`);
             
             // Filter for only completed games BEFORE parsing
             const completedEvents = historicalData.events.filter((event: any) => {
@@ -111,25 +111,25 @@ const buildNFLPredictions = async (): Promise<Prediction[]> => {
                                   statusType === 'status_completed';
                 
                 if (isCompleted) {
-                    console.log(`✅ Found completed game: ${event.id} - status: ${statusType} (${statusState})`);
+                    console.log(`Found completed game: ${event.id} - status: ${statusType} (${statusState})`);
                 }
                 
                 return isCompleted;
             });
             
-            console.log(`📊 Filtered to ${completedEvents.length} completed games out of ${historicalData.events.length} total`);
+            console.log(`Filtered to ${completedEvents.length} completed games out of ${historicalData.events.length} total`);
             
             if (completedEvents.length > 0) {
                 historicalGames = parseNFLGamesFromEvents(completedEvents);
-                console.log(`✅ Parsed ${historicalGames.length} completed historical games`);
+                console.log(`Parsed ${historicalGames.length} completed historical games`);
             } else {
-                console.log('⚠️ No completed games found in historical data');
+                console.log('No completed games found in historical data');
             }
         } else {
-            console.log('⚠️ No historical games found');
+            console.log('No historical games found');
         }
     } catch (error) {
-        console.error('❌ Error fetching historical games:', error);
+        console.error('Error fetching historical games:', error);
     }
 
 // Combine games and remove duplicates by ID
@@ -144,8 +144,8 @@ const allGames = Array.from(allGamesMap.values());
 // Ensure we only process games that have a valid ID string
 const validGames = allGames.filter(game => typeof game.id === 'string' && game.id.length > 0);
 
-console.log(`📊 Found ${validGames.length} total NFL games (${upcomingGames.length} upcoming, ${todayGames.length} today, ${historicalGames.length} historical)`);
-console.log('📋 All games with status:', validGames.map(g => ({
+console.log(` Found ${validGames.length} total NFL games (${upcomingGames.length} upcoming, ${todayGames.length} today, ${historicalGames.length} historical)`);
+console.log(' All games with status:', validGames.map(g => ({
     id: g.id,
     match: `${g.awayTeam} @ ${g.homeTeam}`,
     statusState: g.status?.state,
@@ -158,7 +158,7 @@ const predictableGames = validGames.filter(game => {
     const statusState = game.status?.state?.toLowerCase() || 'unknown';
     const statusType = game.status?.type?.toLowerCase() || 'unknown';
     
-    console.log(`🔍 Checking game ${game.id} (${game.awayTeam} @ ${game.homeTeam}): state="${statusState}", type="${statusType}"`);
+    console.log(` Checking game ${game.id} (${game.awayTeam} @ ${game.homeTeam}): state="${statusState}", type="${statusType}"`);
     
     // Skip games that haven't started (pre/scheduled status)
     if (statusState === 'pre' || 
@@ -166,7 +166,7 @@ const predictableGames = validGames.filter(game => {
         statusType === 'pre' ||
         statusType === 'status_scheduled' ||
         statusType.includes('scheduled')) {
-        console.log(`❌ Skipping game ${game.id} - status: state="${statusState}", type="${statusType}" (game hasn't started yet)`);
+        console.log(` Skipping game ${game.id} - status: state="${statusState}", type="${statusType}" (game hasn't started yet)`);
         return false;
     }
     
@@ -188,9 +188,9 @@ const predictableGames = validGames.filter(game => {
                       (statusState === 'post' && statusType !== 'unknown'); // If state is post, it's completed
     
     if (isPlayable) {
-        console.log(`✅ Including game ${game.id} (${game.awayTeam} @ ${game.homeTeam}) - status: state="${statusState}", type="${statusType}"`);
+        console.log(` Including game ${game.id} (${game.awayTeam} @ ${game.homeTeam}) - status: state="${statusState}", type="${statusType}"`);
     } else {
-        console.log(`⚠️ Excluding game ${game.id} - status doesn't match playable criteria: state="${statusState}", type="${statusType}"`);
+        console.log(` Excluding game ${game.id} - status doesn't match playable criteria: state="${statusState}", type="${statusType}"`);
         // Log the full status object for debugging
         console.log(`   Full status object:`, game.status);
     }
@@ -201,8 +201,8 @@ const predictableGames = validGames.filter(game => {
 console.log(`Found ${predictableGames.length} games eligible for prediction out of ${validGames.length} total games`);
 
 if (predictableGames.length === 0) {
-    console.log('⚠️ No games in progress or completed. Predictions require games that have started.');
-    console.log('📋 All game statuses for debugging:', validGames.map(g => ({
+    console.log(' No games in progress or completed. Predictions require games that have started.');
+    console.log(' All game statuses for debugging:', validGames.map(g => ({
         id: g.id,
         match: `${g.awayTeam} @ ${g.homeTeam}`,
         statusState: g.status?.state,
@@ -212,15 +212,15 @@ if (predictableGames.length === 0) {
     
     // TEMPORARY TEST: Try to get predictions for ANY game that's not explicitly "pre" to test if model works
     // This will help us see if the issue is with filtering or with the model itself
-    console.log('🧪 TESTING: Attempting to get prediction for first available game (even if status is unknown)...');
+    console.log(' TESTING: Attempting to get prediction for first available game (even if status is unknown)...');
     if (validGames.length > 0) {
         const testGame = validGames[0];
-        console.log(`🧪 Testing with game ${testGame.id} (${testGame.awayTeam} @ ${testGame.homeTeam})`);
+        console.log(` Testing with game ${testGame.id} (${testGame.awayTeam} @ ${testGame.homeTeam})`);
         try {
             const testPrediction = await getNFLPrediction(testGame.id);
-            console.log('🧪 Test prediction result:', testPrediction);
+            console.log(' Test prediction result:', testPrediction);
         } catch (error) {
-            console.error('🧪 Test prediction error:', error);
+            console.error(' Test prediction error:', error);
         }
     }
     
@@ -234,7 +234,7 @@ if (predictableGames.length === 0) {
     });
     
     if (fallbackGames.length > 0 && fallbackGames.length !== validGames.length) {
-        console.log(`🔄 Trying fallback: ${fallbackGames.length} games (excluding only explicitly pre-game)`);
+        console.log(` Trying fallback: ${fallbackGames.length} games (excluding only explicitly pre-game)`);
         // Use fallback games but continue with normal flow
         // We'll set predictableGames to fallbackGames for this attempt
         const originalPredictable = predictableGames;
@@ -245,13 +245,13 @@ if (predictableGames.length === 0) {
 }
 
 // Map over the predictableGames array (only games that have started)
-console.log(`🔄 Starting prediction requests for ${predictableGames.length} games...`);
+console.log(` Starting prediction requests for ${predictableGames.length} games...`);
 const predictionPromises = predictableGames.map(async (game) => {
     try {
-        console.log(`📞 Requesting prediction for game ${game.id} (${game.awayTeam} @ ${game.homeTeam})...`);
+        console.log(` Requesting prediction for game ${game.id} (${game.awayTeam} @ ${game.homeTeam})...`);
         // We know game.id is a string here
         const aiPrediction = await getNFLPrediction(game.id);
-        console.log(`📥 Received response for game ${game.id}:`, aiPrediction);
+        console.log(` Received response for game ${game.id}:`, aiPrediction);
 
         if (aiPrediction.error) {
             // Handle 422 errors gracefully (expected for games that just started or have insufficient data)
@@ -259,10 +259,10 @@ const predictionPromises = predictableGames.map(async (game) => {
             if (errorMsg.includes('Cannot predict upcoming games') || 
                 errorMsg.includes('Insufficient game data') ||
                 errorMsg.includes('422')) {
-                console.log(`⚠️ Game ${game.id} cannot be predicted yet (expected):`, aiPrediction.error);
+                console.log(` Game ${game.id} cannot be predicted yet (expected):`, aiPrediction.error);
                 return null;
             }
-            console.error(`❌ Failed to get prediction for game ${game.id}:`, aiPrediction.error, aiPrediction.details);
+            console.error(` Failed to get prediction for game ${game.id}:`, aiPrediction.error, aiPrediction.details);
             return null;
         }
 
@@ -322,34 +322,34 @@ const predictionPromises = predictableGames.map(async (game) => {
             sport: 'NFL' as SportKey,
         };
         
-        console.log(`✅ Successfully built prediction for game ${game.id}:`, prediction);
+        console.log(` Successfully built prediction for game ${game.id}:`, prediction);
         return prediction;
     } catch (error: any) {
         // Handle network errors or 422 errors in the catch block
         const errorMessage = error?.message || '';
-        console.error(`💥 Exception for game ${game.id}:`, error);
+        console.error(` Exception for game ${game.id}:`, error);
         if (errorMessage.includes('422') || 
             errorMessage.includes('Cannot predict upcoming games') ||
             errorMessage.includes('Insufficient game data')) {
-            console.log(`⚠️ Game ${game.id} cannot be predicted yet (caught error):`, errorMessage);
+            console.log(` Game ${game.id} cannot be predicted yet (caught error):`, errorMessage);
             return null;
         }
-        console.error(`❌ Error fetching prediction for game ${game.id}:`, error);
+        console.error(` Error fetching prediction for game ${game.id}:`, error);
         return null;
     }
 });
 
 // Wait for all the API calls to complete
-console.log('⏳ Waiting for all prediction requests to complete...');
+console.log(' Waiting for all prediction requests to complete...');
 const predictions = await Promise.all(predictionPromises);
 
 // Filter out any games that failed to get a prediction
 const filteredPredictions = predictions.filter(p => p !== null) as Prediction[];
-console.log(`📈 Final results: ${filteredPredictions.length} successful predictions out of ${predictableGames.length} eligible games`);
-console.log('✅ Predictions:', filteredPredictions);
+console.log(` Final results: ${filteredPredictions.length} successful predictions out of ${predictableGames.length} eligible games`);
+console.log(' Predictions:', filteredPredictions);
 
 if (filteredPredictions.length === 0 && predictableGames.length > 0) {
-    console.warn('⚠️ WARNING: Had eligible games but no successful predictions. Check backend logs for errors.');
+    console.warn(' WARNING: Had eligible games but no successful predictions. Check backend logs for errors.');
 }
 
 return filteredPredictions;
@@ -583,8 +583,8 @@ export default function PredictionsScreen() {
         ])
             .then(results => {
                 const flattened = results.flat();
-                console.log('🎯 Setting predictions state with:', flattened.length, 'predictions');
-                console.log('🎯 Predictions data:', flattened);
+                console.log(' Setting predictions state with:', flattened.length, 'predictions');
+                console.log(' Predictions data:', flattened);
                 setPredictions(flattened);
             })
             .catch((err) => {

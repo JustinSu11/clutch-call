@@ -24,29 +24,29 @@ STANDINGS = "https://site.api.espn.com/apis/v2/sports/football/nfl/standings"
 MODEL_PATH = os.path.join(os.path.dirname(__file__), '../../models/saved_models/nfl_model.pkl')
 try:
     model = joblib.load(MODEL_PATH)
-    print("✅ NFL model loaded")
+    print(" NFL model loaded")
     print(f"   Features: {model.n_features_in_}")
 except Exception as e:
-    print(f"❌ Model load error: {e}")
+    print(f" Model load error: {e}")
     model = None
 
 
 def generate_prediction_for_game(event_id: str):
     """Generate prediction using actual game yard statistics."""
     print(f"\n{'='*60}")
-    print(f"🏈 PREDICTION FOR: {event_id}")
+    print(f" PREDICTION FOR: {event_id}")
     
     if model is None:
-        print("❌ Model not loaded")
+        print(" Model not loaded")
         return {"error": "Model not loaded"}
     
     try:
         # Step 1: Fetch game data
-        print(f"📡 Fetching game data...")
+        print(f" Fetching game data...")
         game_data = get_game_by_id(event_id)
         
         # DEBUG: Show top-level keys
-        print(f"🔍 Top-level keys in response: {list(game_data.keys())}")
+        print(f" Top-level keys in response: {list(game_data.keys())}")
         
         # Step 2: Access competitions - check different possible locations
         competitions = game_data.get("competitions", [])
@@ -54,26 +54,26 @@ def generate_prediction_for_game(event_id: str):
         # If not found at top level, check inside 'header'
         if not competitions and "header" in game_data:
             competitions = game_data.get("header", {}).get("competitions", [])
-            print(f"🔍 Found competitions in 'header'")
+            print(f" Found competitions in 'header'")
         
         if not competitions:
-            print(f"❌ No competitions data found")
-            print(f"🔍 Available keys: {list(game_data.keys())}")
+            print(f" No competitions data found")
+            print(f" Available keys: {list(game_data.keys())}")
             return {"error": f"No competitions data found for event {event_id}"}
         
         comp = competitions[0]
-        print(f"✅ Competition data retrieved")
+        print(f" Competition data retrieved")
         
         # Step 3: CHECK GAME STATUS
         status = comp.get("status", {})
         status_type = status.get("type", {}).get("name", "unknown").lower()
         status_state = status.get("type", {}).get("state", "unknown").lower()
         
-        print(f"📋 Game Status: '{status_type}' (state: '{status_state}')")
+        print(f" Game Status: '{status_type}' (state: '{status_state}')")
         
         # Check if game is scheduled/upcoming
         if status_state == "pre":
-            print(f"⚠️  Game has NOT started - status_state is 'pre'")
+            print(f"  Game has NOT started - status_state is 'pre'")
             return {
                 "error": "Cannot predict upcoming games",
                 "message": "This model predicts outcomes based on in-game yard statistics. The game must be in progress or completed.",
@@ -84,7 +84,7 @@ def generate_prediction_for_game(event_id: str):
             }
         
         if status_type in ["scheduled", "pre"]:
-            print(f"⚠️  Game has NOT started - status_type is '{status_type}'")
+            print(f"  Game has NOT started - status_type is '{status_type}'")
             return {
                 "error": "Cannot predict upcoming games",
                 "message": "This model predicts outcomes based on in-game yard statistics. The game must be in progress or completed.",
@@ -94,7 +94,7 @@ def generate_prediction_for_game(event_id: str):
                 "suggestion": "Please wait until the game starts to get a prediction."
             }
         
-        print(f"✅ Game is live or completed - proceeding with prediction")
+        print(f" Game is live or completed - proceeding with prediction")
         
         # Step 4: Get competitors
         competitors = comp.get("competitors", [])
@@ -110,12 +110,12 @@ def generate_prediction_for_game(event_id: str):
                 away = next((t for t in boxscore_teams if t.get("homeAway") == "away"), None)
 
         if not home or not away:
-            print(f"❌ Cannot find home/away teams")
+            print(f" Cannot find home/away teams")
             return {"error": f"Cannot find teams for event {event_id}"}
         
         home_team_name = home.get("team", {}).get("displayName", "Unknown")
         away_team_name = away.get("team", {}).get("displayName", "Unknown")
-        print(f"🏟️  {away_team_name} @ {home_team_name}")
+        print(f"  {away_team_name} @ {home_team_name}")
         
         # Step 5: Extract total yards from statistics
         home_yards = 300.0
@@ -124,7 +124,7 @@ def generate_prediction_for_game(event_id: str):
         home_stats = home.get("statistics", [])
         away_stats = away.get("statistics", [])
         
-        print(f"📊 Extracting statistics...")
+        print(f" Extracting statistics...")
         print(f"   Home stats available: {len(home_stats)} items")
         print(f"   Away stats available: {len(away_stats)} items")
         
@@ -142,7 +142,7 @@ def generate_prediction_for_game(event_id: str):
         
         # Fallback: use boxscore stats if available
         if home_yards == 300.0 or away_yards == 300.0:
-            print(f"⚠️  Missing stats, checking boxscore...")
+            print(f"  Missing stats, checking boxscore...")
             boxscore = game_data.get("boxscore", {})
             teams = boxscore.get("teams", [])
             
@@ -162,8 +162,8 @@ def generate_prediction_for_game(event_id: str):
         
         # Check if we still have default values (no stats found)
         if home_yards == 300.0 and away_yards == 300.0:
-            print(f"⚠️  No yard statistics found - using defaults")
-            print(f"⚠️  This likely means the game hasn't generated stats yet")
+            print(f"  No yard statistics found - using defaults")
+            print(f"  This likely means the game hasn't generated stats yet")
             return {
                 "error": "Insufficient game data",
                 "message": "No yard statistics available for this game yet. The game may have just started.",
@@ -174,7 +174,7 @@ def generate_prediction_for_game(event_id: str):
         
         yard_diff = home_yards - away_yards
         
-        print(f"📊 FEATURES:")
+        print(f" FEATURES:")
         print(f"   Home Total Yards: {home_yards:.1f}")
         print(f"   Away Total Yards: {away_yards:.1f}")
         print(f"   Yard Differential: {yard_diff:+.1f}")
@@ -254,8 +254,8 @@ def generate_prediction_for_game(event_id: str):
         }
         
     except Exception as e:
-        print(f"❌ EXCEPTION: {str(e)}")
-        print(f"❌ ERROR: {traceback.format_exc()}")
+        print(f" EXCEPTION: {str(e)}")
+        print(f" ERROR: {traceback.format_exc()}")
         return {"error": str(e), "event_id": event_id}
 
 
@@ -285,17 +285,17 @@ def get_game_by_id(event_id: str):
             return data
         
         # If summary didn't work, try finding in scoreboard
-        print(f"⚠️  Summary API didn't return competitions, trying scoreboard...")
+        print(f"  Summary API didn't return competitions, trying scoreboard...")
         today_data = get_today_games()
         for event in today_data.get("events", []):
             if str(event.get("id")) == str(event_id):
-                print(f"✅ Found game {event_id} in scoreboard")
+                print(f" Found game {event_id} in scoreboard")
                 return event
         
         # Return original data even if incomplete
         return data
     except Exception as e:
-        print(f"❌ Error fetching game {event_id}: {e}")
+        print(f" Error fetching game {event_id}: {e}")
         # Try scoreboard as last resort
         try:
             today_data = get_today_games()
