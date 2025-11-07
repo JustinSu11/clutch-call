@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /*
     File: frontend/src/app/predictions/page.tsx
     Created: 09/29/2025 by Michael Tajchman
