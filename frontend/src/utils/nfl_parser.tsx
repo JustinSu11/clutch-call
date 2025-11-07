@@ -71,6 +71,9 @@ export const parseUpcomingNFLGames = async () => {
         // extract date of match
         const gameDate = event['date'].split('T')[0]; // extract date only, ignore time
         const dateAndTime = event['date']
+        
+        // extract game ID
+        const gameId = event['id']
 
         // the official game name for reference
         const officialGameName = event['name'];
@@ -91,7 +94,7 @@ export const parseUpcomingNFLGames = async () => {
         const formattedGameDate = `${month}-${day}-${year}`;
 
         // return { homeTeam, awayTeam, gameDate: formattedGameDate};
-        return { homeTeam, awayTeam, gameDate: formattedGameDate, dateAndTime: dateAndTime, league: league };
+        return { homeTeam, awayTeam, gameDate: formattedGameDate, dateAndTime: dateAndTime, league: league, gameId: gameId };
     });
 
     return games;
