@@ -106,6 +106,7 @@ export default function Page() {
     const [team1Stats, setTeam1Stats] = useState<number[]>([]);
     const [team2Stats, setTeam2Stats] = useState<number[]>([]);
     const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
     // Team mappings matching your backend
     const teamsData: Record<SportKey, string[]> = {
@@ -220,6 +221,13 @@ export default function Page() {
     useEffect(() => {
         const fetchStats = async () => {
             if (!team1 && !team2) return;
+
+            if (team1 && team2 && team1 === team2) {
+                setError("Can't compare a team to itself");
+                setTeam1Stats([]);
+                setTeam2Stats([]);
+                return;
+            }
             
             setLoading(true);
             try {
@@ -247,10 +255,63 @@ export default function Page() {
             } finally {
                 setLoading(false);
             }
+            setError(null); // Clear error if fetch is successful
         };
 
         fetchStats();
     }, [team1, team2, activeSport]);
+
+    // Calculate averages for the bar chart
+    const team1Average = team1Stats.length > 0 ? parseFloat((team1Stats.reduce((a, b) => a + b, 0) / team1Stats.length).toFixed(1)) : 0;
+    const team2Average = team2Stats.length > 0 ? parseFloat((team2Stats.reduce((a, b) => a + b, 0) / team2Stats.length).toFixed(1)) : 0;
+
+    // Highcharts configuration for the new bar chart
+    const barChartOptions: Highcharts.Options = {
+        chart: {
+            type: 'column',
+            backgroundColor: '',
+        },
+        title: {
+            text: 'Average Points Comparison',
+            style: { color: 'var(--color-text-primary)' }
+        },
+        xAxis: {
+            categories: ['Average Points'],
+            labels: { style: { color: 'var(--color-text-primary)' } }
+        },
+        yAxis: {
+            min: 0,
+            title: {
+                text: 'Points',
+                style: { color: 'var(--color-text-primary)' }
+            },
+            labels: { style: { color: 'var(--color-text-primary)' } },
+            gridLineColor: '#333333'
+        },
+        legend: {
+            itemStyle: { color: 'var(--color-text-primary)' }
+        },
+        tooltip: {
+            pointFormat: '<span style="color:{series.color}">{series.name}</span>: <b>{point.y:.1f}</b><br/>',
+            shared: true,
+            backgroundColor: '#2a2a2a',
+            style: { color: 'var(--color-text-primary)' }
+        },
+        series: [
+            {
+                name: team1 || 'Team 1',
+                data: [team1Average],
+                color: '#3b82f6',
+                type: 'column'
+            },
+            {
+                name: team2 || 'Team 2',
+                data: [team2Average],
+                color: '#ef4444',
+                type: 'column'
+            }
+        ]
+    };
 
     // Highcharts configuration
     const chartOptions: Highcharts.Options = {
@@ -261,16 +322,16 @@ export default function Page() {
         title: {
             text: 'Team Performance Comparison',
             style: {
-                color: 'green'
+                color: 'var(--color-text-primary)'
             }
         },
         xAxis: {
             title: {
                 text: 'Game Number',
-                style: { color: 'green' }
+                style: { color: 'var(--color-text-primary)' }
             },
             labels: {
-                style: { color: 'green' }
+                style: { color: 'var(--color-text-primary)' }
             },
             gridLineColor: '#333333',
             min: 1,
@@ -279,23 +340,23 @@ export default function Page() {
         yAxis: {
             title: {
                 text: 'Points Scored',
-                style: { color: 'green' }
+                style: { color: 'var(--color-text-primary)' }
             },
             labels: {
-                style: { color: 'green' }
+                style: { color: 'var(--color-text-primary)' }
             },
             gridLineColor: '#333333'
         },
         legend: {
             itemStyle: {
-                color: 'green'
+                color: 'var(--color-text-primary)'
             }
         },
         tooltip: {
             shared: true,
             backgroundColor: '#2a2a2a',
             style: {
-                color: 'green'
+                color: 'var(--color-text-primary)'
             }
         },
         plotOptions: {
@@ -354,15 +415,30 @@ export default function Page() {
             {/* Display stats */}
             {loading && <p className="text-center text-text-primary mt-6">Loading stats...</p>}
             
+            {error && (
+                <div className="text-center text-red-500 mt-6 text-lg font-semibold">
+                    {error}
+                </div>
+            )}
             {!loading && (team1 || team2) && (
                 <>
-                    {/* Chart */}
+                    {/* Charts Container */}
                     {(team1Stats.length > 0 || team2Stats.length > 0) && (
-                        <div className="mt-8 bg-secondary-background p-6 rounded-md">
-                            <HighchartsReact
-                                highcharts={Highcharts}
-                                options={chartOptions}
-                            />
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
+                            {/* Line Chart */}
+                            <div className="bg-secondary-background p-6 rounded-md">
+                                <HighchartsReact
+                                    highcharts={Highcharts}
+                                    options={chartOptions}
+                                />
+                            </div>
+                            {/* Bar Chart */}
+                            <div className="bg-secondary-background p-6 rounded-md">
+                                <HighchartsReact
+                                    highcharts={Highcharts}
+                                    options={barChartOptions}
+                                />
+                            </div>
                         </div>
                     )}
 
