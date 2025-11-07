@@ -4,17 +4,12 @@ Purpose: Test that NBA predictions return confidence scores and decision factors
 """
 
 import os
-import sys
 import unittest
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock
 import numpy as np
 import pandas as pd
 
-# Add backend to path
-backend_path = os.path.join(os.path.dirname(__file__), '..')
-sys.path.insert(0, backend_path)
-
-from nba_ml_prediction_service import NBAMLPredictor
+from nba_ml import NBAMLPredictor
 
 
 class TestNBAPredictionsWithFactors(unittest.TestCase):

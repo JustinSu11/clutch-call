@@ -7,7 +7,6 @@ Purpose: Exposes NBA endpoints using the free balldontlie API and NBA ML predict
 """
 
 import os
-import sys
 import json
 import logging
 from datetime import datetime, timedelta
@@ -16,9 +15,10 @@ from flask import Blueprint, request, jsonify
 # Set up logging
 logger = logging.getLogger(__name__)
 
-# Add backend directory to path for NBA ML imports
-backend_path = os.path.join(os.path.dirname(__file__), '..', '..')
-sys.path.append(backend_path)
+# Common backend paths used throughout this module
+BACKEND_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+ML_DATA_DIR = os.path.join(BACKEND_ROOT, "nba_ml_data")
+MODELS_PATH = os.path.join(ML_DATA_DIR, "models")
 
 from ..services.nba_service import (
     get_games,
@@ -32,17 +32,17 @@ from ..services.nba_service import (
 
 # Import NBA ML system components
 try:
-    from nba_ml_prediction_service import NBAMLPredictor
-    from nba_ml_training_pipeline import NBAMLPipeline
-    from nba_ml_training_state import (
+    from nba_ml import (
+        NBAMLPredictor,
+        NBAMLPipeline,
         get_training_status,
         mark_training_complete,
         mark_training_failed,
         mark_training_start,
     )
     ML_AVAILABLE = True
-except ImportError as e:
-    logging.warning(f"NBA ML components not available: {e}")
+except ImportError as exc:
+    logging.warning(f"NBA ML components not available: {exc}")
     ML_AVAILABLE = False
 
 # Blueprint for NBA-related routes; mounted by the app factory at /api/v1/nba
@@ -132,11 +132,10 @@ def nba_ml_status():
     
     try:
         # Check if models exist
-        models_path = os.path.join(backend_path, 'nba_ml_data', 'models')
-        models_exist = os.path.exists(models_path) and len(os.listdir(models_path)) > 0
-        
+        models_exist = os.path.exists(MODELS_PATH) and len(os.listdir(MODELS_PATH)) > 0
+
         # Get cache stats
-        predictor = NBAMLPredictor()
+        predictor = NBAMLPredictor(data_dir=ML_DATA_DIR)
         cache_stats = predictor.cache.get_cache_stats()
         
         training_status = get_training_status() if ML_AVAILABLE else {}
@@ -146,7 +145,7 @@ def nba_ml_status():
             "message": "NBA ML system is ready" if models_exist else "Models need to be trained",
             "ml_available": ML_AVAILABLE,
             "models_trained": models_exist,
-            "models_path": models_path,
+            "models_path": MODELS_PATH,
             "cache_stats": cache_stats,
             "timestamp": datetime.now().isoformat(),
             "training_status": training_status
@@ -168,7 +167,7 @@ def clear_prediction_cache():
         return jsonify({"error": "NBA ML system is not available"}), 503
     
     try:
-        predictor = NBAMLPredictor()
+        predictor = NBAMLPredictor(data_dir=ML_DATA_DIR)
         predictor.cache.clear_all()
         return jsonify({
             "message": "Prediction cache cleared successfully",
@@ -185,7 +184,7 @@ def clear_expired_cache():
         return jsonify({"error": "NBA ML system is not available"}), 503
     
     try:
-        predictor = NBAMLPredictor()
+        predictor = NBAMLPredictor(data_dir=ML_DATA_DIR)
         predictor.cache.clear_expired()
         cache_stats = predictor.cache.get_cache_stats()
         return jsonify({
@@ -217,7 +216,7 @@ def nba_game_predictions():
             return jsonify({"error": "days_ahead must be between 1 and 7"}), 400
         
         # Initialize predictor
-        predictor = NBAMLPredictor()
+        predictor = NBAMLPredictor(data_dir=ML_DATA_DIR)
         
         # Check cache first
         cached_result = predictor.cache.get_game_predictions(days_ahead, include_details)
@@ -287,7 +286,7 @@ def nba_game_prediction_detail(game_id: str):
     
     try:
         # Initialize predictor
-        predictor = NBAMLPredictor()
+        predictor = NBAMLPredictor(data_dir=ML_DATA_DIR)
         
         # Generate predictions for upcoming games
         predictions = predictor.generate_comprehensive_predictions(days_ahead=7)  # Check up to 7 days
@@ -341,7 +340,6 @@ def nba_train_models():
     
     request_data = {}
     seasons = ['2023-24']
-    models_path = os.path.join(backend_path, 'nba_ml_data', 'models')
     models_exist = False
 
     try:
@@ -350,7 +348,7 @@ def nba_train_models():
         force_retrain = request_data.get('force_retrain', False)
         
         # Check if models already exist
-        models_exist = os.path.exists(models_path) and len(os.listdir(models_path)) > 0
+        models_exist = os.path.exists(MODELS_PATH) and len(os.listdir(MODELS_PATH)) > 0
         
         # Guard against overlapping training runs
         current_training_status = get_training_status()
@@ -363,19 +361,19 @@ def nba_train_models():
         if models_exist and not force_retrain:
             return jsonify({
                 "message": "Models already exist. Use force_retrain=true to retrain.",
-                "models_path": models_path,
+                "models_path": MODELS_PATH,
                 "force_retrain_required": True
             }), 400
         
         # Initialize training pipeline
-        pipeline = NBAMLPipeline()
+        pipeline = NBAMLPipeline(data_dir=ML_DATA_DIR)
         
         # Start training (this might take a while)
         training_start = datetime.now()
 
         mark_training_start({
             "requested_seasons": list(seasons),
-            "models_path": models_path,
+            "models_path": MODELS_PATH,
         })
         
         # Execute training pipeline
@@ -394,14 +392,14 @@ def nba_train_models():
             training_status = mark_training_complete({
                 "training_duration_seconds": round(training_duration, 2),
                 "requested_seasons": list(seasons),
-                "models_path": models_path,
+                "models_path": MODELS_PATH,
             })
             return jsonify({
                 "message": "NBA ML models trained successfully",
                 "training_start": training_start.isoformat(),
                 "training_end": training_end.isoformat(),
                 "training_duration_seconds": round(training_duration, 2),
-                "models_path": models_path,
+                "models_path": MODELS_PATH,
                 "seasons_trained": seasons,
                 "training_status": training_status
             })
@@ -411,7 +409,7 @@ def nba_train_models():
                 {
                     "training_duration_seconds": round(training_duration, 2),
                     "requested_seasons": list(seasons),
-                    "models_path": models_path,
+                    "models_path": MODELS_PATH,
                 }
             )
             return jsonify({
@@ -423,7 +421,7 @@ def nba_train_models():
     except Exception as e:
         training_metadata = {
             "requested_seasons": list(seasons),
-            "models_path": models_path,
+            "models_path": MODELS_PATH,
         }
 
         training_status = mark_training_failed(str(e), training_metadata) if ML_AVAILABLE else {}
@@ -442,16 +440,14 @@ def nba_models_info():
         return jsonify({"error": "NBA ML system is not available"}), 503
     
     try:
-        models_path = os.path.join(backend_path, 'nba_ml_data', 'models')
-        
-        if not os.path.exists(models_path):
+        if not os.path.exists(MODELS_PATH):
             return jsonify({
                 "models_exist": False,
                 "message": "No models directory found. Models need to be trained."
             })
         
         # Get model files
-        model_files = [f for f in os.listdir(models_path) if f.endswith('.pkl')]
+        model_files = [f for f in os.listdir(MODELS_PATH) if f.endswith('.pkl')]
         
         if not model_files:
             return jsonify({
@@ -462,7 +458,7 @@ def nba_models_info():
         # Get model information
         model_info = {}
         for model_file in model_files:
-            file_path = os.path.join(models_path, model_file)
+            file_path = os.path.join(MODELS_PATH, model_file)
             stat_info = os.stat(file_path)
             model_info[model_file] = {
                 "file_size_bytes": stat_info.st_size,
@@ -471,14 +467,14 @@ def nba_models_info():
             }
         
         # Check for preprocessors (saved under models/preprocessors)
-        preprocessors_path = os.path.join(backend_path, 'nba_ml_data', 'models', 'preprocessors')
+        preprocessors_path = os.path.join(MODELS_PATH, 'preprocessors')
         preprocessor_files = []
         if os.path.exists(preprocessors_path):
             preprocessor_files = [f for f in os.listdir(preprocessors_path) if f.endswith('.pkl')]
         
         return jsonify({
             "models_exist": True,
-            "models_path": models_path,
+            "models_path": MODELS_PATH,
             "total_models": len(model_files),
             "total_preprocessors": len(preprocessor_files),
             "models": model_info,
@@ -512,19 +508,18 @@ def nba_delete_models():
         deleted_items = []
         
         # Delete models directory
-        models_path = os.path.join(backend_path, 'nba_ml_data', 'models')
-        if os.path.exists(models_path):
-            shutil.rmtree(models_path)
+        if os.path.exists(MODELS_PATH):
+            shutil.rmtree(MODELS_PATH)
             deleted_items.append('models')
         
         # Delete preprocessors directory  
-        preprocessors_path = os.path.join(backend_path, 'nba_ml_data', 'preprocessors')
+        preprocessors_path = os.path.join(ML_DATA_DIR, 'preprocessors')
         if os.path.exists(preprocessors_path):
             shutil.rmtree(preprocessors_path)
             deleted_items.append('preprocessors')
         
         # Delete cached data (optional - keep raw data)
-        # cache_path = os.path.join(backend_path, 'nba_ml_data', 'cache')
+        # cache_path = os.path.join(ML_DATA_DIR, 'cache')
         # if os.path.exists(cache_path):
         #     shutil.rmtree(cache_path)
         #     deleted_items.append('cache')

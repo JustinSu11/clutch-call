@@ -9,7 +9,7 @@ The NBA ML model training system is now fully automated with two key features:
 
 ## Components
 
-### 1. Model Manager (`nba_ml_model_manager.py`)
+### 1. Model Manager (`nba_ml/model_manager.py`)
 
 The Model Manager handles the lifecycle of NBA ML models:
 
@@ -22,7 +22,7 @@ The Model Manager handles the lifecycle of NBA ML models:
 - **Automatic Training**: If models are missing on startup, they are automatically trained
 - **Manual Retraining**: Can be triggered manually for scheduled updates
 
-### 2. Scheduler (`nba_ml_scheduler.py`)
+### 2. Scheduler (`nba_ml/scheduler.py`)
 
 The Scheduler manages the automatic retraining schedule:
 
@@ -86,8 +86,8 @@ backend/nba_ml_data/models/
 
 You can customize the behavior by modifying:
 
-- **Training Time**: Edit the `CronTrigger` in `nba_ml_scheduler.py`
-- **Training Parameters**: Modify epochs in `nba_ml_model_manager.py`
+- **Training Time**: Edit the `CronTrigger` in `nba_ml/scheduler.py`
+- **Training Parameters**: Modify epochs in `nba_ml/model_manager.py`
 - **Data Directory**: Change `data_dir` parameter in initialization functions
 
 ## Manual Operations
@@ -95,7 +95,7 @@ You can customize the behavior by modifying:
 ### Check if Models Exist
 
 ```python
-from nba_ml_model_manager import NBAModelManager
+from nba_ml import NBAModelManager
 
 manager = NBAModelManager()
 if manager.models_exist():
@@ -107,7 +107,7 @@ else:
 ### Manually Train Models
 
 ```python
-from nba_ml_model_manager import NBAModelManager
+from nba_ml import NBAModelManager
 
 manager = NBAModelManager()
 success = manager.train_models(force_retrain=True)
@@ -116,7 +116,7 @@ success = manager.train_models(force_retrain=True)
 ### Check Scheduler Status
 
 ```python
-from nba_ml_scheduler import get_scheduler
+from nba_ml import get_scheduler
 
 scheduler = get_scheduler()
 if scheduler:
@@ -173,14 +173,14 @@ Check the server logs for error messages. Common issues:
 
 Verify the scheduler is active:
 ```python
-from nba_ml_scheduler import get_scheduler
+from nba_ml import get_scheduler
 print(get_scheduler() is not None)
 ```
 
 ### Training Takes Too Long
 
 The training process runs in the background and won't block the server. However, if you need faster training:
-- Reduce epochs in `nba_ml_model_manager.py` (see `train_models()` method)
+- Reduce epochs in `nba_ml/model_manager.py` (see `train_models()` method)
 - Use fewer seasons of data
 - Reduce model complexity in the training pipeline
 
@@ -191,7 +191,7 @@ For production environments:
 1. **First Deployment**: Allow extra time for initial model training
 2. **Environment Variables**: Make training schedule configurable (optional):
    ```python
-   # Example implementation in nba_ml_scheduler.py:
+    # Example implementation in nba_ml/scheduler.py:
    import os
    training_hour = int(os.getenv('NBA_TRAINING_HOUR', '4'))
    training_minute = int(os.getenv('NBA_TRAINING_MINUTE', '0'))
@@ -207,11 +207,11 @@ Test the system with:
 
 ```bash
 # Test model manager (should print model detection status)
-python nba_ml_model_manager.py
+python -m nba_ml.model_manager
 # Expected: Logs showing model check and training initiation if models are missing
 
 # Test scheduler (runs for 60 seconds then stops with Ctrl+C)
-python nba_ml_scheduler.py
+python -m nba_ml.scheduler
 # Expected: Scheduler starts, shows job scheduled for 4am CT, displays next run time
 ```
 

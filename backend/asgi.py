@@ -12,6 +12,8 @@ import threading
 from asgiref.wsgi import WsgiToAsgi
 from app import create_app
 
+ML_DATA_DIR = os.path.join(os.path.dirname(__file__), "nba_ml_data")
+
 # Set up logging
 logging.basicConfig(
     level=logging.INFO,
@@ -31,15 +33,11 @@ def initialize_nba_models():
     try:
         logger.info("Initializing NBA ML models...")
         
-        # Import model manager and scheduler
-        from nba_ml_model_manager import ensure_models_on_startup
-        from nba_ml_scheduler import start_model_retraining_scheduler
-        
-        # Data directory for models
-        data_dir = os.path.join(os.path.dirname(__file__), 'nba_ml_data')
-        
+        # Import model manager and scheduler from package
+        from nba_ml import ensure_models_on_startup, start_model_retraining_scheduler
+
         # Ensure models exist (train if necessary)
-        models_ready = ensure_models_on_startup(data_dir)
+        models_ready = ensure_models_on_startup(ML_DATA_DIR)
         
         if models_ready:
             logger.info("✅ NBA ML models are ready")
@@ -47,10 +45,10 @@ def initialize_nba_models():
             logger.warning("⚠️  NBA ML models initialization had issues, but server will continue")
         
         # Start the scheduler for daily retraining at 4am CT
-        start_model_retraining_scheduler(data_dir)
+        start_model_retraining_scheduler(ML_DATA_DIR)
         
-    except Exception as e:
-        logger.error(f"❌ Error initializing NBA models: {e}")
+    except Exception as exc:
+        logger.error(f"❌ Error initializing NBA models: {exc}")
         logger.error("Server will continue without NBA ML models")
 
 # Run model initialization in a background thread to not block server startup

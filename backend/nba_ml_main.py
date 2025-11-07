@@ -11,12 +11,8 @@ import argparse
 from datetime import datetime
 from typing import Dict, List, Optional
 
-# Add current directory to path for imports
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-
 # Import our custom modules
-from nba_ml_training_pipeline import NBAMLPipeline
-from nba_ml_prediction_service import NBAMLPredictor
+from nba_ml import NBAMLPipeline, NBAMLPredictor
 
 # Set up logging
 logging.basicConfig(
