@@ -171,6 +171,8 @@ export default function MatchCarousel({ selectedLeagues }: { selectedLeagues: st
             const filteredMatches = selectedLeagues.length > 0 ? matchesWithinDays.filter((game) => selectedLeagues.includes(game.league?.toUpperCase() ?? "")) : matchesWithinDays
 
             setUpcomingMatchesToday(filteredMatches)
+            // Reset expanded state when filter changes
+            setExpandedGameId(undefined)
         }
 
         loadAndFilter()
