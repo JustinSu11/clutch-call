@@ -211,20 +211,31 @@ def get_upcoming_games(days: int = 7):
     for offset in range(0, max(days, 1)):
         d = today + timedelta(days=offset)
         ds = d.strftime("%m/%d/%Y")
-        # day_offset parameter is optional; let it default
-        sb = scoreboardv2.ScoreboardV2(game_date=ds).get_normalized_dict()
-        # Linescores and GameHeader contain game info
-        headers = sb.get("GameHeader", [])
-        for h in headers:
-            all_items.append(
-                {
-                    "game_id": h.get("GAME_ID"),
-                    "game_date": ds,
-                    "home_team_id": h.get("HOME_TEAM_ID"),
-                    "visitor_team_id": h.get("VISITOR_TEAM_ID"),
-                    "game_status": h.get("GAME_STATUS_TEXT"),
-                }
-            )
+        try:
+            # day_offset parameter is optional; let it default
+            sb = scoreboardv2.ScoreboardV2(game_date=ds).get_normalized_dict()
+            # Linescores and GameHeader contain game info
+            headers = sb.get("GameHeader", [])
+            for h in headers:
+                all_items.append(
+                    {
+                        "game_id": h.get("GAME_ID"),
+                        "game_date": ds,
+                        "home_team_id": h.get("HOME_TEAM_ID"),
+                        "visitor_team_id": h.get("VISITOR_TEAM_ID"),
+                        "game_status": h.get("GAME_STATUS_TEXT"),
+                    }
+                )
+        except KeyError as e:
+            # Handle case where NBA API response doesn't include expected datasets
+            # (e.g., WinProbability missing when no games on that date)
+            print(f"⚠️ Warning: NBA API response for {ds} missing expected data: {e}")
+            # Continue to next date instead of failing
+            continue
+        except Exception as e:
+            # Handle any other errors from the NBA API
+            print(f"⚠️ Warning: Error fetching NBA games for {ds}: {e}")
+            continue
     return {"data": all_items}
 
 
@@ -232,24 +243,32 @@ def get_today_games():
     """List NBA games for today using ScoreboardV2."""
     today = datetime.utcnow().date()
     ds = today.strftime("%m/%d/%Y")
-    sb = scoreboardv2.ScoreboardV2(game_date=ds).get_normalized_dict()
-    
-    # Get GameHeader data for today's games
-    headers = sb.get("GameHeader", [])
-    items = []
-    for h in headers:
-        items.append(
-            {
-                "game_id": h.get("GAME_ID"),
-                "game_date": ds,
-                "home_team_id": h.get("HOME_TEAM_ID"),
-                "visitor_team_id": h.get("VISITOR_TEAM_ID"),
-                "game_status": h.get("GAME_STATUS_TEXT"),
-                "league": "NBA"
-            }
-        )
-    return {"data": items}
-    return {"data": items}
+    try:
+        sb = scoreboardv2.ScoreboardV2(game_date=ds).get_normalized_dict()
+        
+        # Get GameHeader data for today's games
+        headers = sb.get("GameHeader", [])
+        items = []
+        for h in headers:
+            items.append(
+                {
+                    "game_id": h.get("GAME_ID"),
+                    "game_date": ds,
+                    "home_team_id": h.get("HOME_TEAM_ID"),
+                    "visitor_team_id": h.get("VISITOR_TEAM_ID"),
+                    "game_status": h.get("GAME_STATUS_TEXT"),
+                    "league": "NBA"
+                }
+            )
+        return {"data": items}
+    except KeyError as e:
+        # Handle case where NBA API response doesn't include expected datasets
+        print(f"⚠️ Warning: NBA API response for {ds} missing expected data: {e}")
+        return {"data": []}
+    except Exception as e:
+        # Handle any other errors from the NBA API
+        print(f"⚠️ Warning: Error fetching NBA games for {ds}: {e}")
+        return {"data": []}
 
 
 def get_live_games():
