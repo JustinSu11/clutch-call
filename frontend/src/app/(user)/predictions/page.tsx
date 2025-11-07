@@ -9,7 +9,7 @@
 */
 "use client";
 import React, { useState, useEffect } from 'react';
-import { parseUpcomingNFLGames, parseNFLTeamStats, parseNFLTeamLogo, parseTodayNFLGames, parseNFLGamesFromEvents } from '@/utils/nfl_parser';
+import { parseUpcomingNFLGames, parseNFLTeamStats, parseTodayNFLGames, parseNFLGamesFromEvents } from '@/utils/nfl_parser';
 import { parseUpcomingNBAGames, parseNBATeamStats } from '@/utils/nba_parser';
 import { parseUpcomingMLSGames, parseMLSTeamStats } from '@/utils/mls_parser';
 import { UpcomingGame } from '@/utils/data_class';
@@ -474,8 +474,6 @@ export default function PredictionsScreen() {
             if (sport === 'NFL') {
                 home = await getNFLTeamStats(homeTeam);
                 away = await getNFLTeamStats(awayTeam);
-                homeLogo = await parseNFLTeamLogo(homeTeam);
-                awayLogo = await parseNFLTeamLogo(awayTeam);
             }
             else if (sport === 'MLS') {
                 home = await getMLSTeamStats(homeTeam);

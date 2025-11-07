@@ -99,4 +99,7 @@ Purpose: Landing page for ClutchCall, explaining what it is and its features
         );
         border-radius: inherit;
     }
+
+.scrollbar-hide::-webkit-scrollbar { display: none; }         /* Chrome/Safari/Opera */
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; } /* IE/Edge/Firefox */
 }

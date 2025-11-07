@@ -2,7 +2,11 @@
 /*
     File: frontend/src/utils/nfl_parser.tsx
     Created: 09/30/2025 by CJ Quintero
+<<<<<<< HEAD
+    Last Updated: 11/06/2025 by CJ Quintero
+=======
     Last Updated: 10/13/2025 by Justin Nguyen
+>>>>>>> e61d0a3ad994c2da72dd576eb411a6492fdfa85d
 
     Description: This file contains methods 
     to parse each response from the nfl backend methods provided
@@ -253,7 +257,6 @@ export const parseNFLTeamStats = async (teamName: string) => {
         return `${yyyy}-${mm}-${dd}`;
     })();
 
-    try {
         // await the response from the backend method
         const responseData = await sports_stats_methods.getHistoricalNFLTeamByName(teamName, {
             startDate: `${seasonStartDate}`,              
@@ -311,42 +314,31 @@ export const parseNFLTeamStats = async (teamName: string) => {
             const homeScore = parseInt(event['competitions'][0]['competitors'][0]['score'] || '0');
             const awayScore = parseInt(event['competitions'][0]['competitors'][1]['score'] || '0');
 
-            // determine if the requested team is home or away for this specific game
-            if (homeTeam === teamName) {
-                
-                // if the home team (the requested team) won
-                if (homeScore > awayScore) { wins++; }
-                else if (homeScore < awayScore) { losses++; }
-                else if (homeScore === awayScore) { ties++; } // tie game
-                totalGames++; // Only count if team was identified
-            }
-            else if (awayTeam === teamName) {
-                // if the away team (the requested team) won
-                if (awayScore > homeScore) { wins++; }
-                else if (awayScore < homeScore) { losses++; }
-                else if (awayScore === homeScore) { ties++; } // tie game
-                totalGames++; // Only count if team was identified
-            }
-        });
+        // determine if the requested team is home or away for this specific game
+        if (homeTeam === teamName) {
+            
+            // if the home team (the requested team) won
+            if (homeScore > awayScore) { wins++;}
+            else if (homeScore < awayScore) { losses++; }
+            else if (homeScore === awayScore) { ties++; } // tie game
+        }
+        else if (awayTeam === teamName) {
+            // if the away team (the requested team) won
+            if (awayScore > homeScore) { wins++; }
+            else if (awayScore < homeScore) { losses++; }
+            else if (awayScore === homeScore) { ties++; } // tie game
+        }
 
-        return { wins, losses, ties, totalGames };
-    } catch (error) {
-        console.error(`Error parsing NFL team stats for ${teamName}:`, error);
-        return { wins: 0, losses: 0, ties: 0, totalGames: 0 };
-    }
+        totalGames++;
+    });
+
+    return { wins, losses, ties, totalGames};
 };
-
 
 export const parseNFLTeamLogo = async (teamName: string) => {
     /*
-        parseNFLTeamLogo:
-        This method gets a team's logo and returns the url
-
-        params:
-            teamName: String - the name of the team to get the logo for.
-
-        returns:
-            logoUrl: String - the url of the team's logo
+        parseNFLPreviousGameStats:
+        This method gets a team's score from their previous games this season
     */
 
     // makes the local date in YYYY-MM-DD using the local timezone
@@ -358,53 +350,48 @@ export const parseNFLTeamLogo = async (teamName: string) => {
         return `${yyyy}-${mm}-${dd}`;
     })();
 
-    try {
-        // await the response from the backend method
-        const responseData = await sports_stats_methods.getHistoricalNFLTeamByName(teamName, {
-            startDate: `${seasonStartDate}`,              
-            endDate: `${todaysDateLocal}`,             
-        });
+    // await the response from the backend method
+    const responseData = await sports_stats_methods.getHistoricalNFLTeamByName(teamName, {
+        startDate: `${seasonStartDate}`,              
+        endDate: `${todaysDateLocal}`,             
+    });
 
-        // Check if data exists and has events
-        if (!responseData || !responseData['data'] || !responseData['data']['events'] || responseData['data']['events'].length === 0) {
-            console.warn(`No events found for team: ${teamName}, cannot get logo`);
-            return '';
-        }
+    // parse major header
+    const events = responseData['data']['events'];
 
-        // for the logo url, we just have to check 1 game
-        const gameData = responseData['data']['events'][0];
+    // Filter out upcoming games first
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const pastEvents = events.filter((event: any) => {
+        const eventDate = new Date(event['date']);
+        return eventDate.getTime() < Date.now();
+    });
+
+
+    // array to hold the parsed previous game stats (initialize empty array)
+    const gameStats: number[] = [];
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    pastEvents.forEach((event: any) => {
         
-        // Check if gameData has the expected structure
-        if (!gameData || !gameData['competitions'] || !gameData['competitions'][0] || !gameData['competitions'][0]['competitors']) {
-            console.warn(`Invalid game data structure for team: ${teamName}`);
-            return '';
-        }
-        
-        const competitors = gameData['competitions'][0]['competitors'];
-        if (competitors.length < 2) {
-            console.warn(`Not enough competitors in game data for team: ${teamName}`);
-            return '';
-        }
+        // home team stuff is always ['competitions'][0]['competitors'][0]
+        // away team stuff is always ['competitions'][0]['competitors'][1]
+        const homeTeam = event['competitions'][0]['competitors'][0]['team']['displayName'];
+        const awayTeam = event['competitions'][0]['competitors'][1]['team']['displayName'];
 
-        // the team logo we want varies if the team is home or away
-        // so we have to check both teams for a matching name
-        const team0 = competitors[0]['team']?.displayName;
-        const team1 = competitors[1]['team']?.displayName;
+        const homeScore = parseInt(event['competitions'][0]['competitors'][0]['score']);
+        const awayScore = parseInt(event['competitions'][0]['competitors'][1]['score']);
 
-        // check the first team, then the second for a name match. Else, log the error
-        if (team0 === teamName) {
-            return competitors[0]['team']?.logo || '';
-        } 
-        else if (team1 === teamName) {
-            return competitors[1]['team']?.logo || '';
+        // determine if the requested team is home or away for this specific game
+        if (homeTeam === teamName) {
+            gameStats.push(homeScore);
         }
-        else {
-            console.log(`[ERROR]::Logo for team: ${teamName} could not be found.`);
-            return '';
+        else if (awayTeam === teamName) {
+            gameStats.push(awayScore);
         }
-    } catch (error) {
-        console.error(`Error parsing NFL team logo for ${teamName}:`, error);
-        return '';
-    }
+    });
 
-};
+    return gameStats;
+}
+
+    
+
