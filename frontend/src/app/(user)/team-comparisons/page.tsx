@@ -297,7 +297,7 @@ export default function Page() {
         tooltip: {
             pointFormat: '<span style="color:{series.color}">{series.name}</span>: <b>{point.y:.1f}</b><br/>',
             shared: true,
-            backgroundColor: '#2a2a2a',
+            backgroundColor: 'var(--color-secondary-background)',
             style: { color: 'var(--color-text-primary)' }
         },
         series: [
@@ -357,7 +357,7 @@ export default function Page() {
         },
         tooltip: {
             shared: true,
-            backgroundColor: '#2a2a2a',
+            backgroundColor: 'var(--color-secondary-background)',
             style: {
                 color: 'var(--color-text-primary)'
             }
