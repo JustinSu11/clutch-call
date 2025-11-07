@@ -47,8 +47,7 @@ const TeamDropdown: React.FC<{
     teams: string[];
     selectedTeam: string | null;
     setSelectedTeam: (team: string) => void;
-    label: string;
-}> = ({ teams, selectedTeam, setSelectedTeam, label }) => {
+}> = ({ teams, selectedTeam, setSelectedTeam }) => {
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = React.useRef<HTMLDivElement>(null);
 
@@ -64,10 +63,9 @@ const TeamDropdown: React.FC<{
 
     return (
         <div ref={dropdownRef} className="relative inline-block text-left">
-            <label className="block text-lg font-medium text-text-primary mb-3">{label}</label>
             <button
                 onClick={() => setIsOpen(!isOpen)}
-                className="w-80 px-6 py-4 text-lg font-medium text-text-primary bg-secondary-background rounded-md hover:bg-opacity-80 focus:outline-none flex items-center justify-between"
+                className="w-80 px-6 py-4 text-lg font-medium text-text-primary bg-secondary-background rounded-md hover:bg-opacity-80 focus:outline-none flex items-center justify-between cursor-pointer"
             >
                 <span>{selectedTeam || 'Select a team'}</span>
                 <svg className={`w-5 h-5 transition-transform ${isOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -75,24 +73,29 @@ const TeamDropdown: React.FC<{
                 </svg>
             </button>
 
-            {isOpen && (
-                <div className="absolute mt-2 w-80 rounded-md shadow-lg bg-background border border-gray-700 z-10 max-h-60 overflow-y-auto">
-                    {teams.map((team) => (
-                        <button
-                            key={team}
-                            onClick={() => {
-                                setSelectedTeam(team);
-                                setIsOpen(false);
-                            }}
-                            className={`block w-full text-left px-6 py-3 text-base hover:bg-secondary ${
-                                selectedTeam === team ? 'bg-secondary text-text-primary font-semibold' : 'text-text-primary'
-                            }`}
-                        >
-                            {team}
-                        </button>
-                    ))}
-                </div>
-            )}
+            <div
+                className={[
+                    "absolute mt-2 w-80 rounded-md shadow-lg bg-secondary-background z-10",
+                    "max-h-60 overflow-y-auto scrollbar-hide origin-top",
+                    "transition-[opacity,transform] duration-200 ease-out",
+                    isOpen
+                    ? "opacity-100 pointer-events-auto"
+                    : "opacity-0 pointer-events-none"
+                ].join(" ")}
+                aria-hidden={!isOpen}
+                >
+                {teams.map((team) => (
+                    <button
+                    key={team}
+                    onClick={() => { setSelectedTeam(team); setIsOpen(false); }}
+                    className={`block w-full text-left px-6 py-3 text-base hover:bg-secondary ${
+                        selectedTeam === team ? 'bg-secondary text-text-primary font-semibold' : 'text-text-primary'
+                    }`}
+                    >
+                    {team}
+                    </button>
+                ))}
+            </div>
         </div>
     );
 };
@@ -393,23 +396,28 @@ export default function Page() {
             </div>
             
             <div className="flex justify-between items-center gap-6 mt-6">
-                <TeamDropdown 
-                    teams={teamsData[activeSport]} 
-                    selectedTeam={team1} 
-                    setSelectedTeam={setTeam1} 
-                    label="Team 1"
-                />
+                <div className="flex flex-col flex-1">
+                    <label className="block text-lg font-medium text-text-primary mb-3">Team 1</label>
+                    <TeamDropdown 
+                        teams={teamsData[activeSport]} 
+                        selectedTeam={team1} 
+                        setSelectedTeam={setTeam1} 
+                    />
+                </div>
+                
                 
                 <div className="flex items-center justify-center mt-8">
                     <span className="text-4xl font-bold text-text-primary">VS</span>
                 </div>
-                
-                <TeamDropdown 
-                    teams={teamsData[activeSport]} 
-                    selectedTeam={team2} 
-                    setSelectedTeam={setTeam2} 
-                    label="Team 2"
-                />
+
+                <div className="flex flex-col flex-1 items-end">
+                    <label className="block text-lg font-medium text-text-primary mb-3">Team 2</label>
+                    <TeamDropdown 
+                        teams={teamsData[activeSport]} 
+                        selectedTeam={team2} 
+                        setSelectedTeam={setTeam2} 
+                    />
+                </div>
             </div>
 
             {/* Display stats */}
