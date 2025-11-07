@@ -1,0 +1,33 @@
+{
+  "data_collection": {
+    "seasons_collected": [
+      "2020-21",
+      "2021-22",
+      "2022-23",
+      "2023-24",
+      "2024-25"
+    ],
+    "recent_games_count": 0,
+    "upcoming_games_count": 65,
+    "status": "success"
+  },
+  "preprocessing": {
+    "status": "success",
+    "ml_ready_data_path": "c:\\Users\\mhaque\\Projects\\clutch-call\\backend\\nba_ml_data\\processed\\ml_ready"
+  },
+  "model_training": {
+    "status": "success",
+    "models_trained": [],
+    "models_dir": "c:\\Users\\mhaque\\Projects\\clutch-call\\backend\\nba_ml_data\\models"
+  },
+  "prediction_service": {
+    "status": "success",
+    "service_file": "c:\\Users\\mhaque\\Projects\\clutch-call\\backend\\nba_ml\\prediction_service.py"
+  },
+  "pipeline_summary": {
+    "start_time": "2025-11-07T15:39:03.336398",
+    "end_time": "2025-11-07T15:39:10.023682",
+    "duration_seconds": 6.687284,
+    "status": "completed_successfully"
+  }
+}
