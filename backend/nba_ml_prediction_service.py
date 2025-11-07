@@ -126,18 +126,18 @@ class NBAMLPredictor:
                 
                 logger.info(f"Processing game: home_team_id={home_team_id}, away_team_id={away_team_id}")
                 
-                # Get team stats for both teams
+                # Get features for HOME team only (matches training format)
+                # During training, the model learns: given a team's stats and IS_HOME flag, predict if they win
+                # So we predict from the home team's perspective with IS_HOME=1
                 home_stats = self.get_team_features(home_team_id, current_team_stats, recent_games, is_home=True)
-                away_stats = self.get_team_features(away_team_id, current_team_stats, recent_games, is_home=False)
                 
-                # Combine features
+                # Create feature row for home team (matching training format exactly)
                 game_feature = {
                     'game_id': game.get('game_id', 'unknown'),
                     'game_date': game.get('game_date', ''),
                     'home_team_id': home_team_id,
                     'away_team_id': away_team_id,
-                    **home_stats,
-                    **{f"OPP_{k}": v for k, v in away_stats.items() if k.startswith('TEAM_')}
+                    **home_stats  # Only home team features, IS_HOME=1
                 }
                 
                 game_features.append(game_feature)
