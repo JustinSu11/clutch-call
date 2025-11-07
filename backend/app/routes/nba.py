@@ -34,6 +34,12 @@ from ..services.nba_service import (
 try:
     from nba_ml_prediction_service import NBAMLPredictor
     from nba_ml_training_pipeline import NBAMLPipeline
+    from nba_ml_training_state import (
+        get_training_status,
+        mark_training_complete,
+        mark_training_failed,
+        mark_training_start,
+    )
     ML_AVAILABLE = True
 except ImportError as e:
     logging.warning(f"NBA ML components not available: {e}")
@@ -133,6 +139,8 @@ def nba_ml_status():
         predictor = NBAMLPredictor()
         cache_stats = predictor.cache.get_cache_stats()
         
+        training_status = get_training_status() if ML_AVAILABLE else {}
+
         return jsonify({
             "status": "available" if models_exist else "models_not_found",
             "message": "NBA ML system is ready" if models_exist else "Models need to be trained",
@@ -140,13 +148,16 @@ def nba_ml_status():
             "models_trained": models_exist,
             "models_path": models_path,
             "cache_stats": cache_stats,
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
+            "training_status": training_status
         })
     except Exception as e:
+        training_status = get_training_status() if ML_AVAILABLE else {}
         return jsonify({
             "status": "error",
             "message": f"Error checking ML system status: {str(e)}",
-            "ml_available": False
+            "ml_available": False,
+            "training_status": training_status
         }), 500
 
 
@@ -328,15 +339,27 @@ def nba_train_models():
     if not ML_AVAILABLE:
         return jsonify({"error": "NBA ML system is not available"}), 503
     
+    request_data = {}
+    seasons = ['2023-24']
+    models_path = os.path.join(backend_path, 'nba_ml_data', 'models')
+    models_exist = False
+
     try:
         request_data = request.get_json() or {}
         seasons = request_data.get('seasons', ['2023-24'])  # Default to most recent season
         force_retrain = request_data.get('force_retrain', False)
         
         # Check if models already exist
-        models_path = os.path.join(backend_path, 'nba_ml_data', 'models')
         models_exist = os.path.exists(models_path) and len(os.listdir(models_path)) > 0
         
+        # Guard against overlapping training runs
+        current_training_status = get_training_status()
+        if current_training_status.get('is_training'):
+            return jsonify({
+                "error": "A training job is already running",
+                "training_status": current_training_status
+            }), 409
+
         if models_exist and not force_retrain:
             return jsonify({
                 "message": "Models already exist. Use force_retrain=true to retrain.",
@@ -349,6 +372,11 @@ def nba_train_models():
         
         # Start training (this might take a while)
         training_start = datetime.now()
+
+        mark_training_start({
+            "requested_seasons": list(seasons),
+            "models_path": models_path,
+        })
         
         # Execute training pipeline
         results = pipeline.run_full_pipeline()
@@ -363,24 +391,47 @@ def nba_train_models():
         )
 
         if status:
+            training_status = mark_training_complete({
+                "training_duration_seconds": round(training_duration, 2),
+                "requested_seasons": list(seasons),
+                "models_path": models_path,
+            })
             return jsonify({
                 "message": "NBA ML models trained successfully",
                 "training_start": training_start.isoformat(),
                 "training_end": training_end.isoformat(),
                 "training_duration_seconds": round(training_duration, 2),
                 "models_path": models_path,
-                "seasons_trained": seasons
+                "seasons_trained": seasons,
+                "training_status": training_status
             })
         else:
+            training_status = mark_training_failed(
+                "Pipeline did not complete successfully",
+                {
+                    "training_duration_seconds": round(training_duration, 2),
+                    "requested_seasons": list(seasons),
+                    "models_path": models_path,
+                }
+            )
             return jsonify({
                 "error": "Model training failed. Check logs for details.",
-                "training_duration_seconds": round(training_duration, 2)
+                "training_duration_seconds": round(training_duration, 2),
+                "training_status": training_status
             }), 500
             
     except Exception as e:
+        training_metadata = {
+            "requested_seasons": list(seasons),
+            "models_path": models_path,
+        }
+
+        training_status = mark_training_failed(str(e), training_metadata) if ML_AVAILABLE else {}
+
         return jsonify({
             "error": f"Error during model training: {str(e)}",
-            "message": "Check server logs for detailed error information"
+            "message": "Check server logs for detailed error information",
+            "training_status": training_status
         }), 500
 
 

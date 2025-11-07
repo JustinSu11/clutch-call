@@ -12,7 +12,7 @@ import { parseUpcomingNFLGames, parseNFLTeamStats } from '@/utils/nfl_parser';
 import { parseNBATeamStats } from '@/utils/nba_parser';
 import { parseUpcomingMLSGames, parseMLSTeamStats } from '@/utils/mls_parser';
 import MatchDialog, { TeamStats } from '@/components/DashboardComponents/Dialog';
-import { getNBAGamePredictions } from '@/backend_methods/nba_methods';
+import { getNBAGamePredictions, getNBAMLStatus } from '@/backend_methods/nba_methods';
 import type { GamePrediction } from '@/utils/nba_prediction_parser';
 import { getNBATeamName } from '@/utils/nba_team_mapping';
 
@@ -27,6 +27,16 @@ type Prediction = {
     confidence: number;     // a number between 0 and 100 showing how confident the AI prediction is
     sport: SportKey;        // the sport this prediction belongs to used for filtering (NFL, NBA, MLS)
     meta?: Record<string, unknown>;
+};
+
+type NBATrainingStatus = {
+    is_training: boolean;
+    started_at?: string;
+    completed_at?: string;
+    last_success?: boolean | null;
+    last_message?: string | null;
+    last_error?: string | null;
+    requested_seasons?: string[];
 };
 
 const buildNFLPredictions = async (): Promise<Prediction[]> => {
@@ -101,6 +111,17 @@ const normalizeConfidence = (value?: number | null): number => {
     }
     const percent = Math.round(value * 100);
     return Math.min(100, Math.max(0, percent));
+};
+
+const formatTimestamp = (iso?: string | null): string | null => {
+    if (!iso) {
+        return null;
+    }
+    const parsed = new Date(iso);
+    if (Number.isNaN(parsed.getTime())) {
+        return null;
+    }
+    return parsed.toLocaleString();
 };
 
 const buildNBAPredictions = async (): Promise<Prediction[]> => {
@@ -379,6 +400,7 @@ export default function PredictionsScreen() {
     const [selectedAway, setSelectedAway] = useState<string | undefined>(undefined);
     const [homeStats, setHomeStats] = useState<TeamStats | null>(null);
     const [awayStats, setAwayStats] = useState<TeamStats | null>(null);
+    const [nbaTrainingStatus, setNbaTrainingStatus] = useState<NBATrainingStatus | null>(null);
 
     const openMatchDialog = async (homeTeam: string, awayTeam: string, sport: SportKey) => {
         setSelectedHome(homeTeam);
@@ -437,9 +459,40 @@ export default function PredictionsScreen() {
             .finally(() => setLoading(false));
     }, []);
 
+    useEffect(() => {
+        let isMounted = true;
+
+        const loadStatus = async () => {
+            try {
+                const statusResponse = await getNBAMLStatus();
+                if (!isMounted) {
+                    return;
+                }
+                const trainingData = statusResponse?.training_status as NBATrainingStatus | undefined;
+                setNbaTrainingStatus(trainingData ?? null);
+            } catch {
+                if (isMounted) {
+                    setNbaTrainingStatus(null);
+                }
+            }
+        };
+
+        loadStatus();
+        const intervalId = window.setInterval(loadStatus, 10000);
+
+        return () => {
+            isMounted = false;
+            window.clearInterval(intervalId);
+        };
+    }, []);
+
     const filteredPredictions = activeSport === 'All Sports'
         ? predictions
         : predictions.filter(p => p.sport === activeSport);
+
+    const isNBATraining = nbaTrainingStatus?.is_training === true;
+    const trainingStarted = formatTimestamp(nbaTrainingStatus?.started_at);
+    const trainingMessage = nbaTrainingStatus?.last_message ?? 'NBA models are currently retraining.';
 
     return (
         <div className="overflow-x-auto">
@@ -451,6 +504,16 @@ export default function PredictionsScreen() {
                     <h2 className="text-3xl font-bold text-text-primary mb-4">Predictions</h2>
                     <p className="text-text-primary mb-4">AI-powered predictions for upcoming sports matches.</p>
                 </div>
+                {isNBATraining && (
+                    <div className="mb-6 rounded-md border border-yellow-400 bg-yellow-50 px-4 py-3 text-sm text-yellow-900">
+                        {trainingMessage}
+                        {trainingStarted && (
+                            <span className="mt-1 block text-xs text-yellow-800">
+                                Started: {trainingStarted}
+                            </span>
+                        )}
+                    </div>
+                )}
                 <SportsFilter sports={sports} activeSport={activeSport} setActiveSport={setActiveSport} />
                 <div className="rounded-lg overflow-hidden">
                     <div className="overflow-x-hidden">
