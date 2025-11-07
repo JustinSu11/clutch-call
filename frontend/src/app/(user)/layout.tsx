@@ -11,7 +11,7 @@
 
 import { cookies } from 'next/headers'
 import type { Metadata } from 'next'
-import Sidebar from '@/components/DashboardComponents/MainDashboardComponents/Sidebar'
+import Sidebar from '@/components/DashboardComponents/Sidebar'
 
 export const metadata: Metadata = {
   title: 'ClutchCall - Dashboard',
@@ -25,8 +25,6 @@ export async function DashboardLayout({
   children: React.ReactNode
 }) {
     //These two variables below allow the sidebar open/close state to persist across page reloads
-    const cookieStore = await cookies()
-    const defaultOpen = cookieStore.get("sidebar_state")?.value === "true"
     return (
         <div className="flex size-full min-h-screen flex-col group/design-root">
             <div className="flex h-full grow">
