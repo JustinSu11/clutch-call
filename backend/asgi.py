@@ -12,7 +12,9 @@ import threading
 from asgiref.wsgi import WsgiToAsgi
 from app import create_app
 
-ML_DATA_DIR = os.path.join(os.path.dirname(__file__), "nba_ml_data")
+BACKEND_ROOT = os.path.dirname(__file__)
+PROJECT_ROOT = os.path.abspath(os.path.join(BACKEND_ROOT, ".."))
+ML_DATA_DIR = os.path.join(PROJECT_ROOT, "nba_ml_data")
 
 # Set up logging
 logging.basicConfig(

@@ -17,7 +17,8 @@ logger = logging.getLogger(__name__)
 
 # Common backend paths used throughout this module
 BACKEND_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-ML_DATA_DIR = os.path.join(BACKEND_ROOT, "nba_ml_data")
+PROJECT_ROOT = os.path.abspath(os.path.join(BACKEND_ROOT, ".."))
+ML_DATA_DIR = os.path.join(PROJECT_ROOT, "nba_ml_data")
 MODELS_PATH = os.path.join(ML_DATA_DIR, "models")
 
 from ..services.nba_service import (

@@ -12,7 +12,8 @@ from datetime import datetime
 from typing import Any, Dict
 
 BACKEND_ROOT = os.path.dirname(os.path.dirname(__file__))
-STATUS_FILE = os.path.join(BACKEND_ROOT, "nba_ml_data", "models", "training_status.json")
+PROJECT_ROOT = os.path.abspath(os.path.join(BACKEND_ROOT, ".."))
+STATUS_FILE = os.path.join(PROJECT_ROOT, "nba_ml_data", "models", "training_status.json")
 _LOCK = threading.Lock()
 
 

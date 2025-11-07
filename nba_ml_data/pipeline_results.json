@@ -27,9 +27,9 @@
     "service_file": "c:\\Users\\mhaque\\Projects\\clutch-call\\backend\\nba_ml\\prediction_service.py"
   },
   "pipeline_summary": {
-    "start_time": "2025-11-07T15:40:16.373810",
-    "end_time": "2025-11-07T15:40:47.447752",
-    "duration_seconds": 31.073942,
+    "start_time": "2025-11-07T15:45:29.077929",
+    "end_time": "2025-11-07T15:46:01.012830",
+    "duration_seconds": 31.934901,
     "status": "completed_successfully"
   }
 }
