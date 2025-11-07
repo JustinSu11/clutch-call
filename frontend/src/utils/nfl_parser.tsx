@@ -1,7 +1,7 @@
 /*
     File: frontend/src/utils/nfl_parser.tsx
     Created: 09/30/2025 by CJ Quintero
-    Last Updated: 10/08/2025 by CJ Quintero
+    Last Updated: 11/06/2025 by CJ Quintero
 
     Description: This file contains methods 
     to parse each response from the nfl backend methods provided
@@ -149,4 +149,64 @@ export const parseNFLTeamStats = async (teamName: string) => {
 
     return { wins, losses, ties, totalGames};
 };
+
+export const parseNFLPreviousGameStats = async (teamName: string) => {
+    /*
+        parseNFLPreviousGameStats:
+        This method gets a team's score from their previous games this season
+    */
+
+    // makes the local date in YYYY-MM-DD using the local timezone
+    const todaysDateLocal = (() => {
+        const d = new Date();
+        const yyyy = d.getFullYear();
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const dd = String(d.getDate()).padStart(2, '0');
+        return `${yyyy}-${mm}-${dd}`;
+    })();
+
+    // await the response from the backend method
+    const responseData = await sports_stats_methods.getHistoricalNFLTeamByName(teamName, {
+        startDate: `${seasonStartDate}`,              
+        endDate: `${todaysDateLocal}`,             
+    });
+
+    // parse major header
+    const events = responseData['data']['events'];
+
+    // Filter out upcoming games first
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const pastEvents = events.filter((event: any) => {
+        const eventDate = new Date(event['date']);
+        return eventDate.getTime() < Date.now();
+    });
+
+
+    // array to hold the parsed previous game stats (initialize empty array)
+    const gameStats: number[] = [];
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    pastEvents.forEach((event: any) => {
+        
+        // home team stuff is always ['competitions'][0]['competitors'][0]
+        // away team stuff is always ['competitions'][0]['competitors'][1]
+        const homeTeam = event['competitions'][0]['competitors'][0]['team']['displayName'];
+        const awayTeam = event['competitions'][0]['competitors'][1]['team']['displayName'];
+
+        const homeScore = parseInt(event['competitions'][0]['competitors'][0]['score']);
+        const awayScore = parseInt(event['competitions'][0]['competitors'][1]['score']);
+
+        // determine if the requested team is home or away for this specific game
+        if (homeTeam === teamName) {
+            gameStats.push(homeScore);
+        }
+        else if (awayTeam === teamName) {
+            gameStats.push(awayScore);
+        }
+    });
+
+    return gameStats;
+}
+
+    
 
