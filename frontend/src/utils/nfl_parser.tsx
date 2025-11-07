@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /*
     File: frontend/src/utils/nfl_parser.tsx
     Created: 09/30/2025 by CJ Quintero
