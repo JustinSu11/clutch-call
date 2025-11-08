@@ -197,7 +197,8 @@ export const parseUpcomingNFLGames = async (): Promise<UpcomingGame[]> => {
             awayTeam,
             gameDate: gameDate,
             dateAndTime: dateAndTime ? new Date(dateAndTime) : new Date(),
-            league: "NFL"
+            league: "NFL",
+            gameId: event.id // Add the event ID so live game status can match it
         };
     }).filter((game: UpcomingGame | null): game is UpcomingGame => game !== null);
 
@@ -335,7 +336,7 @@ export const parseNFLTeamStats = async (teamName: string) => {
     return { wins, losses, ties, totalGames};
 };
 
-export const parseNFLTeamLogo = async (teamName: string) => {
+export const parseNFLPreviousGameStats = async (teamName: string) => {
     /*
         parseNFLPreviousGameStats:
         This method gets a team's score from their previous games this season

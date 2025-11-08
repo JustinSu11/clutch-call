@@ -131,7 +131,13 @@ export const makeBackendRequest = async (method: 'GET' | 'POST', relativeRoute: 
                 console.warn('Could not parse error response body');
             }
             
-            console.error('API Error:', JSON.stringify(errorData, null, 2));
+            // Don't log 404 errors for live endpoints - they're expected when no games are live
+            const isLiveEndpoint = relativeRoute.includes('/live/');
+            const is404 = response?.status === 404;
+            if (!isLiveEndpoint || !is404) {
+                console.error('API Error:', JSON.stringify(errorData, null, 2));
+            }
+            
             // Throw an error object with details
             throw new Error(JSON.stringify(errorData)); 
         }

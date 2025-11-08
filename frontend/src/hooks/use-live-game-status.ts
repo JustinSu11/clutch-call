@@ -282,6 +282,9 @@ export const useLiveGameStatus = (gameId: string | undefined, league: string) =>
             return;
         }
 
+        // Reset to UPCOMING state when gameId/league changes
+        setLiveData({ status: 'UPCOMING' });
+
         // Check if this is a mock game ID and return mock data
         const isDevelopment = process.env.NODE_ENV === 'development';
         if (isDevelopment && gameId?.startsWith('mock-live-')) {
@@ -306,15 +309,28 @@ export const useLiveGameStatus = (gameId: string | undefined, league: string) =>
                 }
 
                 // Find the specific game in the response
-                const events = response?.events || [];
+                // MLS returns 'matches' while NBA/NFL return 'events'
+                const events = league === 'MLS' ? (response?.matches || []) : (response?.events || []);
                 const gameData = events.find((event: any) => event.id === gameId);
                 
                 if (gameData) {
                     const parsedData = parseLiveGameData(gameData, league);
                     setLiveData(parsedData);
+                } else {
+                    // Game not found in live games response, so it's not live
+                    setLiveData({ status: 'UPCOMING' });
                 }
             } catch (error) {
-                console.error('Error fetching live game data:', error);
+                // 404 errors are expected when there are no live games - just set status to UPCOMING
+                const errorMessage = error instanceof Error ? error.message : String(error);
+                if (errorMessage.includes('404')) {
+                    // Silently handle 404 - no live games available
+                    setLiveData({ status: 'UPCOMING' });
+                } else {
+                    // Log other errors
+                    console.error('Error fetching live game data:', error);
+                    setLiveData({ status: 'UPCOMING' });
+                }
             } finally {
                 setIsLoading(false);
             }

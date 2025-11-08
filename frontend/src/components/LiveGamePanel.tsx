@@ -105,7 +105,7 @@ export default function LiveGamePanel({
                                                 {category.label}
                                             </div>
                                             <div className="flex items-start justify-between gap-8">
-                                                {/* Home Leader - Photo Left, Stats Right (Inside) */}
+                                                {/* Away Leader - Photo Left, Stats Right (Inside) */}
                                                 <div className="flex items-start gap-4 flex-1">
                                                     <div className="flex-shrink-0">
                                                         {awayLeader?.photo ? (
@@ -149,7 +149,7 @@ export default function LiveGamePanel({
                                                     </div>
                                                 </div>
 
-                                                {/* Away Leader - Photo Right, Stats Left (Inside) */}
+                                                {/* Home Leader - Photo Right, Stats Left (Inside) */}
                                                 <div className="flex items-start gap-4 flex-1 flex-row-reverse">
                                                     <div className="flex-shrink-0">
                                                         {homeLeader?.photo ? (
