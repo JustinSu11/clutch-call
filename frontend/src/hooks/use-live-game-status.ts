@@ -321,7 +321,16 @@ export const useLiveGameStatus = (gameId: string | undefined, league: string) =>
                     setLiveData({ status: 'UPCOMING' });
                 }
             } catch (error) {
-                console.error('Error fetching live game data:', error);
+                // 404 errors are expected when there are no live games - just set status to UPCOMING
+                const errorMessage = error instanceof Error ? error.message : String(error);
+                if (errorMessage.includes('404')) {
+                    // Silently handle 404 - no live games available
+                    setLiveData({ status: 'UPCOMING' });
+                } else {
+                    // Log other errors
+                    console.error('Error fetching live game data:', error);
+                    setLiveData({ status: 'UPCOMING' });
+                }
             } finally {
                 setIsLoading(false);
             }
