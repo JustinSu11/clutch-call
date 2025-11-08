@@ -26,7 +26,7 @@ import {
     getSoccerMatches,
     getSpecificSoccerMatchDetails,
     getSpecificSoccerMatchBoxscore,
-    getUpcomingSoccerMatches
+    getEPLUpcomingMatches
 } from '@/backend_methods/soccer_methods';
 import {
     getTodayAllGames,
@@ -50,7 +50,21 @@ import {
     getDashboardData,
     type HistoricalGameFilters,
     type StatisticalTrendsFilters,
-    getStatisticalTrends
+    getStatisticalTrends,
+    // New Historical Methods
+    getHistoricalNBAAllTeams,
+    getHistoricalNFLAllTeams,
+    getHistoricalSoccerAllTeams,
+    getHistoricalNBATeamByName,
+    getHistoricalNFLTeamByName,
+    getHistoricalSoccerTeamByName,
+    getHistoricalNBASeason,
+    getHistoricalNFLSeason,
+    getHistoricalSoccerSeason,
+    getNBATeamStats,
+    getNFLTeamStats,
+    getSoccerTeamStats,
+    getHistoricalDashboardData
 } from '@/backend_methods/sports_stats_methods';
 
 interface TestResult {
@@ -79,7 +93,13 @@ export default function TestingPage() {
         league: '',
         page: '1',
         perPage: '25',
-        betType: 'all'
+        betType: 'all',
+        // New inputs for historical methods
+        nbaTeamName: '',
+        nflTeamName: '',
+        soccerTeamName: '',
+        historicalSeason: '',
+        statType: 'all'
     });
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const addResult = (method: string, success: boolean, data?: any, error?: string) => {
@@ -284,11 +304,11 @@ export default function TestingPage() {
                             {loading === 'getSoccerMatches' ? 'Loading...' : 'Get Soccer Matches'}
                         </button>
                         <button
-                            onClick={() => handleTest('getUpcomingSoccerMatches', getUpcomingSoccerMatches)}
-                            disabled={loading === 'getUpcomingSoccerMatches'}
+                            onClick={() => handleTest('getEPLUpcomingMatches', getEPLUpcomingMatches)}
+                            disabled={loading === 'getEPLUpcomingMatches'}
                             className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:bg-emerald-400 transition-colors"
                         >
-                            {loading === 'getUpcomingSoccerMatches' ? 'Loading...' : 'Get Upcoming Soccer Matches'}
+                            {loading === 'getEPLUpcomingMatches' ? 'Loading...' : 'Get EPL Upcoming Matches'}
                         </button>
                     </div>
 
@@ -653,6 +673,265 @@ export default function TestingPage() {
                             >
                                 {loading === 'getDashboardData' ? 'Loading...' : 'Dashboard Data'}
                             </button>
+                            <button
+                                onClick={() => handleTest('getHistoricalDashboardData', getHistoricalDashboardData)}
+                                disabled={loading === 'getHistoricalDashboardData'}
+                                className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:bg-purple-400 transition-colors"
+                            >
+                                {loading === 'getHistoricalDashboardData' ? 'Loading...' : 'Historical Dashboard'}
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* New Historical Data Testing Section */}
+                    <div className="mb-8">
+                        <h3 className="text-lg font-semibold text-gray-800 mb-4">Enhanced Historical Data Testing</h3>
+                        
+                        {/* Team Name Inputs */}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">NBA Team Name</label>
+                                <input
+                                    type="text"
+                                    value={inputs.nbaTeamName}
+                                    onChange={(e) => setInputs(prev => ({ ...prev, nbaTeamName: e.target.value }))}
+                                    placeholder="e.g., 'Los Angeles Lakers', 'lakers'"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">NFL Team Name</label>
+                                <input
+                                    type="text"
+                                    value={inputs.nflTeamName}
+                                    onChange={(e) => setInputs(prev => ({ ...prev, nflTeamName: e.target.value }))}
+                                    placeholder="e.g., 'Kansas City Chiefs', 'chiefs'"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Soccer Team Name</label>
+                                <input
+                                    type="text"
+                                    value={inputs.soccerTeamName}
+                                    onChange={(e) => setInputs(prev => ({ ...prev, soccerTeamName: e.target.value }))}
+                                    placeholder="e.g., 'Inter Miami', 'LAFC'"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                />
+                            </div>
+                        </div>
+
+                        {/* Additional Historical Inputs */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Historical Season</label>
+                                <input
+                                    type="text"
+                                    value={inputs.historicalSeason}
+                                    onChange={(e) => setInputs(prev => ({ ...prev, historicalSeason: e.target.value }))}
+                                    placeholder="e.g., '2023-24' for NBA, '2023' for NFL/Soccer"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Team Stats Type</label>
+                                <select
+                                    value={inputs.statType}
+                                    onChange={(e) => setInputs(prev => ({ ...prev, statType: e.target.value }))}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                >
+                                    <option value="all">All Stats</option>
+                                    <option value="wins">Wins</option>
+                                    <option value="losses">Losses</option>
+                                    <option value="scoring">Scoring</option>
+                                    <option value="defensive">Defensive</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        {/* All Teams Historical Data */}
+                        <div className="mb-6">
+                            <h4 className="text-md font-medium text-gray-700 mb-3">All Teams Historical Data</h4>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <button
+                                    onClick={() => handleTest('getHistoricalNBAAllTeams', () => {
+                                        const season = inputs.historicalSeason || undefined;
+                                        return getHistoricalNBAAllTeams(season);
+                                    })}
+                                    disabled={loading === 'getHistoricalNBAAllTeams'}
+                                    className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:bg-indigo-400 transition-colors"
+                                >
+                                    {loading === 'getHistoricalNBAAllTeams' ? 'Loading...' : 'NBA All Teams Historical'}
+                                </button>
+                                <button
+                                    onClick={() => handleTest('getHistoricalNFLAllTeams', () => {
+                                        const season = inputs.historicalSeason || undefined;
+                                        return getHistoricalNFLAllTeams(season);
+                                    })}
+                                    disabled={loading === 'getHistoricalNFLAllTeams'}
+                                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-green-400 transition-colors"
+                                >
+                                    {loading === 'getHistoricalNFLAllTeams' ? 'Loading...' : 'NFL All Teams Historical'}
+                                </button>
+                                <button
+                                    onClick={() => handleTest('getHistoricalSoccerAllTeams', () => {
+                                        const leagues = [inputs.soccerLeague];
+                                        return getHistoricalSoccerAllTeams(leagues);
+                                    })}
+                                    disabled={loading === 'getHistoricalSoccerAllTeams'}
+                                    className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:bg-emerald-400 transition-colors"
+                                >
+                                    {loading === 'getHistoricalSoccerAllTeams' ? 'Loading...' : 'Soccer All Teams Historical'}
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Team by Name Historical Data */}
+                        <div className="mb-6">
+                            <h4 className="text-md font-medium text-gray-700 mb-3">Team by Name Historical Data</h4>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <button
+                                    onClick={() => handleTestWithParam('getHistoricalNBATeamByName', (teamName: string) => {
+                                        const options = {
+                                            season: inputs.historicalSeason || undefined,
+                                            startDate: inputs.startDate || undefined,
+                                            endDate: inputs.endDate || undefined
+                                        };
+                                        return getHistoricalNBATeamByName(teamName, options);
+                                    }, inputs.nbaTeamName, 'NBA Team Name')}
+                                    disabled={loading === 'getHistoricalNBATeamByName'}
+                                    className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:bg-indigo-400 transition-colors"
+                                >
+                                    {loading === 'getHistoricalNBATeamByName' ? 'Loading...' : 'NBA Team by Name'}
+                                </button>
+                                <button
+                                    onClick={() => handleTestWithParam('getHistoricalNFLTeamByName', (teamName: string) => {
+                                        const options = {
+                                            season: inputs.historicalSeason || undefined,
+                                            startDate: inputs.startDate || undefined,
+                                            endDate: inputs.endDate || undefined
+                                        };
+                                        return getHistoricalNFLTeamByName(teamName, options);
+                                    }, inputs.nflTeamName, 'NFL Team Name')}
+                                    disabled={loading === 'getHistoricalNFLTeamByName'}
+                                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-green-400 transition-colors"
+                                >
+                                    {loading === 'getHistoricalNFLTeamByName' ? 'Loading...' : 'NFL Team by Name'}
+                                </button>
+                                <button
+                                    onClick={() => handleTestWithParam('getHistoricalSoccerTeamByName', (teamName: string) => {
+                                        const options = {
+                                            leagues: [inputs.soccerLeague],
+                                            startDate: inputs.startDate || undefined,
+                                            endDate: inputs.endDate || undefined
+                                        };
+                                        return getHistoricalSoccerTeamByName(teamName, options);
+                                    }, inputs.soccerTeamName, 'Soccer Team Name')}
+                                    disabled={loading === 'getHistoricalSoccerTeamByName'}
+                                    className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:bg-emerald-400 transition-colors"
+                                >
+                                    {loading === 'getHistoricalSoccerTeamByName' ? 'Loading...' : 'Soccer Team by Name'}
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Season Historical Data */}
+                        <div className="mb-6">
+                            <h4 className="text-md font-medium text-gray-700 mb-3">Season Historical Data</h4>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <button
+                                    onClick={() => handleTestWithParam('getHistoricalNBASeason', (season: string) => {
+                                        const options = {
+                                            teamName: inputs.nbaTeamName || undefined,
+                                            startDate: inputs.startDate || undefined,
+                                            endDate: inputs.endDate || undefined
+                                        };
+                                        return getHistoricalNBASeason(season, options);
+                                    }, inputs.historicalSeason, 'Historical Season')}
+                                    disabled={loading === 'getHistoricalNBASeason'}
+                                    className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:bg-indigo-400 transition-colors"
+                                >
+                                    {loading === 'getHistoricalNBASeason' ? 'Loading...' : 'NBA Season Data'}
+                                </button>
+                                <button
+                                    onClick={() => handleTestWithParam('getHistoricalNFLSeason', (season: string) => {
+                                        const options = {
+                                            teamName: inputs.nflTeamName || undefined,
+                                            startDate: inputs.startDate || undefined,
+                                            endDate: inputs.endDate || undefined
+                                        };
+                                        return getHistoricalNFLSeason(season, options);
+                                    }, inputs.historicalSeason, 'Historical Season')}
+                                    disabled={loading === 'getHistoricalNFLSeason'}
+                                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-green-400 transition-colors"
+                                >
+                                    {loading === 'getHistoricalNFLSeason' ? 'Loading...' : 'NFL Season Data'}
+                                </button>
+                                <button
+                                    onClick={() => handleTestWithParam('getHistoricalSoccerSeason', (season: string) => {
+                                        const options = {
+                                            teamName: inputs.soccerTeamName || undefined,
+                                            leagues: [inputs.soccerLeague],
+                                            startDate: inputs.startDate || undefined,
+                                            endDate: inputs.endDate || undefined
+                                        };
+                                        return getHistoricalSoccerSeason(season, options);
+                                    }, inputs.historicalSeason, 'Historical Season')}
+                                    disabled={loading === 'getHistoricalSoccerSeason'}
+                                    className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:bg-emerald-400 transition-colors"
+                                >
+                                    {loading === 'getHistoricalSoccerSeason' ? 'Loading...' : 'Soccer Season Data'}
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Team Stats */}
+                        <div className="mb-6">
+                            <h4 className="text-md font-medium text-gray-700 mb-3">Team Performance Stats</h4>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <button
+                                    onClick={() => handleTest('getNBATeamStats', () => {
+                                        const options = {
+                                            teamName: inputs.nbaTeamName || undefined,
+                                            season: inputs.historicalSeason || undefined,
+                                            statType: inputs.statType
+                                        };
+                                        return getNBATeamStats(options);
+                                    })}
+                                    disabled={loading === 'getNBATeamStats'}
+                                    className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:bg-indigo-400 transition-colors"
+                                >
+                                    {loading === 'getNBATeamStats' ? 'Loading...' : 'NBA Team Stats'}
+                                </button>
+                                <button
+                                    onClick={() => handleTest('getNFLTeamStats', () => {
+                                        const options = {
+                                            teamName: inputs.nflTeamName || undefined,
+                                            season: inputs.historicalSeason || undefined,
+                                            statType: inputs.statType
+                                        };
+                                        return getNFLTeamStats(options);
+                                    })}
+                                    disabled={loading === 'getNFLTeamStats'}
+                                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-green-400 transition-colors"
+                                >
+                                    {loading === 'getNFLTeamStats' ? 'Loading...' : 'NFL Team Stats'}
+                                </button>
+                                <button
+                                    onClick={() => handleTest('getSoccerTeamStats', () => {
+                                        const options = {
+                                            teamName: inputs.soccerTeamName || undefined,
+                                            leagues: [inputs.soccerLeague],
+                                            statType: inputs.statType
+                                        };
+                                        return getSoccerTeamStats(options);
+                                    })}
+                                    disabled={loading === 'getSoccerTeamStats'}
+                                    className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:bg-emerald-400 transition-colors"
+                                >
+                                    {loading === 'getSoccerTeamStats' ? 'Loading...' : 'Soccer Team Stats'}
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
