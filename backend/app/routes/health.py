@@ -6,14 +6,22 @@ Purpose: Defines a minimal health-check endpoint to verify the backend is reacha
          and basic sanity checks during development.
 """
 
-from flask import Blueprint
+from flask import Blueprint, jsonify, request, make_response 
+# --- END CHANGE ---
 
-# Create a blueprint for health endpoints. This blueprint is mounted under the
-# global API prefix (e.g., /api/v1/health) by the application factory.
 bp = Blueprint("health", __name__)
 
-
-@bp.get("/health")
-def health():
-    """Return a simple JSON payload indicating service health."""
-    return {"status": "healthy"}
+@bp.route("/", methods=["GET", "OPTIONS"], strict_slashes=False) 
+def health_check():
+    # Handle OPTIONS explicitly
+    if request.method == 'OPTIONS': 
+        response = make_response()
+        # Add CORS headers
+        response.headers.add("Access-Control-Allow-Origin", "http://localhost:3000")
+        response.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+        response.headers.add("Access-Control-Allow-Methods", "GET, OPTIONS")
+        response.headers.add("Access-Control-Allow-Credentials", "true")
+        return response
+        
+    # Handle GET request
+    return jsonify({"status": "healthy"})
