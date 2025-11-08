@@ -306,7 +306,8 @@ export const useLiveGameStatus = (gameId: string | undefined, league: string) =>
                 }
 
                 // Find the specific game in the response
-                const events = response?.events || [];
+                // MLS returns 'matches' while NBA/NFL return 'events'
+                const events = league === 'MLS' ? (response?.matches || []) : (response?.events || []);
                 const gameData = events.find((event: any) => event.id === gameId);
                 
                 if (gameData) {
