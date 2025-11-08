@@ -282,6 +282,9 @@ export const useLiveGameStatus = (gameId: string | undefined, league: string) =>
             return;
         }
 
+        // Reset to UPCOMING state when gameId/league changes
+        setLiveData({ status: 'UPCOMING' });
+
         // Check if this is a mock game ID and return mock data
         const isDevelopment = process.env.NODE_ENV === 'development';
         if (isDevelopment && gameId?.startsWith('mock-live-')) {
@@ -313,6 +316,9 @@ export const useLiveGameStatus = (gameId: string | undefined, league: string) =>
                 if (gameData) {
                     const parsedData = parseLiveGameData(gameData, league);
                     setLiveData(parsedData);
+                } else {
+                    // Game not found in live games response, so it's not live
+                    setLiveData({ status: 'UPCOMING' });
                 }
             } catch (error) {
                 console.error('Error fetching live game data:', error);
