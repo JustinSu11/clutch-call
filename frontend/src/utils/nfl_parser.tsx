@@ -197,7 +197,8 @@ export const parseUpcomingNFLGames = async (): Promise<UpcomingGame[]> => {
             awayTeam,
             gameDate: gameDate,
             dateAndTime: dateAndTime ? new Date(dateAndTime) : new Date(),
-            league: "NFL"
+            league: "NFL",
+            gameId: event.id // Add the event ID so live game status can match it
         };
     }).filter((game: UpcomingGame | null): game is UpcomingGame => game !== null);
 
