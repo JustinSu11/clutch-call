@@ -50,16 +50,17 @@ except ImportError as exc:
 bp = Blueprint("nba", __name__)
 
 
+# --- PREDICTION ENDPOINT ---
+@bp.get("/predict/<game_id>") # <--- 2. Add the prediction route
+def nba_predict_game(game_id: str):
+    """Generate a prediction for a single game by its game ID."""
+    return generate_prediction_for_game(game_id)
+# -----------------------------
+
+
 @bp.get("/games")
 def nba_games():
-    """List games with optional filters.
-
-    Query params:
-        season (str): Season year (e.g., 2024)
-        team_id (str): Team ID filter
-        page (int): Pagination page (default 1)
-        per_page (int): Items per page (default 25)
-    """
+    """List games with optional filters."""
     season = request.args.get("season")
     team_id = request.args.get("team_id")
     page = int(request.args.get("page", 1))
@@ -70,7 +71,7 @@ def nba_games():
 
 @bp.get("/game/<game_id>")
 def nba_game_by_id(game_id: str):
-    """Fetch a single game by its balldontlie game ID."""
+    """Fetch a single game by its game ID."""
     return get_game_by_id(game_id)
 
 
@@ -82,12 +83,7 @@ def nba_box_score(game_id: str):
 
 @bp.get("/teams/<int:team_id>/last")
 def nba_team_last(team_id: int):
-    """Get a team's recent games.
-
-    Query params:
-        n (int): Number of recent games to return (default 5)
-        season (str): Optional season filter (e.g., 2024)
-    """
+    """Get a team's recent games."""
     n = int(request.args.get("n", 5))
     season = request.args.get("season")
     return get_team_last_games(team_id, n=n, season=season)

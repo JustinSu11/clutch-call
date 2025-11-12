@@ -1,9 +1,9 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
 # dependencies
-/frontend/node_modules
-/frontend/.next
+frontend/node_modules
 /.pnp
+.pnp.js
 .pnp.*
 .yarn/*
 !.yarn/patches
@@ -15,7 +15,7 @@
 /coverage
 
 # next.js
-/frontend/.next/
+frontend/.next/
 /out/
 
 # production
@@ -31,7 +31,9 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
+# local env files
+.env*.local
+.env
 .env*
 
 # vercel
@@ -39,8 +41,19 @@ yarn-error.log*
 
 # typescript
 *.tsbuildinfo
+frontend/next-env.d.ts
 next-env.d.ts
 
+# Python virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Python cache files
+__pycache__/
+*.py[cod]
+*$py.class
 *.pyc
 *.pyo
 *.pyd
@@ -50,3 +63,26 @@ next-env.d.ts
 
 *.log
 
+# Data files and outputs
+*.json
+!package.json
+!package-lock.json
+!tsconfig.json
+!*.config.json
+!frontend/tsconfig.json
+!components.json
+
+# CSV data files
+*.csv
+
+# Test outputs
+backend/tests/*_output.json
+backend/*_output.json
+backend/*_games.json
+backend/*_games.csv
+backend/upcoming_games.json
+backend/health_check_output.json
+
+# Training data
+backend/models/training_scripts/*.json
+backend/models/training_scripts/*.csv

@@ -4,11 +4,16 @@ Author: Maaz Haque
 Purpose: Thin service layer for NBA data using the python package `nba_api` (which
          calls stats.nba.com). Provides helpers to list games, fetch a specific
          game (summary), box score stats, team recent games, and upcoming games.
+         *** UPDATED to include AI prediction logic. ***
 """
 
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
 import requests
+import requests
+import os          
+import joblib       
+import pandas as pd
 
 from nba_api.stats.endpoints import (
     boxscoretraditionalv2,
@@ -18,6 +23,88 @@ from nba_api.stats.endpoints import (
     scoreboardv2,
     teamgamelog,
 )
+
+# --- Updated Integration ---
+
+# 1. Load the trained model once when the service starts up
+# Use a robust path to ensure the model is found correctly
+MODEL_PATH = os.path.join(os.path.dirname(__file__), '../../models/saved_models/nba_model.pkl')
+
+try:
+    model = joblib.load(MODEL_PATH)
+    print("NBA prediction model loaded successfully.")
+except FileNotFoundError:
+    print(f"Error: Prediction model not found at {MODEL_PATH}")
+    model = None
+
+def predict_outcome(home_avg_pts: float, away_avg_pts: float):
+    """
+    Predicts the outcome using the loaded model.
+    This function takes the FINAL features required by the model.
+    """
+    if model is None:
+        return {"error": "Model not available. Please train the model first."}
+
+    # Create a pandas DataFrame from the input, matching the training format
+    feature_data = pd.DataFrame(
+        [[home_avg_pts, away_avg_pts]], 
+        columns=['HomeAvgPts', 'AwayAvgPts']
+    )
+
+    # Use the model to predict the outcome and probabilities
+    prediction = model.predict(feature_data)
+    prediction_proba = model.predict_proba(feature_data)
+
+    # Format the output for the user
+    winner_index = prediction[0]
+    confidence = prediction_proba[0][winner_index]
+    winner = "Home" if winner_index == 1 else "Away"
+    
+    return {
+        "predicted_winner": winner,
+        "confidence": f"{confidence * 100:.2f}%",
+        "model_features": {
+            "home_team_avg_pts_last_5": home_avg_pts,
+            "away_team_avg_pts_last_5": away_avg_pts,
+        }
+    }
+
+def generate_prediction_for_game(game_id: str):
+    """
+    Orchestrator function to generate a prediction for a given game_id.
+    It fetches necessary data, engineers features, and calls the prediction model.
+    """
+    # Wrap the entire logic in a try-except block for robustness
+    try:
+        # Step 1: Get game details to find the two teams
+        game_summary = get_game_by_id(game_id)
+        game_header = game_summary.get("GameHeader", [{}])[0]
+        home_team_id = game_header.get("HOME_TEAM_ID")
+        visitor_team_id = game_header.get("VISITOR_TEAM_ID")
+
+        if not home_team_id or not visitor_team_id:
+            return {"error": "Could not determine teams for the given game_id."}
+
+        # Step 2: Get recent stats for each team using our existing functions
+        home_team_games = get_team_last_games(home_team_id, n=5).get("data", [])
+        away_team_games = get_team_last_games(visitor_team_id, n=5).get("data", [])
+        
+        if not home_team_games or not away_team_games:
+            return {"error": "Could not fetch recent game data for one or both teams."}
+
+        # Step 3: Feature Engineering - Calculate the average points for each team
+        home_avg_pts = sum(game['pts'] for game in home_team_games) / len(home_team_games)
+        away_avg_pts = sum(game['pts'] for game in away_team_games) / len(away_team_games)
+
+        # Step 4: Call our prediction function with the engineered features
+        prediction = predict_outcome(home_avg_pts, away_avg_pts)
+        return prediction
+    
+    except Exception as e:
+        # If any part of the process fails (e.g., NBA API is down), return a clean error
+        return {"error": "Failed to generate prediction due to an internal error.", "details": str(e)}
+
+# --- Update End integration ---
 
 
 def _season_to_nba_format(season: Optional[str]) -> Optional[str]:
@@ -124,20 +211,31 @@ def get_upcoming_games(days: int = 7):
     for offset in range(0, max(days, 1)):
         d = today + timedelta(days=offset)
         ds = d.strftime("%m/%d/%Y")
-        # day_offset parameter is optional; let it default
-        sb = scoreboardv2.ScoreboardV2(game_date=ds).get_normalized_dict()
-        # Linescores and GameHeader contain game info
-        headers = sb.get("GameHeader", [])
-        for h in headers:
-            all_items.append(
-                {
-                    "game_id": h.get("GAME_ID"),
-                    "game_date": ds,
-                    "home_team_id": h.get("HOME_TEAM_ID"),
-                    "visitor_team_id": h.get("VISITOR_TEAM_ID"),
-                    "game_status": h.get("GAME_STATUS_TEXT"),
-                }
-            )
+        try:
+            # day_offset parameter is optional; let it default
+            sb = scoreboardv2.ScoreboardV2(game_date=ds).get_normalized_dict()
+            # Linescores and GameHeader contain game info
+            headers = sb.get("GameHeader", [])
+            for h in headers:
+                all_items.append(
+                    {
+                        "game_id": h.get("GAME_ID"),
+                        "game_date": ds,
+                        "home_team_id": h.get("HOME_TEAM_ID"),
+                        "visitor_team_id": h.get("VISITOR_TEAM_ID"),
+                        "game_status": h.get("GAME_STATUS_TEXT"),
+                    }
+                )
+        except KeyError as e:
+            # Handle case where NBA API response doesn't include expected datasets
+            # (e.g., WinProbability missing when no games on that date)
+            print(f" Warning: NBA API response for {ds} missing expected data: {e}")
+            # Continue to next date instead of failing
+            continue
+        except Exception as e:
+            # Handle any other errors from the NBA API
+            print(f" Warning: Error fetching NBA games for {ds}: {e}")
+            continue
     return {"data": all_items}
 
 
@@ -145,23 +243,32 @@ def get_today_games():
     """List NBA games for today using ScoreboardV2."""
     today = datetime.utcnow().date()
     ds = today.strftime("%m/%d/%Y")
-    sb = scoreboardv2.ScoreboardV2(game_date=ds).get_normalized_dict()
-    
-    # Get GameHeader data for today's games
-    headers = sb.get("GameHeader", [])
-    items = []
-    for h in headers:
-        items.append(
-            {
-                "game_id": h.get("GAME_ID"),
-                "game_date": ds,
-                "home_team_id": h.get("HOME_TEAM_ID"),
-                "visitor_team_id": h.get("VISITOR_TEAM_ID"),
-                "game_status": h.get("GAME_STATUS_TEXT"),
-                "league": "NBA"
-            }
-        )
-    return {"data": items}
+    try:
+        sb = scoreboardv2.ScoreboardV2(game_date=ds).get_normalized_dict()
+        
+        # Get GameHeader data for today's games
+        headers = sb.get("GameHeader", [])
+        items = []
+        for h in headers:
+            items.append(
+                {
+                    "game_id": h.get("GAME_ID"),
+                    "game_date": ds,
+                    "home_team_id": h.get("HOME_TEAM_ID"),
+                    "visitor_team_id": h.get("VISITOR_TEAM_ID"),
+                    "game_status": h.get("GAME_STATUS_TEXT"),
+                    "league": "NBA"
+                }
+            )
+        return {"data": items}
+    except KeyError as e:
+        # Handle case where NBA API response doesn't include expected datasets
+        print(f" Warning: NBA API response for {ds} missing expected data: {e}")
+        return {"data": []}
+    except Exception as e:
+        # Handle any other errors from the NBA API
+        print(f" Warning: Error fetching NBA games for {ds}: {e}")
+        return {"data": []}
 
 
 def get_live_games():
