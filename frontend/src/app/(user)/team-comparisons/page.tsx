@@ -13,11 +13,11 @@
 import React from 'react';
 import { useState, useEffect } from 'react';
 import { parseNFLPreviousGameStats } from '@/utils/nfl_parser';
-import { parseMLSPreviousGameStats } from '@/utils/mls_parser';
+import { parseEPLPreviousGameStats } from '@/utils/epl_parser';
 import Highcharts from 'highcharts';
 import HighchartsReact from 'highcharts-react-official';
 
-type SportKey = 'NFL' | 'NBA' | 'MLS';
+type SportKey = 'NFL' | 'NBA' | 'EPL';
 
 // component for the sports filter
 const SportsFilter: React.FC<{
@@ -102,7 +102,7 @@ const TeamDropdown: React.FC<{
 
 
 export default function Page() {
-    const sports: SportKey[] = ['NFL', 'NBA', 'MLS'];
+    const sports: SportKey[] = ['NFL', 'NBA', 'EPL'];
     const [activeSport, setActiveSport] = useState<SportKey>('NFL');
     const [team1, setTeam1] = useState<string | null>(null);
     const [team2, setTeam2] = useState<string | null>(null);
@@ -179,36 +179,27 @@ export default function Page() {
             'Utah Jazz',
             'Washington Wizards'
         ],
-        MLS: [
-            'Atlanta United FC',
-            'Austin FC',
-            'CF Montréal',
-            'Charlotte FC',
-            'Chicago Fire FC',
-            'Colorado Rapids',
-            'Columbus Crew',
-            'D.C. United',
-            'FC Cincinnati',
-            'FC Dallas',
-            'Houston Dynamo FC',
-            'Inter Miami CF',
-            'LA Galaxy',
-            'Los Angeles FC',
-            'Minnesota United FC',
-            'Nashville SC',
-            'New England Revolution',
-            'New York City FC',
-            'New York Red Bulls',
-            'Orlando City SC',
-            'Philadelphia Union',
-            'Portland Timbers',
-            'Real Salt Lake',
-            'San Jose Earthquakes',
-            'Seattle Sounders FC',
-            'Sporting Kansas City',
-            'St. Louis City SC',
-            'Toronto FC',
-            'Vancouver Whitecaps FC'
+        EPL: [
+            'Arsenal',
+            'Aston Villa',
+            'Bournemouth',
+            'Brentford',
+            'Brighton & Hove Albion',
+            'Chelsea',
+            'Crystal Palace',
+            'Everton',
+            'Fulham',
+            'Ipswich Town',
+            'Leicester City',
+            'Liverpool',
+            'Manchester City',
+            'Manchester United',
+            'Newcastle United',
+            'Nottingham Forest',
+            'Southampton',
+            'Tottenham Hotspur',
+            'West Ham United',
+            'Wolverhampton Wanderers'
         ]
     };
 
@@ -238,8 +229,8 @@ export default function Page() {
                     let stats: number[] = [];
                     if (activeSport === 'NFL') {
                         stats = await parseNFLPreviousGameStats(team1);
-                    } else if (activeSport === 'MLS') {
-                        stats = await parseMLSPreviousGameStats(team1);
+                    } else if (activeSport === 'EPL') {
+                        stats = await parseEPLPreviousGameStats(team1);
                     }
                     setTeam1Stats(stats);
                 }
@@ -248,8 +239,8 @@ export default function Page() {
                     let stats: number[] = [];
                     if (activeSport === 'NFL') {
                         stats = await parseNFLPreviousGameStats(team2);
-                    } else if (activeSport === 'MLS') {
-                        stats = await parseMLSPreviousGameStats(team2);
+                    } else if (activeSport === 'EPL') {
+                        stats = await parseEPLPreviousGameStats(team2);
                     }
                     setTeam2Stats(stats);
                 }

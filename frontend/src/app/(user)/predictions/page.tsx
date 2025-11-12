@@ -11,7 +11,7 @@
 import React, { useState, useEffect } from 'react';
 import { parseUpcomingNFLGames, parseNFLTeamStats, parseNFLTeamLogo, parseTodayNFLGames, parseNFLGamesFromEvents } from '@/utils/nfl_parser';
 import { parseUpcomingNBAGames, parseNBATeamStats } from '@/utils/nba_parser';
-import { parseUpcomingMLSGames, parseMLSTeamStats } from '@/utils/mls_parser';
+import { parseUpcomingEPLGames, getEPLMatchPrediction } from '@/utils/epl_parser';
 import { UpcomingGame } from '@/utils/data_class';
 import { get } from 'http';
 import { urlToHttpOptions } from 'url';
@@ -24,7 +24,7 @@ import { getNFLPrediction, getHistoricalNFLGames, getUpcomingNFLGames } from '@/
 
 
 // declare data types
-type SportKey = 'All Sports' | 'NFL' | 'NBA' | 'MLS';
+type SportKey = 'All Sports' | 'NFL' | 'NBA' | 'EPL';
 
 type Game = {
     id: string; // Ensure the parsed game object includes an ID
@@ -50,6 +50,10 @@ type Prediction = {
     confidence: number;
     analysis?: string;        // Add this field
     sport: SportKey;
+    // EPL probability fields
+    homeWin?: number;
+    draw?: number;
+    awayWin?: number;
 };
 
 
@@ -269,22 +273,64 @@ return filteredPredictions;
 };
 
 
-const buildMLSPredictions = async (): Promise<Prediction[]> => {
+const buildEPLPredictions = async (): Promise<Prediction[]> => {
     /*
-        buildMLSPredictions:
-        This method builds a list of Prediction objects for upcoming MLS games.
+        buildEPLPredictions:
+        This method builds a list of Prediction objects for upcoming EPL games
+        with real win/draw/loss probabilities from the EPL model.
     */
-    const upcomingMLSGames = await parseUpcomingMLSGames();
+    const upcomingEPLGames = await parseUpcomingEPLGames();
 
-    // map each game to a Prediction object
-    return upcomingMLSGames.map((game) => ({
-        match: `${game.awayTeam.displayName} at ${game.homeTeam.displayName}`,
-        date: game.dateAndTime ? String(game.dateAndTime) : '', // Keep for backward compatibility
-        dateAndTime: game.dateAndTime || '', // Use dateAndTime for proper time display
-        prediction: `${game.homeTeam.displayName} predicted to win`,
-        confidence: 100,
-        sport: 'MLS'
-    }));
+    // Process each game to get prediction probabilities
+    const predictionPromises = upcomingEPLGames.map(async (game) => {
+        try {
+            // Get actual probabilities from EPL model
+            const probabilities = await getEPLMatchPrediction(
+                game.homeTeam.displayName,
+                game.awayTeam.displayName
+            );
+            
+            // Determine the predicted winner based on highest probability
+            const maxProb = Math.max(probabilities.homeWin, probabilities.draw, probabilities.awayWin);
+            let predictedOutcome = '';
+            if (maxProb === probabilities.homeWin) {
+                predictedOutcome = `${game.homeTeam.displayName} to win`;
+            } else if (maxProb === probabilities.draw) {
+                predictedOutcome = 'Draw predicted';
+            } else {
+                predictedOutcome = `${game.awayTeam.displayName} to win`;
+            }
+            
+            return {
+                match: `${game.awayTeam.displayName} at ${game.homeTeam.displayName}`,
+                date: game.dateAndTime ? String(game.dateAndTime) : '',
+                dateAndTime: game.dateAndTime || '',
+                prediction: predictedOutcome,
+                confidence: Math.round(maxProb * 100), // Convert to percentage for display
+                sport: 'EPL' as SportKey,
+                // Add probability fields for stacked bar
+                homeWin: probabilities.homeWin,
+                draw: probabilities.draw,
+                awayWin: probabilities.awayWin
+            };
+        } catch (error) {
+            console.error(`Error getting EPL prediction for ${game.homeTeam.displayName} vs ${game.awayTeam.displayName}:`, error);
+            // Return fallback prediction with balanced probabilities
+            return {
+                match: `${game.awayTeam.displayName} at ${game.homeTeam.displayName}`,
+                date: game.dateAndTime ? String(game.dateAndTime) : '',
+                dateAndTime: game.dateAndTime || '',
+                prediction: `${game.homeTeam.displayName} predicted to win`,
+                confidence: 40,
+                sport: 'EPL' as SportKey,
+                homeWin: 0.40,
+                draw: 0.30,
+                awayWin: 0.30
+            };
+        }
+    });
+
+    return Promise.all(predictionPromises);
 }
 
 const buildNBAPredictions = async (): Promise<Prediction[]> => {
@@ -314,6 +360,58 @@ const getConfidenceStyle = (confidence: number) => {
     return { backgroundColor: `hsl(${hue}, 90%, 45%)` };
 };
 
+// Component for EPL stacked probability bars
+const EPLProbabilityBar: React.FC<{
+    homeWin: number;
+    draw: number;
+    awayWin: number;
+    homeTeam: string;
+    awayTeam: string;
+}> = ({ homeWin, draw, awayWin, homeTeam, awayTeam }) => {
+    const homeWinPercent = Math.round(homeWin * 100);
+    const drawPercent = Math.round(draw * 100);
+    const awayWinPercent = Math.round(awayWin * 100);
+    
+    return (
+        <div className="w-full">
+            <div className="w-24 bg-gray-200 rounded-full h-2.5 mb-2 flex overflow-hidden">
+                {/* Home team win - Green */}
+                <div
+                    className="h-2.5 bg-green-500"
+                    style={{ width: `${homeWinPercent}%` }}
+                    title={`${homeTeam} win: ${homeWinPercent}%`}
+                ></div>
+                {/* Draw - Yellow */}
+                <div
+                    className="h-2.5 bg-yellow-500"
+                    style={{ width: `${drawPercent}%` }}
+                    title={`Draw: ${drawPercent}%`}
+                ></div>
+                {/* Away team win - Red */}
+                <div
+                    className="h-2.5 bg-red-500"
+                    style={{ width: `${awayWinPercent}%` }}
+                    title={`${awayTeam} win: ${awayWinPercent}%`}
+                ></div>
+            </div>
+            <div className="text-xs text-text-secondary space-y-1">
+                <div className="flex items-center gap-1">
+                    <div className="w-2 h-2 bg-green-500 rounded"></div>
+                    <span>{homeTeam}: {homeWinPercent}%</span>
+                </div>
+                <div className="flex items-center gap-1">
+                    <div className="w-2 h-2 bg-yellow-500 rounded"></div>
+                    <span>Draw: {drawPercent}%</span>
+                </div>
+                <div className="flex items-center gap-1">
+                    <div className="w-2 h-2 bg-red-500 rounded"></div>
+                    <span>{awayTeam}: {awayWinPercent}%</span>
+                </div>
+            </div>
+        </div>
+    );
+};
+
 const getNFLTeamStats = async (teamName: string) => {
     /*
         getTeamStats:
@@ -331,20 +429,19 @@ const getNFLTeamStats = async (teamName: string) => {
     return stats;
 }
 
-const getMLSTeamStats = async (teamName: string) => {
+const getEPLTeamStats = async (teamName: string) => {
     /*
-        getTeamStats:
-        This method gets the current season stats for a given MLS team.
+        getEPLTeamStats:
+        This method gets the current season stats for a given EPL team.
         
         params:
-            teamName: string - the full display name of the team (e.g., "LA Galaxy")
+            teamName: string - the full display name of the team (e.g., "Arsenal")
         returns:
             stats: dict - an object containing wins, losses, ties, and totalGames
     */
    
-    const stats = await parseMLSTeamStats(`${teamName}`);
-
-    return stats;
+    // Return placeholder stats for EPL teams for now
+    return { wins: 0, losses: 0, ties: 0, totalGames: 0 };
 }
 
 const getNBATeamStats = async (teamName: string) => {
@@ -427,13 +524,25 @@ const PredictionRow: React.FC<{ item: Prediction; onClick?: () => void }> = ({ i
             </td>
             <td className="text-center px-6 py-4 whitespace-nowrap">
                 <div className="flex items-center justify-center">
-                    <div className="w-24 bg-gray-200 rounded-full h-2.5 mr-3">
-                        <div
-                            className="h-2.5 rounded-full"
-                            style={{ ...getConfidenceStyle(item.confidence), width: `${item.confidence}%` }}
-                        ></div>
-                    </div>
-                    <span className="text-md font-medium text-text-primary">{item.confidence.toFixed(0)}%</span>
+                    {item.sport === 'EPL' && item.homeWin && item.draw && item.awayWin ? (
+                        <EPLProbabilityBar
+                            homeWin={item.homeWin}
+                            draw={item.draw}
+                            awayWin={item.awayWin}
+                            homeTeam={homeTeamName}
+                            awayTeam={awayTeamName}
+                        />
+                    ) : (
+                        <>
+                            <div className="w-24 bg-gray-200 rounded-full h-2.5 mr-3">
+                                <div
+                                    className="h-2.5 rounded-full"
+                                    style={{ ...getConfidenceStyle(item.confidence), width: `${item.confidence}%` }}
+                                ></div>
+                            </div>
+                            <span className="text-md font-medium text-text-primary">{item.confidence.toFixed(0)}%</span>
+                        </>
+                    )}
                 </div>
             </td>
         </tr>
@@ -442,7 +551,7 @@ const PredictionRow: React.FC<{ item: Prediction; onClick?: () => void }> = ({ i
 
 // --- Main App Component ---
 export default function PredictionsScreen() {
-    const sports: SportKey[] = ['All Sports', 'NFL', 'NBA', 'MLS'];
+    const sports: SportKey[] = ['All Sports', 'NFL', 'NBA', 'EPL'];
     const [activeSport, setActiveSport] = useState<SportKey>('NFL');
     const [predictions, setPredictions] = useState<Prediction[]>([]);
     const [loading, setLoading] = useState(false);
@@ -470,15 +579,15 @@ export default function PredictionsScreen() {
         try {
             let home = { wins: 0, losses: 0, ties: 0, totalGames: 0 };
             let away = { wins: 0, losses: 0, ties: 0, totalGames: 0 };
-            let homeLogo = '';
-            let awayLogo = '';
+            const homeLogo = '';
+            const awayLogo = '';
             if (sport === 'NFL') {
                 home = await getNFLTeamStats(homeTeam);
                 away = await getNFLTeamStats(awayTeam);
             }
-            else if (sport === 'MLS') {
-                home = await getMLSTeamStats(homeTeam);
-                away = await getMLSTeamStats(awayTeam);
+            else if (sport === 'EPL') {
+                home = await getEPLTeamStats(homeTeam);
+                away = await getEPLTeamStats(awayTeam);
             }
             else if (sport === 'NBA') {
                 home = await getNBATeamStats(homeTeam);
@@ -519,7 +628,7 @@ export default function PredictionsScreen() {
         Promise.all([
             buildNFLPredictions(),
             buildNBAPredictions(),
-            buildMLSPredictions(),
+            buildEPLPredictions(),
         ])
             .then(results => {
                 const flattened = results.flat();
@@ -628,13 +737,25 @@ export default function PredictionsScreen() {
                                         </div>
                                         <div className="text-sm text-text-primary mb-3">{item.prediction}</div>
                                         <div className="flex items-center">
-                                            <div className="flex-1 bg-gray-200 rounded-full h-2 mr-3">
-                                                <div
-                                                    className="h-2 rounded-full"
-                                                    style={{ ...getConfidenceStyle(item.confidence), width: `${item.confidence}%` }}
-                                                ></div>
-                                            </div>
-                                            <span className="text-sm font-medium text-text-primary">{item.confidence}%</span>
+                                            {item.sport === 'EPL' && item.homeWin && item.draw && item.awayWin ? (
+                                                <EPLProbabilityBar
+                                                    homeWin={item.homeWin}
+                                                    draw={item.draw}
+                                                    awayWin={item.awayWin}
+                                                    homeTeam={homeTeam ?? ''}
+                                                    awayTeam={awayTeam ?? ''}
+                                                />
+                                            ) : (
+                                                <>
+                                                    <div className="flex-1 bg-gray-200 rounded-full h-2 mr-3">
+                                                        <div
+                                                            className="h-2 rounded-full"
+                                                            style={{ ...getConfidenceStyle(item.confidence), width: `${item.confidence}%` }}
+                                                        ></div>
+                                                    </div>
+                                                    <span className="text-sm font-medium text-text-primary">{item.confidence}%</span>
+                                                </>
+                                            )}
                                         </div>
                                     </div>
                                 );

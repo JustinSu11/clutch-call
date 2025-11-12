@@ -10,7 +10,6 @@ Purpose: Carousel for upcoming and live matches for the selected sport.
 import { parseUpcomingNBAGames } from "@/utils/nba_parser"
 import { parseUpcomingNFLGames } from "@/utils/nfl_parser"
 import { parseUpcomingEPLGames } from "@/utils/epl_parser"
-import { parseUpcomingMLSGames } from "@/utils/mls_parser"
 import React, { useState, useRef, useEffect } from "react"
 import Slider from "react-slick"
 import "slick-carousel/slick/slick.css"
@@ -94,38 +93,13 @@ const createMockEPLGame = (): UpcomingGame => {
     };
 };
 
-const createMockMLSGame = (): UpcomingGame => {
-    const mockHomeTeam: Team = {
-        displayName: "LA Galaxy",
-        abbreviation: "LA",
-        color: "00245D",
-        alternateColor: "FFC425"
-    };
-    
-    const mockAwayTeam: Team = {
-        displayName: "Seattle Sounders FC",
-        abbreviation: "SEA",
-        color: "5D9741",
-        alternateColor: "005595"
-    };
-    
-    return {
-        homeTeam: mockHomeTeam,
-        awayTeam: mockAwayTeam,
-        gameDate: new Date(),
-        dateAndTime: new Date(),
-        league: "MLS",
-        gameId: "mock-live-mls-game"
-    };
-};
 
 //returns the upcoming matches as arrays of the UpcomingMatch type
 const fetchAllMatches = async (): Promise<UpcomingGame[]> => {
-    const [nba, nfl, epl, mls] = await Promise.all([
+    const [nba, nfl, epl] = await Promise.all([
         parseUpcomingNBAGames().catch(() => []),
         parseUpcomingNFLGames().catch(() => []),
-        parseUpcomingEPLGames().catch(() => []),
-        parseUpcomingMLSGames().catch(() => [])
+        parseUpcomingEPLGames().catch(() => [])
     ])
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -138,7 +112,7 @@ const fetchAllMatches = async (): Promise<UpcomingGame[]> => {
         gameId: game.gameId
     }))
 
-    return [...normalize(nba), ...normalize(nfl), ...normalize(epl), ...normalize(mls)]
+    return [...normalize(nba), ...normalize(nfl), ...normalize(epl)]
 }
 
 export default function MatchCarousel({ selectedLeagues }: { selectedLeagues: string[] }) {
@@ -189,7 +163,6 @@ export default function MatchCarousel({ selectedLeagues }: { selectedLeagues: st
             const isDevelopment = process.env.NODE_ENV === 'development';
             if (isDevelopment) {
                 all.unshift(createMockEPLGame());
-                all.unshift(createMockMLSGame());
                 all.unshift(createMockNFLGame());
                 all.unshift(createMockNBAGame());
             }

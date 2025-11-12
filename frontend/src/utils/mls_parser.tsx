@@ -33,7 +33,7 @@ export const parseUpcomingMLSGames = async () => {
     */
 
     // await the response from the backend method
-    const responseData = await mls_methods.getUpcomingSoccerMatches();
+    const responseData = await mls_methods.getSoccerMatches();
 
     // parse major header
     const events = responseData["events"];

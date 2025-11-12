@@ -93,17 +93,19 @@ export const getNFLPrediction = async (gameId: string) => {
         const result = await makeBackendRequest('GET', ROUTES.specific_nfl_prediction(gameId));
         return result;
         
-    } catch (error: any) {
+    } catch (error: unknown) {
         // If the error was thrown as a JSON string, try to parse it
-        let errorData: any = { error: 'Unknown error' };
+        let errorData: { error: string; details?: unknown } = { error: 'Unknown error' };
         try {
-            if (error?.message && error.message.startsWith('{')) {
-                errorData = JSON.parse(error.message);
+            const err = error as Error;
+            if (err?.message && err.message.startsWith('{')) {
+                errorData = JSON.parse(err.message);
             } else {
-                errorData = { error: error?.message || 'Network error', details: error };
+                errorData = { error: err?.message || 'Network error', details: error };
             }
         } catch (parseError) {
-            errorData = { error: error?.message || 'Unknown error', details: error };
+            const err = error as Error;
+            errorData = { error: err?.message || 'Unknown error', details: error };
         }
         
         console.error(`Error fetching NFL prediction for gameId ${gameId}:`, errorData);
