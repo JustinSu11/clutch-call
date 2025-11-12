@@ -79,12 +79,15 @@ def soccer_today():
 
 @bp.get("/standings")
 def soccer_standings():
+    """Get soccer standings for a given league.
+    
+    Query params:
+        league (str): League key (MLS, EPL, LaLiga) - default MLS
+        season (str): Optional season year (e.g., 2024)
+    """
     league = request.args.get("league", "MLS")
     season = request.args.get("season")
-    # --- TYPO FIX 1 ---
-    # Changed 'league=g=league' to 'league=league'
     return get_standings(league=league, season=season)
-    # --- END FIX ---
 
 
 # --- NEW HVB Model Routes (EPL) ---

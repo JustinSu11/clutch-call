@@ -14,7 +14,7 @@ def gather_season_data(season_year: int):
     with open(filename, "w") as f:
         json.dump(season_games, f, indent=4)
         
-    print(f"✅ Data saved successfully to {filename}")
+    print(f"Data saved successfully to {filename}")
     return filename
 
 if __name__ == "__main__":

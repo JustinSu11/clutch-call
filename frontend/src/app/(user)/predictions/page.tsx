@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /*
     File: frontend/src/app/predictions/page.tsx
     Created: 09/29/2025 by Michael Tajchman
@@ -10,8 +11,7 @@
 import React, { useState, useEffect } from 'react';
 import { parseUpcomingNFLGames, parseNFLTeamStats, parseNFLTeamLogo, parseTodayNFLGames, parseNFLGamesFromEvents } from '@/utils/nfl_parser';
 import { parseUpcomingNBAGames, parseNBATeamStats } from '@/utils/nba_parser';
-import { parseUpcomingEPLGames } from '@/utils/epl_parser';
-import { predictEPLMatch, getEPLTeams } from '@/backend_methods/soccer_methods';
+import { parseUpcomingMLSGames, parseMLSTeamStats } from '@/utils/mls_parser';
 import { UpcomingGame } from '@/utils/data_class';
 import { get } from 'http';
 import { urlToHttpOptions } from 'url';
@@ -19,18 +19,21 @@ import MatchDialog, { TeamStats } from '@/components/DashboardComponents/Dialog'
 import formatDate from '@/utils/date-formatter-for-matches';
 
 // Import the method that calls your backend prediction API
-import { getNFLPrediction, getHistoricalNFLGames } from '@/backend_methods/nfl_methods';
+import { getNFLPrediction, getHistoricalNFLGames, getUpcomingNFLGames } from '@/backend_methods/nfl_methods';
 
 
 
 // declare data types
-type SportKey = 'All Sports' | 'NFL' | 'NBA' | 'EPL';
+type SportKey = 'All Sports' | 'NFL' | 'NBA' | 'MLS';
 
 type Game = {
     id: string; // Ensure the parsed game object includes an ID
     homeTeam: string;
     awayTeam: string;
     date?: string; // Formatted date string
+    dateAndTime?: string;
+    homeTeamLogo?: string; 
+    awayTeamLogo?: string;
     status?: {
         state?: string;
         type?: string;
@@ -39,7 +42,10 @@ type Game = {
 
 type Prediction = {
     match: string;
-    date?: string;           // Make optional since not all predictions have it
+    date?: string;           // Keep for backward compatibility
+    dateAndTime?: string | Date;  // Add dateAndTime property for proper time display
+    homeTeamLogo?: string;
+    awayTeamLogo?: string;
     prediction: string;
     confidence: number;
     analysis?: string;        // Add this field
@@ -52,207 +58,105 @@ const buildNFLPredictions = async (): Promise<Prediction[]> => {
         buildNFLPredictions:
         This method builds a list of Prediction objects for NFL games
         by calling the AI backend for each game.
-        Fetches upcoming, today's, and historical games to get in-progress/completed games.
+        Now supports both upcoming (pre-game) and in-progress games.
     */
    
-    console.log('🏈 Starting NFL predictions build...');
+    console.log('Starting NFL predictions build...');
     
-    // Fetch upcoming, today's, and historical games (last 2 days for completed games)
-    let upcomingGames: Game[] = [];
+    // Fetch upcoming and today's games
+    let upcomingGamesRaw: any = null;
     let todayGames: Game[] = [];
-    let historicalGames: Game[] = [];
     
     try {
-        console.log('📡 Fetching upcoming NFL games...');
-        upcomingGames = await parseUpcomingNFLGames();
-        console.log(`✅ Fetched ${upcomingGames.length} upcoming games`);
+        console.log('Fetching upcoming NFL games...');
+        // Get raw response to access event IDs
+        upcomingGamesRaw = await getUpcomingNFLGames();
+        console.log(`Fetched upcoming games response`);
     } catch (error) {
-        console.error('❌ Error fetching upcoming games:', error);
+        console.error('Error fetching upcoming games:', error);
     }
     
     try {
-        console.log('📡 Fetching today\'s NFL games...');
+        console.log('Fetching today\'s NFL games...');
         todayGames = await parseTodayNFLGames();
-        console.log(`✅ Fetched ${todayGames.length} today's games`);
+        console.log(`Fetched ${todayGames.length} today's games`);
     } catch (error) {
-        console.error('❌ Error fetching today\'s games:', error);
+        console.error('Error fetching today\'s games:', error);
     }
     
-    // Fetch historical games from the last week to get completed games
-    try {
-        console.log('📡 Fetching historical NFL games (last 7 days)...');
-        const today = new Date();
-        const weekAgo = new Date(today);
-        weekAgo.setDate(weekAgo.getDate() - 7); // Go back 7 days to find completed games
+    // Combine and filter for future games only
+    const now = new Date();
+    const allGames: Game[] = [];
+    
+    // Convert upcoming games to Game format - use parseNFLGamesFromEvents to get IDs
+    if (upcomingGamesRaw && upcomingGamesRaw.events) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const upcomingEvents = upcomingGamesRaw.events.filter((event: any) => {
+            const eventDate = event.date ? new Date(event.date) : null;
+            return eventDate && eventDate > now;
+        });
         
-        const startDateStr = weekAgo.toISOString().split('T')[0]; // YYYY-MM-DD
-        const endDateStr = today.toISOString().split('T')[0];
-        
-        console.log(`📅 Fetching games from ${startDateStr} to ${endDateStr}`);
-        
-        const historicalData = await getHistoricalNFLGames(startDateStr, endDateStr);
-        console.log('📥 Raw historical games response:', historicalData);
-        
-        if (historicalData && historicalData.events && historicalData.events.length > 0) {
-            console.log(`📋 Found ${historicalData.events.length} historical events`);
-            
-            // Filter for only completed games BEFORE parsing
-            const completedEvents = historicalData.events.filter((event: any) => {
-                const comp = event.competitions?.[0];
-                const status = comp?.status || event.status || {};
-                const statusType = status.type?.name?.toLowerCase() || '';
-                const statusState = status.type?.state?.toLowerCase() || '';
-                
-                // Only include completed/finished games
-                const isCompleted = statusState === 'post' || 
-                                  statusType.includes('final') ||
-                                  statusType.includes('finished') ||
-                                  statusType.includes('complete') ||
-                                  statusType === 'status_final' ||
-                                  statusType === 'status_completed';
-                
-                if (isCompleted) {
-                    console.log(`✅ Found completed game: ${event.id} - status: ${statusType} (${statusState})`);
+        if (upcomingEvents.length > 0) {
+            const upcomingGamesWithIds = parseNFLGamesFromEvents(upcomingEvents);
+            upcomingGamesWithIds.forEach((game) => {
+                const gameDate = game.dateAndTime ? new Date(game.dateAndTime) : 
+                                game.date ? new Date(game.date) : null;
+                if (gameDate && gameDate > now) {
+                    allGames.push(game);
                 }
-                
-                return isCompleted;
             });
-            
-            console.log(`📊 Filtered to ${completedEvents.length} completed games out of ${historicalData.events.length} total`);
-            
-            if (completedEvents.length > 0) {
-                historicalGames = parseNFLGamesFromEvents(completedEvents);
-                console.log(`✅ Parsed ${historicalGames.length} completed historical games`);
-            } else {
-                console.log('⚠️ No completed games found in historical data');
-            }
-        } else {
-            console.log('⚠️ No historical games found');
-        }
-    } catch (error) {
-        console.error('❌ Error fetching historical games:', error);
-    }
-
-// Combine games and remove duplicates by ID
-const allGamesMap = new Map<string, Game>();
-[...upcomingGames, ...todayGames, ...historicalGames].forEach(game => {
-    if (game.id && !allGamesMap.has(game.id)) {
-        allGamesMap.set(game.id, game);
-    }
-});
-const allGames = Array.from(allGamesMap.values());
-
-// Ensure we only process games that have a valid ID string
-const validGames = allGames.filter(game => typeof game.id === 'string' && game.id.length > 0);
-
-console.log(`📊 Found ${validGames.length} total NFL games (${upcomingGames.length} upcoming, ${todayGames.length} today, ${historicalGames.length} historical)`);
-console.log('📋 All games with status:', validGames.map(g => ({
-    id: g.id,
-    match: `${g.awayTeam} @ ${g.homeTeam}`,
-    statusState: g.status?.state,
-    statusType: g.status?.type
-})));
-
-// Filter games by status - only predict in-progress or completed games
-// TEMPORARY: For debugging, let's be more lenient and see what we get
-const predictableGames = validGames.filter(game => {
-    const statusState = game.status?.state?.toLowerCase() || 'unknown';
-    const statusType = game.status?.type?.toLowerCase() || 'unknown';
-    
-    console.log(`🔍 Checking game ${game.id} (${game.awayTeam} @ ${game.homeTeam}): state="${statusState}", type="${statusType}"`);
-    
-    // Skip games that haven't started (pre/scheduled status)
-    if (statusState === 'pre' || 
-        statusType === 'scheduled' || 
-        statusType === 'pre' ||
-        statusType === 'status_scheduled' ||
-        statusType.includes('scheduled')) {
-        console.log(`❌ Skipping game ${game.id} - status: state="${statusState}", type="${statusType}" (game hasn't started yet)`);
-        return false;
-    }
-    
-    // Include games that are in-progress or completed
-    // Status states: "in" (in-progress), "post" (completed), etc.
-    // Status types: "in-progress", "final", "finished", "status_in_progress", "status_final", etc.
-    // Also check for completed games by looking for status that indicates game ended
-    const isPlayable = statusState === 'in' || 
-                      statusState === 'post' ||
-                      statusType.includes('in-progress') ||
-                      statusType.includes('in_progress') ||
-                      statusType.includes('final') ||
-                      statusType.includes('finished') ||
-                      statusType.includes('live') ||
-                      statusType.includes('complete') ||
-                      statusType.includes('closed') ||
-                      statusType === 'status_final' ||
-                      statusType === 'status_completed' ||
-                      (statusState === 'post' && statusType !== 'unknown'); // If state is post, it's completed
-    
-    if (isPlayable) {
-        console.log(`✅ Including game ${game.id} (${game.awayTeam} @ ${game.homeTeam}) - status: state="${statusState}", type="${statusType}"`);
-    } else {
-        console.log(`⚠️ Excluding game ${game.id} - status doesn't match playable criteria: state="${statusState}", type="${statusType}"`);
-        // Log the full status object for debugging
-        console.log(`   Full status object:`, game.status);
-    }
-    
-    return isPlayable;
-});
-
-console.log(`Found ${predictableGames.length} games eligible for prediction out of ${validGames.length} total games`);
-
-if (predictableGames.length === 0) {
-    console.log('⚠️ No games in progress or completed. Predictions require games that have started.');
-    console.log('📋 All game statuses for debugging:', validGames.map(g => ({
-        id: g.id,
-        match: `${g.awayTeam} @ ${g.homeTeam}`,
-        statusState: g.status?.state,
-        statusType: g.status?.type,
-        fullStatus: g.status
-    })));
-    
-    // TEMPORARY TEST: Try to get predictions for ANY game that's not explicitly "pre" to test if model works
-    // This will help us see if the issue is with filtering or with the model itself
-    console.log('🧪 TESTING: Attempting to get prediction for first available game (even if status is unknown)...');
-    if (validGames.length > 0) {
-        const testGame = validGames[0];
-        console.log(`🧪 Testing with game ${testGame.id} (${testGame.awayTeam} @ ${testGame.homeTeam})`);
-        try {
-            const testPrediction = await getNFLPrediction(testGame.id);
-            console.log('🧪 Test prediction result:', testPrediction);
-        } catch (error) {
-            console.error('🧪 Test prediction error:', error);
         }
     }
     
-    // TEMPORARY: If no predictable games, try to get predictions for any game that's not explicitly "pre"
-    // This helps debug if the status filtering is too strict
-    const fallbackGames = validGames.filter(game => {
-        const statusState = game.status?.state?.toLowerCase() || 'unknown';
-        const statusType = game.status?.type?.toLowerCase() || 'unknown';
-        // Only exclude if explicitly "pre" or "scheduled"
-        return !(statusState === 'pre' && statusType.includes('scheduled'));
+    // Add today's games that are in the future
+    todayGames.forEach((game) => {
+        const gameDate = game.dateAndTime ? new Date(game.dateAndTime) : 
+                        game.date ? new Date(game.date) : null;
+        if (gameDate && gameDate > now) {
+            allGames.push(game);
+        }
     });
     
-    if (fallbackGames.length > 0 && fallbackGames.length !== validGames.length) {
-        console.log(`🔄 Trying fallback: ${fallbackGames.length} games (excluding only explicitly pre-game)`);
-        // Use fallback games but continue with normal flow
-        // We'll set predictableGames to fallbackGames for this attempt
-        const originalPredictable = predictableGames;
-        // For now, just log - we'll try the fallback approach
+    // Remove duplicates based on game ID
+    const uniqueGames = Array.from(
+        new Map(allGames.map(game => [game.id, game])).values()
+    );
+    
+    console.log(`Total unique future games: ${uniqueGames.length}`);
+    
+    // Filter for games we can predict (upcoming or in-progress)
+    const predictableGames = uniqueGames.filter((game) => {
+        // Only include games with valid IDs
+        if (!game.id || game.id === '') {
+            console.warn(`Skipping game without ID: ${game.awayTeam} @ ${game.homeTeam}`);
+            return false;
+        }
+        
+        const statusState = (game.status?.state || '').toLowerCase();
+        const statusType = (game.status?.type || '').toLowerCase();
+        const isUpcoming = statusState === 'pre' || statusType === 'scheduled' || statusType === 'pre';
+        const isInProgress = ['in', 'live', 'inprogress'].includes(statusState) || 
+                            statusType.includes('in-progress') || 
+                            statusType.includes('live');
+        return isUpcoming || isInProgress;
+    });
+    
+    console.log(`Games available for prediction: ${predictableGames.length}`);
+    
+    if (predictableGames.length === 0) {
+        console.log('No games available for prediction');
+        return [];
     }
     
-    return [];
-}
-
-// Map over the predictableGames array (only games that have started)
-console.log(`🔄 Starting prediction requests for ${predictableGames.length} games...`);
-const predictionPromises = predictableGames.map(async (game) => {
+    // Map over the predictableGames array
+    console.log(`Starting prediction requests for ${predictableGames.length} games...`);
+    const predictionPromises = predictableGames.map(async (game) => {
     try {
-        console.log(`📞 Requesting prediction for game ${game.id} (${game.awayTeam} @ ${game.homeTeam})...`);
+        console.log(`Requesting prediction for game ${game.id} (${game.awayTeam} @ ${game.homeTeam})...`);
         // We know game.id is a string here
         const aiPrediction = await getNFLPrediction(game.id);
-        console.log(`📥 Received response for game ${game.id}:`, aiPrediction);
+        console.log(`Received response for game ${game.id}:`, aiPrediction);
+
 
         if (aiPrediction.error) {
             // Handle 422 errors gracefully (expected for games that just started or have insufficient data)
@@ -260,10 +164,10 @@ const predictionPromises = predictableGames.map(async (game) => {
             if (errorMsg.includes('Cannot predict upcoming games') || 
                 errorMsg.includes('Insufficient game data') ||
                 errorMsg.includes('422')) {
-                console.log(`⚠️ Game ${game.id} cannot be predicted yet (expected):`, aiPrediction.error);
+                console.log(`Game ${game.id} cannot be predicted yet (expected):`, aiPrediction.error);
                 return null;
             }
-            console.error(`❌ Failed to get prediction for game ${game.id}:`, aiPrediction.error, aiPrediction.details);
+            console.error(`Failed to get prediction for game ${game.id}:`, aiPrediction.error, aiPrediction.details);
             return null;
         }
 
@@ -288,6 +192,7 @@ const predictionPromises = predictableGames.map(async (game) => {
         if (Object.keys(decisionFactors).length > 0) {
             // Sort factors by absolute contribution (most influential first)
             const sortedFactors = Object.entries(decisionFactors)
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 .map(([feature, data]: [string, any]) => ({
                     feature,
                     ...data,
@@ -299,7 +204,11 @@ const predictionPromises = predictableGames.map(async (game) => {
             const topFactors = sortedFactors.slice(0, 2); // Top 2 most influential
             
             const factors = topFactors.map((factor) => {
-                const featureName = factor.feature === 'HomeYards' ? 'Home yards' :
+                const featureName = factor.feature === 'WinPercentage' ? 'Win percentage' :
+                                  factor.feature === 'PointDifferential' ? 'Point differential' :
+                                  factor.feature === 'OffensiveStrength' ? 'Offensive strength' :
+                                  factor.feature === 'HomeFieldAdvantage' ? 'Home field advantage' :
+                                  factor.feature === 'HomeYards' ? 'Home yards' :
                                   factor.feature === 'AwayYards' ? 'Away yards' :
                                   'Yard differential';
                 // Use actual team names instead of "home" or "away"
@@ -315,128 +224,67 @@ const predictionPromises = predictableGames.map(async (game) => {
         
         const prediction = {
             match: `${game.awayTeam} at ${game.homeTeam}`,
-            
-            date: game.date || '', // Use game.date if available, otherwise use empty string
+            date: game.date || '', // Keep for backward compatibility
+            dateAndTime: game.dateAndTime || game.date || '', // Use dateAndTime if available for proper time display
+            homeTeamLogo: game.homeTeamLogo || '', // Pass logo URL
+            awayTeamLogo: game.awayTeamLogo || '', // Pass logo URL
             prediction: winnerName + ' to win',
             confidence: isNaN(confidenceValue) ? 0 : confidenceValue,
             analysis: analysisText,
             sport: 'NFL' as SportKey,
         };
         
-        console.log(`✅ Successfully built prediction for game ${game.id}:`, prediction);
+        console.log(`Successfully built prediction for game ${game.id}:`, prediction);
         return prediction;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
         // Handle network errors or 422 errors in the catch block
         const errorMessage = error?.message || '';
-        console.error(`💥 Exception for game ${game.id}:`, error);
+        console.error(`Exception for game ${game.id}:`, error);
         if (errorMessage.includes('422') || 
             errorMessage.includes('Cannot predict upcoming games') ||
             errorMessage.includes('Insufficient game data')) {
-            console.log(`⚠️ Game ${game.id} cannot be predicted yet (caught error):`, errorMessage);
+            console.log(`Game ${game.id} cannot be predicted yet (caught error):`, errorMessage);
             return null;
         }
-        console.error(`❌ Error fetching prediction for game ${game.id}:`, error);
+        console.error(`Error fetching prediction for game ${game.id}:`, error);
         return null;
     }
 });
 
 // Wait for all the API calls to complete
-console.log('⏳ Waiting for all prediction requests to complete...');
+console.log('Waiting for all prediction requests to complete...');
 const predictions = await Promise.all(predictionPromises);
 
 // Filter out any games that failed to get a prediction
 const filteredPredictions = predictions.filter(p => p !== null) as Prediction[];
-console.log(`📈 Final results: ${filteredPredictions.length} successful predictions out of ${predictableGames.length} eligible games`);
-console.log('✅ Predictions:', filteredPredictions);
+console.log(`Final results: ${filteredPredictions.length} successful predictions out of ${predictableGames.length} eligible games`);
+console.log('Predictions:', filteredPredictions);
 
 if (filteredPredictions.length === 0 && predictableGames.length > 0) {
-    console.warn('⚠️ WARNING: Had eligible games but no successful predictions. Check backend logs for errors.');
+    console.warn('WARNING: Had eligible games but no successful predictions. Check backend logs for errors.');
 }
 
 return filteredPredictions;
 };
 
 
-const buildEPLPredictions = async (): Promise<Prediction[]> => {
+const buildMLSPredictions = async (): Promise<Prediction[]> => {
     /*
-        buildEPLPredictions:
-        This method builds a list of Prediction objects for upcoming EPL games using the AI prediction model.
+        buildMLSPredictions:
+        This method builds a list of Prediction objects for upcoming MLS games.
     */
-    try {
-        console.log('⚽ Starting EPL predictions build...');
-        const upcomingEPLGames = await parseUpcomingEPLGames();
-        console.log(`⚽ Fetched ${upcomingEPLGames.length} upcoming EPL games`);
-        
-        if (upcomingEPLGames.length === 0) {
-            console.log('⚽ No EPL games found, returning empty array');
-            return [];
-        }
-        
-        // Create predictions using your EPL prediction model
-        const predictionPromises = upcomingEPLGames.map(async (game) => {
-            try {
-                console.log(`⚽ Getting prediction for ${game.homeTeam.displayName} vs ${game.awayTeam.displayName}`);
-                
-                // Use the EPL prediction method
-                const prediction = await predictEPLMatch(
-                    game.homeTeam.displayName, 
-                    game.awayTeam.displayName
-                );
-                
-                console.log(`⚽ Got prediction result:`, prediction);
-                
-                // Convert win probabilities to a prediction
-                const homeWinRate = prediction.home_win || 0;
-                const awayWinRate = prediction.home_loss || 0; // This is away win rate (home_loss means home team loses)
-                const drawRate = prediction.draw || 0;
-                
-                // Determine predicted winner
-                let predictedWinner = '';
-                let confidence = 0;
-                
-                if (homeWinRate > awayWinRate && homeWinRate > drawRate) {
-                    predictedWinner = `${game.homeTeam.displayName} to win`;
-                    confidence = Math.round(homeWinRate * 100);
-                } else if (awayWinRate > homeWinRate && awayWinRate > drawRate) {
-                    predictedWinner = `${game.awayTeam.displayName} to win`;
-                    confidence = Math.round(awayWinRate * 100);
-                } else {
-                    predictedWinner = 'Draw predicted';
-                    confidence = Math.round(drawRate * 100);
-                }
-                
-                const predictionObj = {
-                    match: `${game.awayTeam.displayName} at ${game.homeTeam.displayName}`,
-                    date: game.dateAndTime,
-                    prediction: predictedWinner,
-                    confidence: confidence,
-                    analysis: `Home: ${Math.round(homeWinRate * 100)}%, Draw: ${Math.round(drawRate * 100)}%, Away: ${Math.round(awayWinRate * 100)}%`,
-                    sport: 'EPL' as SportKey
-                };
-                
-                console.log(`⚽ Created prediction object:`, predictionObj);
-                return predictionObj;
-                
-            } catch (error) {
-                console.error(`⚽ Error getting EPL prediction for ${game.homeTeam.displayName} vs ${game.awayTeam.displayName}:`, error);
-                return {
-                    match: `${game.awayTeam.displayName} at ${game.homeTeam.displayName}`,
-                    date: game.dateAndTime,
-                    prediction: 'Prediction unavailable',
-                    confidence: 0,
-                    analysis: 'Unable to generate prediction',
-                    sport: 'EPL' as SportKey
-                };
-            }
-        });
-        
-        const predictions = await Promise.all(predictionPromises);
-        console.log(`⚽ Final EPL predictions count: ${predictions.length}`);
-        return predictions;
-    } catch (error) {
-        console.error('⚽ Error building EPL predictions:', error);
-        return [];
-    }
+    const upcomingMLSGames = await parseUpcomingMLSGames();
+
+    // map each game to a Prediction object
+    return upcomingMLSGames.map((game) => ({
+        match: `${game.awayTeam.displayName} at ${game.homeTeam.displayName}`,
+        date: game.dateAndTime ? String(game.dateAndTime) : '', // Keep for backward compatibility
+        dateAndTime: game.dateAndTime || '', // Use dateAndTime for proper time display
+        prediction: `${game.homeTeam.displayName} predicted to win`,
+        confidence: 100,
+        sport: 'MLS'
+    }));
 }
 
 const buildNBAPredictions = async (): Promise<Prediction[]> => {
@@ -449,7 +297,8 @@ const buildNBAPredictions = async (): Promise<Prediction[]> => {
     // map each game to a Prediction object
     return upcomingNBAGames.map((game) => ({
         match: `${game.awayTeam} at ${game.homeTeam}`,
-        date: `${game.gameDate}`,
+        date: game.gameDate ? String(game.gameDate) : '', // Keep for backward compatibility
+        dateAndTime: game.dateAndTime || game.gameDate || '', // Use dateAndTime if available for proper time display
         prediction: `${game.homeTeam} predicted to win`,
         confidence: 100,
         sport: 'NBA'
@@ -482,20 +331,20 @@ const getNFLTeamStats = async (teamName: string) => {
     return stats;
 }
 
-const getEPLTeamStats = async (teamName: string) => {
+const getMLSTeamStats = async (teamName: string) => {
     /*
-        getEPLTeamStats:
-        This method gets the current season stats for a given EPL team.
-        For now returns placeholder data since EPL stats aren't implemented.
+        getTeamStats:
+        This method gets the current season stats for a given MLS team.
         
         params:
-            teamName: string - the full display name of the team (e.g., "Arsenal")
+            teamName: string - the full display name of the team (e.g., "LA Galaxy")
         returns:
             stats: dict - an object containing wins, losses, ties, and totalGames
     */
    
-    // Placeholder for EPL team stats - you can implement this later if needed
-    return { wins: 0, losses: 0, ties: 0, totalGames: 0 };
+    const stats = await parseMLSTeamStats(`${teamName}`);
+
+    return stats;
 }
 
 const getNBATeamStats = async (teamName: string) => {
@@ -539,34 +388,61 @@ const SportsFilter: React.FC<{
     </div>
 );
 
-const PredictionRow: React.FC<{ item: Prediction; onClick?: () => void }> = ({ item, onClick }) => (
-    <tr onClick={onClick} className="bg-secondary-background hover:bg-secondary cursor-pointer">
-        <td className="text-center px-6 py-4 whitespace-nowrap">
-            <div className="text-md font-medium text-text-primary">{item.match}</div>
-        </td>
-        <td className="text-center px-6 py-4 whitespace-nowrap">
-        <div className="text-md font-medium text-text-primary">{item.date ? formatDate(item.date) : 'N/A'}</div>
-        </td>
-        <td className="text-center px-6 py-4 whitespace-nowrap">
-            <div className="text-md font-medium text-text-primary">{item.prediction}</div>
-        </td>
-        <td className="text-center px-6 py-4 whitespace-nowrap">
-            <div className="flex items-center justify-center">
-                <div className="w-24 bg-gray-200 rounded-full h-2.5 mr-3">
-                    <div
-                        className="h-2.5 rounded-full"
-                        style={{ ...getConfidenceStyle(item.confidence), width: `${item.confidence}%` }}
-                    ></div>
+const PredictionRow: React.FC<{ item: Prediction; onClick?: () => void }> = ({ item, onClick }) => {
+    // Parse match string to get team names
+    const [awayTeamName, homeTeamName] = item.match.split(' at ');
+    
+    return (
+        <tr onClick={onClick} className="bg-secondary-background hover:bg-secondary cursor-pointer">
+            <td className="text-center px-6 py-4 whitespace-nowrap">
+                <div className="flex items-center justify-center gap-3">
+                    {/* Away team logo */}
+                    {item.awayTeamLogo && (
+                        <img 
+                            src={item.awayTeamLogo} 
+                            alt={awayTeamName} 
+                            className="w-8 h-8 object-contain"
+                        />
+                    )}
+                    <div className="text-md font-medium text-text-primary">
+                        {item.match}
+                    </div>
+                    {/* Home team logo */}
+                    {item.homeTeamLogo && (
+                        <img 
+                            src={item.homeTeamLogo} 
+                            alt={homeTeamName} 
+                            className="w-8 h-8 object-contain"
+                        />
+                    )}
                 </div>
-                <span className="text-md font-medium text-text-primary">{item.confidence.toFixed(0)}%</span> {/* Show confidence as integer */}
-            </div>
-        </td>
-    </tr>
-);
+            </td>
+            <td className="text-center px-6 py-4 whitespace-nowrap">
+                <div className="text-md font-medium text-text-primary">
+                    {item.dateAndTime ? formatDate(item.dateAndTime) : (item.date ? formatDate(item.date) : 'N/A')}
+                </div>
+            </td>
+            <td className="text-center px-6 py-4 whitespace-nowrap">
+                <div className="text-md font-medium text-text-primary">{item.prediction}</div>
+            </td>
+            <td className="text-center px-6 py-4 whitespace-nowrap">
+                <div className="flex items-center justify-center">
+                    <div className="w-24 bg-gray-200 rounded-full h-2.5 mr-3">
+                        <div
+                            className="h-2.5 rounded-full"
+                            style={{ ...getConfidenceStyle(item.confidence), width: `${item.confidence}%` }}
+                        ></div>
+                    </div>
+                    <span className="text-md font-medium text-text-primary">{item.confidence.toFixed(0)}%</span>
+                </div>
+            </td>
+        </tr>
+    );
+};
 
 // --- Main App Component ---
 export default function PredictionsScreen() {
-    const sports: SportKey[] = ['All Sports', 'NFL', 'NBA', 'EPL'];
+    const sports: SportKey[] = ['All Sports', 'NFL', 'NBA', 'MLS'];
     const [activeSport, setActiveSport] = useState<SportKey>('NFL');
     const [predictions, setPredictions] = useState<Prediction[]>([]);
     const [loading, setLoading] = useState(false);
@@ -599,13 +475,10 @@ export default function PredictionsScreen() {
             if (sport === 'NFL') {
                 home = await getNFLTeamStats(homeTeam);
                 away = await getNFLTeamStats(awayTeam);
-                homeLogo = await parseNFLTeamLogo(homeTeam);
-                awayLogo = await parseNFLTeamLogo(awayTeam);
             }
-            else if (sport === 'EPL') {
-                // EPL team stats would be handled here if available
-                home = { wins: 0, losses: 0, ties: 0, totalGames: 0 };
-                away = { wins: 0, losses: 0, ties: 0, totalGames: 0 };
+            else if (sport === 'MLS') {
+                home = await getMLSTeamStats(homeTeam);
+                away = await getMLSTeamStats(awayTeam);
             }
             else if (sport === 'NBA') {
                 home = await getNBATeamStats(homeTeam);
@@ -642,16 +515,16 @@ export default function PredictionsScreen() {
         setLoading(true);
         setError(null);
 
-        // Fetch predictions for all sports
+        // Fetch predictions for all sports concurrently on mount
         Promise.all([
             buildNFLPredictions(),
             buildNBAPredictions(),
-            buildEPLPredictions(),
+            buildMLSPredictions(),
         ])
             .then(results => {
                 const flattened = results.flat();
-                console.log('🎯 Setting predictions state with:', flattened.length, 'predictions');
-                console.log('🎯 Predictions data:', flattened);
+                console.log('Setting predictions state with:', flattened.length, 'predictions');
+                console.log('Predictions data:', flattened);
                 setPredictions(flattened);
             })
             .catch((err) => {
@@ -749,7 +622,9 @@ export default function PredictionsScreen() {
                                     >
                                         <div className="flex justify-between items-start mb-2">
                                             <div className="font-medium text-text-primary">{item.match}</div>
-                                            <div className="text-sm text-text-secondary">{item.date ? formatDate(item.date) : 'N/A'}</div>
+                                            <div className="text-sm text-text-secondary">
+                                                {item.dateAndTime ? formatDate(item.dateAndTime) : (item.date ? formatDate(item.date) : 'N/A')}
+                                            </div>
                                         </div>
                                         <div className="text-sm text-text-primary mb-3">{item.prediction}</div>
                                         <div className="flex items-center">

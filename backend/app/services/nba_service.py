@@ -268,6 +268,8 @@ def get_today_games():
     except Exception as e:
         # Handle any other errors from the NBA API
         print(f"⚠️ Warning: Error fetching NBA games for {ds}: {e}")
+        print(f" Warning: Error fetching NBA games for {ds}: {e}")
+>>>>>>> develop
         return {"data": []}
 
 

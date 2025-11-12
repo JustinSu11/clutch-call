@@ -10,7 +10,6 @@ joblib            # Used for model serialization
 scikit-learn==1.7.1  # Machine learning library (pinned for model compatibility)
 fastapi           # FastAPI framework for building APIs
 
-
 # --- Added Dependencies for EPL Model (from hvbhanot) ---
 fastapi==0.115.0      #
 uvicorn[standard]==0.32.0 #

@@ -31,6 +31,51 @@ except Exception as e:
     model = None
 
 
+def _get_nfl_team_logos():
+    """Get NFL team logos mapping.
+    
+    Returns static mapping of NFL team abbreviations to ESPN logo URLs.
+    Returns:
+        Dictionary mapping team abbreviations to logo URLs
+    """
+    # Static mapping of NFL team abbreviations to ESPN logo URLs
+    logo_map = {
+        "ARI": "https://a.espncdn.com/i/teamlogos/nfl/500/ari.png",
+        "ATL": "https://a.espncdn.com/i/teamlogos/nfl/500/atl.png",
+        "BAL": "https://a.espncdn.com/i/teamlogos/nfl/500/bal.png",
+        "BUF": "https://a.espncdn.com/i/teamlogos/nfl/500/buf.png",
+        "CAR": "https://a.espncdn.com/i/teamlogos/nfl/500/car.png",
+        "CHI": "https://a.espncdn.com/i/teamlogos/nfl/500/chi.png",
+        "CIN": "https://a.espncdn.com/i/teamlogos/nfl/500/cin.png",
+        "CLE": "https://a.espncdn.com/i/teamlogos/nfl/500/cle.png",
+        "DAL": "https://a.espncdn.com/i/teamlogos/nfl/500/dal.png",
+        "DEN": "https://a.espncdn.com/i/teamlogos/nfl/500/den.png",
+        "DET": "https://a.espncdn.com/i/teamlogos/nfl/500/det.png",
+        "GB": "https://a.espncdn.com/i/teamlogos/nfl/500/gb.png",
+        "HOU": "https://a.espncdn.com/i/teamlogos/nfl/500/hou.png",
+        "IND": "https://a.espncdn.com/i/teamlogos/nfl/500/ind.png",
+        "JAX": "https://a.espncdn.com/i/teamlogos/nfl/500/jax.png",
+        "KC": "https://a.espncdn.com/i/teamlogos/nfl/500/kc.png",
+        "LV": "https://a.espncdn.com/i/teamlogos/nfl/500/lv.png",
+        "LAC": "https://a.espncdn.com/i/teamlogos/nfl/500/lac.png",
+        "LAR": "https://a.espncdn.com/i/teamlogos/nfl/500/lar.png",
+        "MIA": "https://a.espncdn.com/i/teamlogos/nfl/500/mia.png",
+        "MIN": "https://a.espncdn.com/i/teamlogos/nfl/500/min.png",
+        "NE": "https://a.espncdn.com/i/teamlogos/nfl/500/ne.png",
+        "NO": "https://a.espncdn.com/i/teamlogos/nfl/500/no.png",
+        "NYG": "https://a.espncdn.com/i/teamlogos/nfl/500/nyg.png",
+        "NYJ": "https://a.espncdn.com/i/teamlogos/nfl/500/nyj.png",
+        "PHI": "https://a.espncdn.com/i/teamlogos/nfl/500/phi.png",
+        "PIT": "https://a.espncdn.com/i/teamlogos/nfl/500/pit.png",
+        "SF": "https://a.espncdn.com/i/teamlogos/nfl/500/sf.png",
+        "SEA": "https://a.espncdn.com/i/teamlogos/nfl/500/sea.png",
+        "TB": "https://a.espncdn.com/i/teamlogos/nfl/500/tb.png",
+        "TEN": "https://a.espncdn.com/i/teamlogos/nfl/500/ten.png",
+        "WAS": "https://a.espncdn.com/i/teamlogos/nfl/500/wsh.png",
+    }
+    return logo_map
+
+
 def generate_prediction_for_game(event_id: str):
     """Generate prediction using actual game yard statistics."""
     print(f"\n{'='*60}")
@@ -72,29 +117,27 @@ def generate_prediction_for_game(event_id: str):
         print(f"📋 Game Status: '{status_type}' (state: '{status_state}')")
         
         # Check if game is scheduled/upcoming
-        if status_state == "pre":
-            print(f"⚠️  Game has NOT started - status_state is 'pre'")
-            return {
-                "error": "Cannot predict upcoming games",
-                "message": "This model predicts outcomes based on in-game yard statistics. The game must be in progress or completed.",
-                "game_status": status_type,
-                "status_state": status_state,
-                "event_id": event_id,
-                "suggestion": "Please wait until the game starts to get a prediction."
-            }
+        if status_state == "pre" or status_type in ["scheduled", "pre"]:
+            print(f"⚠️  Game has NOT started - using pre-game prediction model")
+            
+            # Get team names for pre-game prediction
+            competitors = comp.get("competitors", [])
+            home = next((c for c in competitors if c.get("homeAway") == "home"), None)
+            away = next((c for c in competitors if c.get("homeAway") == "away"), None)
+            
+            if not home or not away:
+                return {
+                    "error": "Cannot find teams for pre-game prediction",
+                    "event_id": event_id
+                }
+            
+            home_team_name = home.get("team", {}).get("displayName", "Unknown")
+            away_team_name = away.get("team", {}).get("displayName", "Unknown")
+            
+            # Use pre-game prediction model
+            return generate_pre_game_prediction(home_team_name, away_team_name)
         
-        if status_type in ["scheduled", "pre"]:
-            print(f"⚠️  Game has NOT started - status_type is '{status_type}'")
-            return {
-                "error": "Cannot predict upcoming games",
-                "message": "This model predicts outcomes based on in-game yard statistics. The game must be in progress or completed.",
-                "game_status": status_type,
-                "status_state": status_state,
-                "event_id": event_id,
-                "suggestion": "Please wait until the game starts to get a prediction."
-            }
-        
-        print(f"✅ Game is live or completed - proceeding with prediction")
+        print(f"✅ Game is live or completed - proceeding with in-game prediction")
         
         # Step 4: Get competitors
         competitors = comp.get("competitors", [])
@@ -185,7 +228,7 @@ def generate_prediction_for_game(event_id: str):
             columns=['HomeYards', 'AwayYards', 'YardDiff']
         )
         
-                # Predict
+        # Predict
         prediction = model.predict(features)
         proba = model.predict_proba(features)
         
@@ -257,6 +300,154 @@ def generate_prediction_for_game(event_id: str):
         print(f"❌ EXCEPTION: {str(e)}")
         print(f"❌ ERROR: {traceback.format_exc()}")
         return {"error": str(e), "event_id": event_id}
+
+
+def generate_pre_game_prediction(home_team_name: str, away_team_name: str):
+    """
+    Generate prediction for an upcoming game using team season statistics.
+    
+    Args:
+        home_team_name: Display name of home team (e.g., "Denver Broncos")
+        away_team_name: Display name of away team (e.g., "Kansas City Chiefs")
+    
+    Returns:
+        Dictionary with prediction data (same format as in-game predictions)
+    """
+    print(f"\n{'='*60}")
+    print(f"🏈 PRE-GAME PREDICTION: {away_team_name} @ {home_team_name}")
+    
+    try:
+        # Step 1: Get standings to fetch team stats
+        standings_data = get_standings()
+        
+        if "error" in standings_data:
+            return {"error": "Could not fetch team statistics"}
+        
+        # Step 2: Find both teams in standings
+        home_team_stats = None
+        away_team_stats = None
+        
+        # Search in both AFC and NFC standings
+        all_teams = standings_data.get("afc_standings", []) + standings_data.get("nfc_standings", [])
+        
+        for team in all_teams:
+            if team.get("team_name") == home_team_name:
+                home_team_stats = team
+            if team.get("team_name") == away_team_name:
+                away_team_stats = team
+        
+        if not home_team_stats or not away_team_stats:
+            return {
+                "error": f"Could not find team statistics for {home_team_name} or {away_team_name}"
+            }
+        
+        # Step 3: Extract key statistics
+        home_win_pct = home_team_stats.get("win_pct", 0.5)
+        away_win_pct = away_team_stats.get("win_pct", 0.5)
+        
+        home_pf = home_team_stats.get("points_for", 0)
+        home_pa = home_team_stats.get("points_against", 0)
+        away_pf = away_team_stats.get("points_for", 0)
+        away_pa = away_team_stats.get("points_against", 0)
+        
+        home_diff = home_team_stats.get("point_differential", 0)
+        away_diff = away_team_stats.get("point_differential", 0)
+        
+        # Calculate averages (points per game)
+        home_games = home_team_stats.get("wins", 0) + home_team_stats.get("losses", 0) + home_team_stats.get("ties", 0)
+        away_games = away_team_stats.get("wins", 0) + away_team_stats.get("losses", 0) + away_team_stats.get("ties", 0)
+        
+        home_ppg = home_pf / home_games if home_games > 0 else 0
+        home_papg = home_pa / home_games if home_games > 0 else 0
+        away_ppg = away_pf / away_games if away_games > 0 else 0
+        away_papg = away_pa / away_games if away_games > 0 else 0
+        
+        # Step 4: Simple prediction algorithm
+        # Factors:
+        # 1. Win percentage difference (weighted 40%)
+        # 2. Point differential (weighted 30%)
+        # 3. Offensive/Defensive strength (weighted 20%)
+        # 4. Home field advantage (weighted 10% - small boost)
+        
+        win_pct_diff = home_win_pct - away_win_pct
+        point_diff_advantage = (home_diff - away_diff) / 100.0  # Normalize
+        
+        # Offensive advantage: home PPG vs away PAPG
+        # Defensive advantage: away PPG vs home PAPG
+        offensive_advantage = (home_ppg - away_papg) / 10.0
+        defensive_advantage = (away_papg - home_ppg) / 10.0
+        net_offensive = offensive_advantage - defensive_advantage
+        
+        # Home field advantage (typically worth ~2-3 points)
+        home_advantage = 0.02
+        
+        # Calculate composite score
+        composite_score = (
+            win_pct_diff * 0.4 +
+            point_diff_advantage * 0.3 +
+            net_offensive * 0.2 +
+            home_advantage * 0.1
+        )
+        
+        # Convert to probability (sigmoid-like function)
+        # Higher composite = higher home win probability
+        home_win_prob = 0.5 + (composite_score * 0.4)  # Scale to 0.1-0.9 range
+        home_win_prob = max(0.1, min(0.9, home_win_prob))  # Clamp between 10% and 90%
+        away_win_prob = 1.0 - home_win_prob
+        
+        # Determine predicted winner
+        if home_win_prob >= 0.5:
+            predicted_winner = "home"
+            confidence = home_win_prob
+        else:
+            predicted_winner = "away"
+            confidence = away_win_prob
+        
+        # Build decision factors for analysis
+        decision_factors = {
+            "WinPercentage": {
+                "importance": 40.0,
+                "value": round(win_pct_diff * 100, 1),
+                "contribution": round(win_pct_diff * 0.4 * 100, 2)
+            },
+            "PointDifferential": {
+                "importance": 30.0,
+                "value": round(home_diff - away_diff, 1),
+                "contribution": round(point_diff_advantage * 0.3 * 100, 2)
+            },
+            "OffensiveStrength": {
+                "importance": 20.0,
+                "value": round(home_ppg - away_papg, 1),
+                "contribution": round(net_offensive * 0.2 * 100, 2)
+            },
+            "HomeFieldAdvantage": {
+                "importance": 10.0,
+                "value": 2.5,  # Typical home field advantage
+                "contribution": round(home_advantage * 0.1 * 100, 2)
+            }
+        }
+        
+        print(f"\n🤖 PRE-GAME PREDICTION:")
+        print(f"   Home: {home_team_name} (Win%: {home_win_pct:.1%}, PPG: {home_ppg:.1f}, Diff: {home_diff:+d})")
+        print(f"   Away: {away_team_name} (Win%: {away_win_pct:.1%}, PPG: {away_ppg:.1f}, Diff: {away_diff:+d})")
+        print(f"   Winner: {predicted_winner.upper()}")
+        print(f"   Home: {home_win_prob:.1%}, Away: {away_win_prob:.1%}")
+        print(f"   Confidence: {confidence:.1%}")
+        print(f"{'='*60}\n")
+        
+        return {
+            "prediction": predicted_winner,
+            "predicted_winner": predicted_winner,
+            "confidence": round(confidence * 100, 1),
+            "home_win_probability": round(home_win_prob * 100, 1),
+            "away_win_probability": round(away_win_prob * 100, 1),
+            "decision_factors": decision_factors,
+            "prediction_type": "pre_game"
+        }
+        
+    except Exception as e:
+        print(f"❌ Error in pre-game prediction: {str(e)}")
+        return {"error": f"Failed to generate pre-game prediction: {str(e)}"}
 
 
 def _get(url: str, params: Optional[Dict[str, Any]] = None):
@@ -417,6 +608,9 @@ def get_standings(season: Optional[str] = None):
             
         data = _get(STANDINGS, params)
         
+        # Fetch team logos from static mapping
+        logo_map = _get_nfl_team_logos()
+        
         # ESPN API returns data with children array directly at top level
         afc_standings = []
         nfc_standings = []
@@ -431,6 +625,21 @@ def get_standings(season: Optional[str] = None):
                 "afc_standings": [],
                 "nfc_standings": []
             }
+        
+        # Helper function to parse stat value (handle strings and numbers)
+        def parse_stat_value(value):
+            """Convert stat value to appropriate type."""
+            if value is None:
+                return 0
+            if isinstance(value, (int, float)):
+                return float(value)
+            if isinstance(value, str):
+                # Try to convert string to float
+                try:
+                    return float(value)
+                except (ValueError, TypeError):
+                    return 0
+            return 0
         
         # Process each conference
         for conference in conferences:
@@ -450,34 +659,95 @@ def get_standings(season: Optional[str] = None):
                         team = entry.get("team", {})
                         stats = entry.get("stats", [])
                         
-                        # Parse stats array into a dictionary
+                        team_abbr = team.get("abbreviation", "")
+                        # Get logo from mapping
+                        team_logo = logo_map.get(team_abbr) or team.get("logo", "")
+                        
+                        # Create stats dictionary with normalized names (like soccer service does)
                         stats_dict = {}
                         for stat in stats:
-                            stat_name = stat.get("name", "").lower().replace(" ", "_")
-                            stat_value = stat.get("value", 0)
+                            stat_name = stat.get("name", "").lower().replace(" ", "_").replace("-", "_").replace("%", "pct")
+                            stat_value = stat.get("value")
                             stats_dict[stat_name] = stat_value
+                        
+                        # Debug: Print first team's stats to see actual names
+                        if team_abbr == "DEN" and not hasattr(get_standings, '_debug_printed'):
+                            print(f"\nDEBUG: Stats for {team.get('displayName')}:")
+                            for stat in stats:
+                                print(f"  - {stat.get('name')}: {stat.get('value')} (type: {type(stat.get('value'))})")
+                            print(f"\nDEBUG: Normalized stats_dict keys: {list(stats_dict.keys())}")
+                            get_standings._debug_printed = True
+                        
+                        # Extract stats using normalized dictionary lookup
+                        wins = parse_stat_value(stats_dict.get("wins") or stats_dict.get("win"))
+                        losses = parse_stat_value(stats_dict.get("losses") or stats_dict.get("loss"))
+                        ties = parse_stat_value(stats_dict.get("ties") or stats_dict.get("tie"))
+                        
+                        # Debug output for first team
+                        if team_abbr == "DEN" and hasattr(get_standings, '_debug_printed'):
+                            print(f"DEBUG: Parsed values - wins: {wins}, losses: {losses}, ties: {ties}")
+                        
+                        # Calculate win percentage from wins/losses/ties if we have game data
+                        # NFL formula: wins / (wins + losses + ties)
+                        total_games = wins + losses + ties
+                        if total_games > 0:
+                            win_pct = wins / total_games
+                        else:
+                            # Fallback to API value if no games played
+                            win_pct = parse_stat_value(
+                                stats_dict.get("win_percentage") or 
+                                stats_dict.get("win_pct") or 
+                                stats_dict.get("winpct")
+                            )
+                        points_for = parse_stat_value(
+                            stats_dict.get("points_for") or 
+                            stats_dict.get("pointsfor") or
+                            stats_dict.get("pf") or
+                            stats_dict.get("points_scored")
+                        )
+                        points_against = parse_stat_value(
+                            stats_dict.get("points_against") or 
+                            stats_dict.get("pointsagainst") or
+                            stats_dict.get("pa") or
+                            stats_dict.get("points_allowed")
+                        )
+                        point_differential = parse_stat_value(
+                            stats_dict.get("point_differential") or 
+                            stats_dict.get("pointdifferential") or
+                            stats_dict.get("diff") or
+                            stats_dict.get("net_points") or
+                            stats_dict.get("netpoints")
+                        )
+                        
+                        # Get string stats
+                        home_record = str(stats_dict.get("home_record", "") or stats_dict.get("homerecord", ""))
+                        road_record = str(stats_dict.get("road_record", "") or stats_dict.get("roadrecord", "") or stats_dict.get("away_record", ""))
+                        division_record = str(stats_dict.get("division_record", "") or stats_dict.get("divisionrecord", ""))
+                        conference_record = str(stats_dict.get("conference_record", "") or stats_dict.get("conferencerecord", ""))
+                        streak = str(stats_dict.get("streak", "") or stats_dict.get("current_streak", ""))
+                        last_5 = str(stats_dict.get("last_5", "") or stats_dict.get("last5", "") or stats_dict.get("l10", ""))
                         
                         team_data = {
                             "team_id": team.get("id"),
                             "team_name": team.get("displayName"),
-                            "team_abbreviation": team.get("abbreviation"),
-                            "team_logo": team.get("logo"),
+                            "team_abbreviation": team_abbr,
+                            "team_logo": team_logo,
                             "conference": conference_name,
                             "conference_abbr": conference_abbr,
                             "division": division_name,
-                            "wins": stats_dict.get("wins", 0),
-                            "losses": stats_dict.get("losses", 0),
-                            "ties": stats_dict.get("ties", 0),
-                            "win_pct": stats_dict.get("win_percentage", 0.0),
-                            "points_for": stats_dict.get("points_for", 0),
-                            "points_against": stats_dict.get("points_against", 0),
-                            "point_differential": stats_dict.get("point_differential", 0),
-                            "home_record": stats_dict.get("home_record", ""),
-                            "road_record": stats_dict.get("road_record", ""),
-                            "division_record": stats_dict.get("division_record", ""),
-                            "conference_record": stats_dict.get("conference_record", ""),
-                            "streak": stats_dict.get("streak", ""),
-                            "last_5": stats_dict.get("last_5", "")
+                            "wins": int(wins),
+                            "losses": int(losses),
+                            "ties": int(ties),
+                            "win_pct": float(win_pct),
+                            "points_for": int(points_for),
+                            "points_against": int(points_against),
+                            "point_differential": int(point_differential),
+                            "home_record": home_record,
+                            "road_record": road_record,
+                            "division_record": division_record,
+                            "conference_record": conference_record,
+                            "streak": streak,
+                            "last_5": last_5
                         }
                         
                         if conference_abbr == "AFC":
@@ -492,33 +762,83 @@ def get_standings(season: Optional[str] = None):
                     team = entry.get("team", {})
                     stats = entry.get("stats", [])
                     
+                    team_abbr = team.get("abbreviation", "")
+                    # Get logo from mapping
+                    team_logo = logo_map.get(team_abbr) or team.get("logo", "")
+                    
+                    # Create stats dictionary with normalized names
                     stats_dict = {}
                     for stat in stats:
-                        stat_name = stat.get("name", "").lower().replace(" ", "_")
-                        stat_value = stat.get("value", 0)
+                        stat_name = stat.get("name", "").lower().replace(" ", "_").replace("-", "_").replace("%", "pct")
+                        stat_value = stat.get("value")
                         stats_dict[stat_name] = stat_value
+                    
+                    # Extract stats using normalized dictionary lookup
+                    wins = parse_stat_value(stats_dict.get("wins") or stats_dict.get("win"))
+                    losses = parse_stat_value(stats_dict.get("losses") or stats_dict.get("loss"))
+                    ties = parse_stat_value(stats_dict.get("ties") or stats_dict.get("tie"))
+                    
+                    # Calculate win percentage from wins/losses/ties if we have game data
+                    # NFL formula: wins / (wins + losses + ties)
+                    total_games = wins + losses + ties
+                    if total_games > 0:
+                        win_pct = wins / total_games
+                    else:
+                        # Fallback to API value if no games played
+                        win_pct = parse_stat_value(
+                            stats_dict.get("win_percentage") or 
+                            stats_dict.get("win_pct") or 
+                            stats_dict.get("winpct")
+                        )
+                    points_for = parse_stat_value(
+                        stats_dict.get("points_for") or 
+                        stats_dict.get("pointsfor") or
+                        stats_dict.get("pf") or
+                        stats_dict.get("points_scored")
+                    )
+                    points_against = parse_stat_value(
+                        stats_dict.get("points_against") or 
+                        stats_dict.get("pointsagainst") or
+                        stats_dict.get("pa") or
+                        stats_dict.get("points_allowed")
+                    )
+                    point_differential = parse_stat_value(
+                        stats_dict.get("point_differential") or 
+                        stats_dict.get("pointdifferential") or
+                        stats_dict.get("diff") or
+                        stats_dict.get("net_points") or
+                        stats_dict.get("netpoints")
+                    )
+                    
+                    # Get string stats
+                    home_record = str(stats_dict.get("home_record", "") or stats_dict.get("homerecord", ""))
+                    road_record = str(stats_dict.get("road_record", "") or stats_dict.get("roadrecord", "") or stats_dict.get("away_record", ""))
+                    division_record = str(stats_dict.get("division_record", "") or stats_dict.get("divisionrecord", ""))
+                    conference_record = str(stats_dict.get("conference_record", "") or stats_dict.get("conferencerecord", ""))
+                    streak = str(stats_dict.get("streak", "") or stats_dict.get("current_streak", ""))
+                    last_5 = str(stats_dict.get("last_5", "") or stats_dict.get("last5", "") or stats_dict.get("l10", ""))
                     
                     team_data = {
                         "team_id": team.get("id"),
                         "team_name": team.get("displayName"),
-                        "team_abbreviation": team.get("abbreviation"),
-                        "team_logo": team.get("logo"),
+                        "team_abbreviation": team_abbr,
+                        "team_logo": team_logo,
                         "conference": conference_name,
                         "conference_abbr": conference_abbr,
                         "division": None,
-                        "wins": stats_dict.get("wins", 0),
-                        "losses": stats_dict.get("losses", 0),
-                        "ties": stats_dict.get("ties", 0),
-                        "win_pct": stats_dict.get("win_percentage", 0.0),
-                        "points_for": stats_dict.get("points_for", 0),
-                        "points_against": stats_dict.get("points_against", 0),
-                        "point_differential": stats_dict.get("point_differential", 0),
-                        "home_record": stats_dict.get("home_record", ""),
-                        "road_record": stats_dict.get("road_record", ""),
-                        "division_record": stats_dict.get("division_record", ""),
-                        "conference_record": stats_dict.get("conference_record", ""),
-                        "streak": stats_dict.get("streak", ""),
-                        "last_5": stats_dict.get("last_5", "")
+                        "wins": int(wins),
+                        "losses": int(losses),
+                        "ties": int(ties),
+                        "win_pct": float(win_pct),
+                        "points_for": int(points_for),
+                        "points_against": int(points_against),
+                        "point_differential": int(point_differential),
+                        "home_record": home_record,
+                        "road_record": road_record,
+                        "division_record": division_record,
+                        "conference_record": conference_record,
+                        "streak": streak,
+                        "last_5": last_5
                     }
                     
                     if conference_abbr == "AFC":
@@ -526,9 +846,34 @@ def get_standings(season: Optional[str] = None):
                     else:
                         nfc_standings.append(team_data)
         
+        # Calculate division ranks and playoff seeds
+        # Group by division to calculate division ranks
+        division_groups = {}
+        for team in afc_standings + nfc_standings:
+            div = team.get("division")
+            if div:
+                if div not in division_groups:
+                    division_groups[div] = []
+                division_groups[div].append(team)
+        
+        # Calculate division rank for each team
+        for div, teams in division_groups.items():
+            teams.sort(key=lambda x: (x["wins"], x["win_pct"]), reverse=True)
+            for idx, team in enumerate(teams):
+                team["division_rank"] = idx + 1
+        
         # Sort by wins descending, then win percentage
         afc_standings.sort(key=lambda x: (x["wins"], x["win_pct"]), reverse=True)
         nfc_standings.sort(key=lambda x: (x["wins"], x["win_pct"]), reverse=True)
+        
+        # Calculate conference rank and playoff seed
+        for idx, team in enumerate(afc_standings):
+            team["conference_rank"] = idx + 1
+            team["playoff_seed"] = idx + 1 if idx < 7 else 0
+        
+        for idx, team in enumerate(nfc_standings):
+            team["conference_rank"] = idx + 1
+            team["playoff_seed"] = idx + 1 if idx < 7 else 0
         
         return {
             "league": "NFL",
