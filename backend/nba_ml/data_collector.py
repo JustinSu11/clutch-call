@@ -20,7 +20,6 @@ from nba_api.stats.endpoints import (
     boxscoreadvancedv2,
     boxscoreplayertrackv2,
     leaguegamelog,
-    teamgamelog,
     playergamelog,
     scoreboardv2,
     leaguestandings,

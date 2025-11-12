@@ -21,7 +21,6 @@ from nba_api.stats.endpoints import (
     leaguegamelog,
     leaguestandingsv3,
     scoreboardv2,
-    teamgamelog,
 )
 
 # --- Updated Integration ---
@@ -179,17 +178,17 @@ def get_box_score(game_id: str):
 
 
 def get_team_last_games(team_id: int, n: int = 5, season: Optional[str] = None):
-    """Return the most recent N games for a team using TeamGameLog."""
+    """Return the most recent N games for a team using LeagueGameLog filtered by team."""
     season_fmt = _season_to_nba_format(season)
     if season_fmt:
-        tlog = teamgamelog.TeamGameLog(
-            team_id=team_id, season=season_fmt, season_type_all_star="Regular Season"
+        tlog = leaguegamelog.LeagueGameLog(
+            team_id_nullable=team_id, season=season_fmt, season_type_all_star="Regular Season"
         ).get_normalized_dict()
     else:
-        tlog = teamgamelog.TeamGameLog(
-            team_id=team_id, season_type_all_star="Regular Season"
+        tlog = leaguegamelog.LeagueGameLog(
+            team_id_nullable=team_id, season_type_all_star="Regular Season"
         ).get_normalized_dict()
-    rows = tlog.get("TeamGameLog", [])
+    rows = tlog.get("LeagueGameLog", [])
     # Rows are typically already recent-first; ensure slice of N
     items = [
         {
