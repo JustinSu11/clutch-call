@@ -2,7 +2,6 @@
 /*
     File: frontend/src/utils/nfl_parser.tsx
     Created: 09/30/2025 by CJ Quintero
-<<<<<<< HEAD
     Last Updated: 11/06/2025 by CJ Quintero
 
     Description: This file contains methods 
@@ -346,11 +345,7 @@ export const parseNFLTeamStats = async (teamName: string) => {
         return `${yyyy}-${mm}-${dd}`;
     })();
 
-<<<<<<< HEAD
     try {
-=======
->>>>>>> develop
-        try {
         // await the response from the backend method
         const responseData = await sports_stats_methods.getHistoricalNFLTeamByName(teamName, {
             startDate: `${seasonStartDate}`,              
