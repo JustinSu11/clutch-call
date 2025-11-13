@@ -335,7 +335,7 @@ export const parseNFLTeamStats = async (teamName: string) => {
     return { wins, losses, ties, totalGames};
 };
 
-export const parseNFLTeamLogo = async (teamName: string) => {
+export const parseNFLPreviousGameStats = async (teamName: string) => {
     /*
         parseNFLPreviousGameStats:
         This method gets a team's score from their previous games this season

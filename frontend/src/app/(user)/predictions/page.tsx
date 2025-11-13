@@ -85,10 +85,16 @@ type NBAStandingsResponse = {
     eastern_conference?: Array<{
         team_id: number;
         team_logo?: string | null;
+        wins?: number;
+        losses?: number;
+        win_pct?: number;
     }>;
     western_conference?: Array<{
         team_id: number;
         team_logo?: string | null;
+        wins?: number;
+        losses?: number;
+        win_pct?: number;
     }>;
 };
 
@@ -130,7 +136,7 @@ const buildNFLPredictions = async (): Promise<Prediction[]> => {
     
     // Convert upcoming games to Game format - use parseNFLGamesFromEvents to get IDs
     if (upcomingGamesRaw && upcomingGamesRaw.events) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
         const upcomingEvents = upcomingGamesRaw.events.filter((event: any) => {
             const eventDate = event.date ? new Date(event.date) : null;
             return eventDate && eventDate > now;
@@ -231,7 +237,7 @@ const buildNFLPredictions = async (): Promise<Prediction[]> => {
         if (Object.keys(decisionFactors).length > 0) {
             // Sort factors by absolute contribution (most influential first)
             const sortedFactors = Object.entries(decisionFactors)
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                 
                 .map(([feature, data]: [string, any]) => ({
                     feature,
                     ...data,
@@ -275,7 +281,7 @@ const buildNFLPredictions = async (): Promise<Prediction[]> => {
         
         console.log(` Successfully built prediction for game ${game.id}:`, prediction);
         return prediction;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     } catch (error: any) {
         // Handle network errors or 422 errors in the catch block
         const errorMessage = error?.message || '';
@@ -720,12 +726,17 @@ export default function PredictionsScreen() {
     const [awayStats, setAwayStats] = useState<TeamStats | null>(null);
     const [nbaTrainingStatus, setNbaTrainingStatus] = useState<NBATrainingStatus | null>(null);
     const [nbaTeamLogos, setNbaTeamLogos] = useState<Record<number, string>>({});
+    const [nbaStandingsData, setNbaStandingsData] = useState<Record<number, { wins: number; losses: number; win_pct: number }>>({});
     const [homeLogo, setHomeLogo] = useState<string>('');
     const [awayLogo, setAwayLogo] = useState<string>('');
+    const [selectedPrediction, setSelectedPrediction] = useState<Prediction | null>(null);
 
-    const openMatchDialog = async (homeTeam: string, awayTeam: string, sport: SportKey) => {
+    const openMatchDialog = async (prediction: Prediction) => {
+        const [awayTeam, homeTeam] = prediction.match.split(' at ').map(t => t?.trim() ?? '');
+        
         setSelectedHome(homeTeam);
         setSelectedAway(awayTeam);
+        setSelectedPrediction(prediction);
         setDialogOpen(true);
         setDialogLoading(true);
         setHomeStats(null);
@@ -739,17 +750,48 @@ export default function PredictionsScreen() {
             let away = { wins: 0, losses: 0, ties: 0, totalGames: 0 };
             let homeLogo = '';
             let awayLogo = '';
-            if (sport === 'NFL') {
+            if (prediction.sport === 'NFL') {
                 home = await getNFLTeamStats(homeTeam);
                 away = await getNFLTeamStats(awayTeam);
+                homeLogo = prediction.homeTeamLogo || '';
+                awayLogo = prediction.awayTeamLogo || '';
             }
-            else if (sport === 'MLS') {
+            else if (prediction.sport === 'MLS') {
                 home = await getMLSTeamStats(homeTeam);
                 away = await getMLSTeamStats(awayTeam);
             }
-            else if (sport === 'NBA') {
-                home = await getNBATeamStats(homeTeam);
-                away = await getNBATeamStats(awayTeam);
+            else if (prediction.sport === 'NBA') {
+                // Use standings data instead of fetching team stats
+                const homeTeamId = prediction.meta?.homeTeamId;
+                const awayTeamId = prediction.meta?.awayTeamId;
+                
+                if (homeTeamId && nbaStandingsData[homeTeamId]) {
+                    const standings = nbaStandingsData[homeTeamId];
+                    home = {
+                        wins: standings.wins,
+                        losses: standings.losses,
+                        ties: 0,
+                        totalGames: standings.wins + standings.losses
+                    };
+                }
+                
+                if (awayTeamId && nbaStandingsData[awayTeamId]) {
+                    const standings = nbaStandingsData[awayTeamId];
+                    away = {
+                        wins: standings.wins,
+                        losses: standings.losses,
+                        ties: 0,
+                        totalGames: standings.wins + standings.losses
+                    };
+                }
+                
+                // Get NBA team logos from the state
+                if (homeTeamId && nbaTeamLogos[homeTeamId]) {
+                    homeLogo = nbaTeamLogos[homeTeamId];
+                }
+                if (awayTeamId && nbaTeamLogos[awayTeamId]) {
+                    awayLogo = nbaTeamLogos[awayTeamId];
+                }
             }
             setHomeStats({
                 wins: home.wins,
@@ -822,14 +864,30 @@ export default function PredictionsScreen() {
                 }
 
                 const logoMap: Record<number, string> = {};
+                const standingsMap: Record<number, { wins: number; losses: number; win_pct: number }> = {};
+                
                 for (const team of allTeams) {
-                    if (typeof team.team_id === 'number' && team.team_logo) {
-                        logoMap[team.team_id] = team.team_logo;
+                    if (typeof team.team_id === 'number') {
+                        if (team.team_logo) {
+                            logoMap[team.team_id] = team.team_logo;
+                        }
+                        // Store wins, losses from standings
+                        if (typeof team.wins === 'number' && typeof team.losses === 'number') {
+                            standingsMap[team.team_id] = {
+                                wins: team.wins,
+                                losses: team.losses,
+                                win_pct: team.win_pct || 0
+                            };
+                        }
                     }
                 }
 
                 if (isMounted && Object.keys(logoMap).length > 0) {
                     setNbaTeamLogos(prev => ({ ...prev, ...logoMap }));
+                }
+                
+                if (isMounted && Object.keys(standingsMap).length > 0) {
+                    setNbaStandingsData(standingsMap);
                 }
             } catch (err) {
                 console.warn('Failed to load NBA team logos for predictions view', err);
@@ -927,12 +985,11 @@ export default function PredictionsScreen() {
                                     </tr>
                                 ) : filteredPredictions.length > 0 ? (
                                     filteredPredictions.map((item, idx) => {
-                                        const [awayTeam, homeTeam] = item.match.split(' at ');
                                         return (
                                             <PredictionRow
                                                 key={idx}
                                                 item={item}
-                                                onClick={() => openMatchDialog(homeTeam ?? '', awayTeam ?? '', item.sport)}
+                                                onClick={() => openMatchDialog(item)}
                                                 nbaTeamLogos={nbaTeamLogos}
                                             />
                                         );
@@ -960,12 +1017,11 @@ export default function PredictionsScreen() {
                             </div>
                         ) : filteredPredictions.length > 0 ? (
                             filteredPredictions.map((item, idx) => {
-                                const [awayTeam, homeTeam] = item.match.split(' at ');
                                 return (
                                     <div
                                         key={idx}
                                         className="bg-secondary-background p-4 rounded-lg cursor-pointer hover:bg-secondary"
-                                        onClick={() => openMatchDialog(homeTeam ?? '', awayTeam ?? '', item.sport)}
+                                        onClick={() => openMatchDialog(item)}
                                     >
                                         <div className="flex justify-between items-start mb-2">
                                             <div className="font-medium text-text-primary">{item.match}</div>
@@ -1004,6 +1060,9 @@ export default function PredictionsScreen() {
                 loading={dialogLoading}
                 homeLogo={homeLogo}
                 awayLogo={awayLogo}
+                decisionFactors={selectedPrediction?.meta?.decisionFactors}
+                prediction={selectedPrediction?.prediction}
+                confidence={selectedPrediction?.confidence}
             />
         </div>
     );
