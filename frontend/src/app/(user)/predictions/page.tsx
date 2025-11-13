@@ -85,10 +85,16 @@ type NBAStandingsResponse = {
     eastern_conference?: Array<{
         team_id: number;
         team_logo?: string | null;
+        wins?: number;
+        losses?: number;
+        win_pct?: number;
     }>;
     western_conference?: Array<{
         team_id: number;
         team_logo?: string | null;
+        wins?: number;
+        losses?: number;
+        win_pct?: number;
     }>;
 };
 
@@ -720,6 +726,7 @@ export default function PredictionsScreen() {
     const [awayStats, setAwayStats] = useState<TeamStats | null>(null);
     const [nbaTrainingStatus, setNbaTrainingStatus] = useState<NBATrainingStatus | null>(null);
     const [nbaTeamLogos, setNbaTeamLogos] = useState<Record<number, string>>({});
+    const [nbaStandingsData, setNbaStandingsData] = useState<Record<number, { wins: number; losses: number; win_pct: number }>>({});
     const [homeLogo, setHomeLogo] = useState<string>('');
     const [awayLogo, setAwayLogo] = useState<string>('');
     const [selectedPrediction, setSelectedPrediction] = useState<Prediction | null>(null);
@@ -754,14 +761,36 @@ export default function PredictionsScreen() {
                 away = await getMLSTeamStats(awayTeam);
             }
             else if (prediction.sport === 'NBA') {
-                home = await getNBATeamStats(homeTeam);
-                away = await getNBATeamStats(awayTeam);
-                // Get NBA team logos from the state
-                if (prediction.meta?.homeTeamId && nbaTeamLogos[prediction.meta.homeTeamId]) {
-                    homeLogo = nbaTeamLogos[prediction.meta.homeTeamId];
+                // Use standings data instead of fetching team stats
+                const homeTeamId = prediction.meta?.homeTeamId;
+                const awayTeamId = prediction.meta?.awayTeamId;
+                
+                if (homeTeamId && nbaStandingsData[homeTeamId]) {
+                    const standings = nbaStandingsData[homeTeamId];
+                    home = {
+                        wins: standings.wins,
+                        losses: standings.losses,
+                        ties: 0,
+                        totalGames: standings.wins + standings.losses
+                    };
                 }
-                if (prediction.meta?.awayTeamId && nbaTeamLogos[prediction.meta.awayTeamId]) {
-                    awayLogo = nbaTeamLogos[prediction.meta.awayTeamId];
+                
+                if (awayTeamId && nbaStandingsData[awayTeamId]) {
+                    const standings = nbaStandingsData[awayTeamId];
+                    away = {
+                        wins: standings.wins,
+                        losses: standings.losses,
+                        ties: 0,
+                        totalGames: standings.wins + standings.losses
+                    };
+                }
+                
+                // Get NBA team logos from the state
+                if (homeTeamId && nbaTeamLogos[homeTeamId]) {
+                    homeLogo = nbaTeamLogos[homeTeamId];
+                }
+                if (awayTeamId && nbaTeamLogos[awayTeamId]) {
+                    awayLogo = nbaTeamLogos[awayTeamId];
                 }
             }
             setHomeStats({
@@ -835,14 +864,30 @@ export default function PredictionsScreen() {
                 }
 
                 const logoMap: Record<number, string> = {};
+                const standingsMap: Record<number, { wins: number; losses: number; win_pct: number }> = {};
+                
                 for (const team of allTeams) {
-                    if (typeof team.team_id === 'number' && team.team_logo) {
-                        logoMap[team.team_id] = team.team_logo;
+                    if (typeof team.team_id === 'number') {
+                        if (team.team_logo) {
+                            logoMap[team.team_id] = team.team_logo;
+                        }
+                        // Store wins, losses from standings
+                        if (typeof team.wins === 'number' && typeof team.losses === 'number') {
+                            standingsMap[team.team_id] = {
+                                wins: team.wins,
+                                losses: team.losses,
+                                win_pct: team.win_pct || 0
+                            };
+                        }
                     }
                 }
 
                 if (isMounted && Object.keys(logoMap).length > 0) {
                     setNbaTeamLogos(prev => ({ ...prev, ...logoMap }));
+                }
+                
+                if (isMounted && Object.keys(standingsMap).length > 0) {
+                    setNbaStandingsData(standingsMap);
                 }
             } catch (err) {
                 console.warn('Failed to load NBA team logos for predictions view', err);
