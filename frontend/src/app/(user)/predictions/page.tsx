@@ -394,6 +394,7 @@ const buildNBAPredictions = async (): Promise<Prediction[]> => {
             return {
                 match: `${awayName} at ${homeName}`,
                 date: formatGameDate(game.game_date),
+                dateAndTime: game.game_date, // Store full datetime for proper time display
                 prediction: `${predictedWinnerName} predicted to win`,
                 confidence: normalizeConfidence(confidenceRaw),
                 sport: 'NBA',

@@ -315,6 +315,51 @@ class NBADataCollector:
         logger.info(f"Collected {len(recent_games)} recent games with details")
         return recent_games
     
+    def _parse_game_datetime(self, date_str: str, game_status_text: str) -> str:
+        """Parse game date and time from date string and status text.
+        
+        Args:
+            date_str: Date string in format "MM/DD/YYYY"
+            game_status_text: Status text like "7:00 PM ET" or "7:30 PM ET"
+            
+        Returns:
+            ISO format datetime string
+        """
+        import re
+        
+        # Parse the date
+        try:
+            game_date = datetime.strptime(date_str, "%m/%d/%Y")
+        except ValueError:
+            logger.warning(f"Could not parse date: {date_str}, using current date")
+            game_date = datetime.now()
+        
+        # Try to extract time from game_status_text
+        # Pattern matches times like "7:00 PM", "10:30 PM", etc.
+        time_pattern = r'(\d{1,2}):(\d{2})\s*(AM|PM)'
+        match = re.search(time_pattern, game_status_text, re.IGNORECASE)
+        
+        if match:
+            hour = int(match.group(1))
+            minute = int(match.group(2))
+            period = match.group(3).upper()
+            
+            # Convert to 24-hour format
+            if period == 'PM' and hour != 12:
+                hour += 12
+            elif period == 'AM' and hour == 12:
+                hour = 0
+            
+            # Combine date with time
+            game_datetime = game_date.replace(hour=hour, minute=minute, second=0, microsecond=0)
+            logger.info(f"Parsed time from '{game_status_text}': {game_datetime.strftime('%I:%M %p')}")
+        else:
+            # If no time found, default to 7:00 PM (common game time)
+            game_datetime = game_date.replace(hour=19, minute=0, second=0, microsecond=0)
+            logger.warning(f"Could not parse time from '{game_status_text}', defaulting to 7:00 PM")
+        
+        return game_datetime.isoformat()
+
     def get_upcoming_games(self, days_ahead: int = 7) -> pd.DataFrame:
         """Get upcoming games for prediction"""
         logger.info(f"Getting upcoming games for next {days_ahead} days...")
@@ -343,14 +388,19 @@ class NBADataCollector:
                         if str(game_id).startswith('001'):
                             logger.info(f"Skipping preseason game {game_id} on {date_str}")
                             continue
+                        
+                        game_status_text = game.get('GAME_STATUS_TEXT', '')
+                        # Parse the combined date and time
+                        game_datetime = self._parse_game_datetime(date_str, game_status_text)
+                        
                         upcoming_games.append({
                             'game_id': game_id,
-                            'game_date': date_str,
+                            'game_date': game_datetime,  # Now includes time
                             'home_team_id': game.get('HOME_TEAM_ID'),
                             'away_team_id': game.get('VISITOR_TEAM_ID'),
                             'home_team': game.get('HOME_TEAM_NAME', ''),
                             'away_team': game.get('VISITOR_TEAM_NAME', ''),
-                            'game_time': game.get('GAME_STATUS_TEXT', '')
+                            'game_time': game_status_text
                         })
                         
             except Exception as e:
