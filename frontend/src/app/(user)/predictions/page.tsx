@@ -722,10 +722,14 @@ export default function PredictionsScreen() {
     const [nbaTeamLogos, setNbaTeamLogos] = useState<Record<number, string>>({});
     const [homeLogo, setHomeLogo] = useState<string>('');
     const [awayLogo, setAwayLogo] = useState<string>('');
+    const [selectedPrediction, setSelectedPrediction] = useState<Prediction | null>(null);
 
-    const openMatchDialog = async (homeTeam: string, awayTeam: string, sport: SportKey) => {
+    const openMatchDialog = async (prediction: Prediction) => {
+        const [awayTeam, homeTeam] = prediction.match.split(' at ').map(t => t?.trim() ?? '');
+        
         setSelectedHome(homeTeam);
         setSelectedAway(awayTeam);
+        setSelectedPrediction(prediction);
         setDialogOpen(true);
         setDialogLoading(true);
         setHomeStats(null);
@@ -739,17 +743,26 @@ export default function PredictionsScreen() {
             let away = { wins: 0, losses: 0, ties: 0, totalGames: 0 };
             let homeLogo = '';
             let awayLogo = '';
-            if (sport === 'NFL') {
+            if (prediction.sport === 'NFL') {
                 home = await getNFLTeamStats(homeTeam);
                 away = await getNFLTeamStats(awayTeam);
+                homeLogo = prediction.homeTeamLogo || '';
+                awayLogo = prediction.awayTeamLogo || '';
             }
-            else if (sport === 'MLS') {
+            else if (prediction.sport === 'MLS') {
                 home = await getMLSTeamStats(homeTeam);
                 away = await getMLSTeamStats(awayTeam);
             }
-            else if (sport === 'NBA') {
+            else if (prediction.sport === 'NBA') {
                 home = await getNBATeamStats(homeTeam);
                 away = await getNBATeamStats(awayTeam);
+                // Get NBA team logos from the state
+                if (prediction.meta?.homeTeamId && nbaTeamLogos[prediction.meta.homeTeamId]) {
+                    homeLogo = nbaTeamLogos[prediction.meta.homeTeamId];
+                }
+                if (prediction.meta?.awayTeamId && nbaTeamLogos[prediction.meta.awayTeamId]) {
+                    awayLogo = nbaTeamLogos[prediction.meta.awayTeamId];
+                }
             }
             setHomeStats({
                 wins: home.wins,
@@ -927,12 +940,11 @@ export default function PredictionsScreen() {
                                     </tr>
                                 ) : filteredPredictions.length > 0 ? (
                                     filteredPredictions.map((item, idx) => {
-                                        const [awayTeam, homeTeam] = item.match.split(' at ');
                                         return (
                                             <PredictionRow
                                                 key={idx}
                                                 item={item}
-                                                onClick={() => openMatchDialog(homeTeam ?? '', awayTeam ?? '', item.sport)}
+                                                onClick={() => openMatchDialog(item)}
                                                 nbaTeamLogos={nbaTeamLogos}
                                             />
                                         );
@@ -960,12 +972,11 @@ export default function PredictionsScreen() {
                             </div>
                         ) : filteredPredictions.length > 0 ? (
                             filteredPredictions.map((item, idx) => {
-                                const [awayTeam, homeTeam] = item.match.split(' at ');
                                 return (
                                     <div
                                         key={idx}
                                         className="bg-secondary-background p-4 rounded-lg cursor-pointer hover:bg-secondary"
-                                        onClick={() => openMatchDialog(homeTeam ?? '', awayTeam ?? '', item.sport)}
+                                        onClick={() => openMatchDialog(item)}
                                     >
                                         <div className="flex justify-between items-start mb-2">
                                             <div className="font-medium text-text-primary">{item.match}</div>
@@ -1004,6 +1015,9 @@ export default function PredictionsScreen() {
                 loading={dialogLoading}
                 homeLogo={homeLogo}
                 awayLogo={awayLogo}
+                decisionFactors={selectedPrediction?.meta?.decisionFactors}
+                prediction={selectedPrediction?.prediction}
+                confidence={selectedPrediction?.confidence}
             />
         </div>
     );

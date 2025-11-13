@@ -16,6 +16,56 @@ export type TeamStats = {
     totalGames: number;
 };
 
+export type DecisionFactor = {
+    factor: string;
+    importance: number;
+    value: number;
+    contribution: number;
+    impact?: number;
+    effect?: string;
+    delta?: number;
+};
+
+const formatFactorValue = (factor: DecisionFactor): string => {
+    // Format the actual value of the factor for display
+    const value = factor.value;
+    const factorName = factor.factor.toLowerCase();
+    
+    // For percentage-based stats
+    if (factorName.includes('percentage') || factorName.includes('win rate') || factorName.includes('%')) {
+        return `${(value * 100).toFixed(1)}%`;
+    }
+    
+    // For ratings and pace (typically 90-120 range)
+    if (factorName.includes('rating') || factorName.includes('pace')) {
+        return value.toFixed(1);
+    }
+    
+    // For streak (show with + or -)
+    if (factorName.includes('streak')) {
+        const streakValue = Math.round(value);
+        return streakValue >= 0 ? `+${streakValue}` : `${streakValue}`;
+    }
+    
+    // For rest days
+    if (factorName.includes('rest') || factorName.includes('days')) {
+        return `${Math.round(value)} days`;
+    }
+    
+    // For points per game
+    if (factorName.includes('points') || factorName.includes('ppg')) {
+        return `${value.toFixed(1)} pts`;
+    }
+    
+    // For home court advantage (binary 0 or 1)
+    if (factorName.includes('home court')) {
+        return value === 1 ? 'Home' : 'Away';
+    }
+    
+    // Default: show as decimal with 1 decimal place
+    return value.toFixed(1);
+};
+
 export default function MatchDialog({
     open,
     onClose,
@@ -26,6 +76,9 @@ export default function MatchDialog({
     loading,
     homeLogo,
     awayLogo,
+    decisionFactors,
+    prediction,
+    confidence,
 }: {
     open: boolean;
     onClose: () => void;
@@ -36,6 +89,9 @@ export default function MatchDialog({
     loading?: boolean;
     homeLogo?: string;
     awayLogo?: string;
+    decisionFactors?: DecisionFactor[];
+    prediction?: string;
+    confidence?: number;
 }) {
     if (!open) return null;
     return (
@@ -75,45 +131,105 @@ export default function MatchDialog({
                 {loading ? (
                     <div className="py-8 text-center text-text-primary text-2xl">Loading...</div>
                 ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {/* left column with right border (the divider) */}
-                        <div className="text-text-primary space-y-2 border-r-2 pr-4 flex flex-col">
-                            <div className="flex items-center gap-3">
-                                <h4 className="text-text-primary text-xl font-semibold">{awayTeam}</h4>
+                    <>
+                        {/* Prediction and Confidence */}
+                        {prediction && confidence !== undefined && (
+                            <div className="mb-6 p-4 bg-secondary rounded-lg">
+                                <div className="flex items-center justify-between mb-2">
+                                    <span className="text-lg font-semibold text-text-primary">{prediction}</span>
+                                    <span className="text-lg font-bold text-primary">{Math.round(confidence)}% Confidence</span>
+                                </div>
+                                <div className="w-full bg-gray-200 rounded-full h-3">
+                                    <div
+                                        className="h-3 rounded-full transition-all"
+                                        style={{
+                                            width: `${confidence}%`,
+                                            backgroundColor: `hsl(${(confidence / 100) * 100}, 90%, 45%)`
+                                        }}
+                                    />
+                                </div>
                             </div>
-                            {awayStats ? (
-                                <ul className="text-xl space-y-1">
-                                    {Object.entries(awayStats).map(([k, v]) => (
-                                        <li key={k} className="flex justify-between">
-                                            <span className="text-text-primary text-lg">{k}</span>
-                                            <span className="text-text-primary text-lg">{String(v)}</span>
-                                        </li>
-                                    ))}
-                                </ul>
-                            ) : (
-                                <div className="text-2xl text-text-primary">No stats available</div>
-                            )}
+                        )}
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                            {/* left column with right border (the divider) */}
+                            <div className="text-text-primary space-y-2 border-r-2 pr-4 flex flex-col">
+                                <div className="flex items-center gap-3">
+                                    <h4 className="text-text-primary text-xl font-semibold">{awayTeam}</h4>
+                                </div>
+                                {awayStats ? (
+                                    <ul className="text-xl space-y-1">
+                                        {Object.entries(awayStats).map(([k, v]) => (
+                                            <li key={k} className="flex justify-between">
+                                                <span className="text-text-primary text-lg">{k}</span>
+                                                <span className="text-text-primary text-lg">{String(v)}</span>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                ) : (
+                                    <div className="text-2xl text-text-primary">No stats available</div>
+                                )}
+                            </div>
+
+                            <div className="space-y-2 pl-4 flex flex-col">
+                                {/* right column with left padding */}
+                                <div className="flex items-center gap-3">
+                                    <h4 className="text-text-primary text-xl font-semibold">{homeTeam}</h4>
+                                </div>
+                                {homeStats ? (
+                                    <ul className="text-xl space-y-1">
+                                        {Object.entries(homeStats).map(([k, v]) => (
+                                            <li key={k} className="flex justify-between">
+                                                <span className="text-text-primary text-lg">{k}</span>
+                                                <span className="text-text-primary text-lg">{String(v)}</span>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                ) : (
+                                    <div className="text-2xl text-text-primary">No stats available</div>
+                                )}
+                            </div>
                         </div>
 
-                        <div className="space-y-2 pl-4 flex flex-col">
-                            {/* right column with left padding */}
-                            <div className="flex items-center gap-3">
-                                <h4 className="text-text-primary text-xl font-semibold">{homeTeam}</h4>
-                            </div>
-                            {homeStats ? (
-                                <ul className="text-xl space-y-1">
-                                    {Object.entries(homeStats).map(([k, v]) => (
-                                        <li key={k} className="flex justify-between">
-                                            <span className="text-text-primary text-lg">{k}</span>
-                                            <span className="text-text-primary text-lg">{String(v)}</span>
-                                        </li>
+                        {/* Decision Factors Section */}
+                        {decisionFactors && decisionFactors.length > 0 && (
+                            <div className="mt-6 pt-6 border-t-2 border-secondary">
+                                <h4 className="text-xl font-bold text-text-primary mb-4">Decision Factors</h4>
+                                <div className="space-y-4">
+                                    {decisionFactors.map((factor, idx) => (
+                                        <div key={idx} className="bg-secondary p-4 rounded-lg">
+                                            <div className="flex items-center justify-between mb-2">
+                                                <span className="text-base font-semibold text-text-primary">
+                                                    {factor.factor}
+                                                </span>
+                                                <span className="text-base font-bold text-primary">
+                                                    {(factor.contribution * 100).toFixed(1)}%
+                                                </span>
+                                            </div>
+                                            <div className="grid grid-cols-2 gap-2 text-sm text-text-secondary">
+                                                <div>
+                                                    <span className="font-medium">Value: </span>
+                                                    {formatFactorValue(factor)}
+                                                </div>
+                                                {factor.effect && (
+                                                    <div>
+                                                        <span className="font-medium">Effect: </span>
+                                                        {factor.effect}
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <div className="mt-2 w-full bg-gray-200 rounded-full h-2">
+                                                <div
+                                                    className="h-2 rounded-full bg-primary"
+                                                    style={{ width: `${factor.contribution * 100}%` }}
+                                                />
+                                            </div>
+                                        </div>
                                     ))}
-                                </ul>
-                            ) : (
-                                <div className="text-2xl text-text-primary">No stats available</div>
-                            )}
-                        </div>
-                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </>
                 )}
             </div>
         </div>
