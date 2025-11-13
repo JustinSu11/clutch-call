@@ -130,7 +130,7 @@ const buildNFLPredictions = async (): Promise<Prediction[]> => {
     
     // Convert upcoming games to Game format - use parseNFLGamesFromEvents to get IDs
     if (upcomingGamesRaw && upcomingGamesRaw.events) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
         const upcomingEvents = upcomingGamesRaw.events.filter((event: any) => {
             const eventDate = event.date ? new Date(event.date) : null;
             return eventDate && eventDate > now;
@@ -231,7 +231,7 @@ const buildNFLPredictions = async (): Promise<Prediction[]> => {
         if (Object.keys(decisionFactors).length > 0) {
             // Sort factors by absolute contribution (most influential first)
             const sortedFactors = Object.entries(decisionFactors)
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                 
                 .map(([feature, data]: [string, any]) => ({
                     feature,
                     ...data,
@@ -275,7 +275,7 @@ const buildNFLPredictions = async (): Promise<Prediction[]> => {
         
         console.log(` Successfully built prediction for game ${game.id}:`, prediction);
         return prediction;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     } catch (error: any) {
         // Handle network errors or 422 errors in the catch block
         const errorMessage = error?.message || '';
