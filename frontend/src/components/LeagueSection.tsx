@@ -33,7 +33,7 @@ export default function LeagueSection({ leagueName, games, error, isLoading }: L
       case 'NBA':
         return '🏀';
       case 'NFL':
-        return '🏈';
+        return '';
       case 'Soccer':
         return '⚽';
       default:
