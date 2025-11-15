@@ -1,0 +1,1345 @@
+{
+  "prediction_date": "2025-11-05T22:23:56.909304",
+  "prediction_window_days": 3,
+  "games_predicted": 31,
+  "game_outcomes": [
+    {
+      "game_id": "0022500171",
+      "game_date": "11/05/2025",
+      "home_team_id": 1610612739,
+      "away_team_id": 1610612755,
+      "home_team_win_probability": 0.04311621595425026,
+      "away_team_win_probability": 0.9568837840457497,
+      "predicted_winner": "away",
+      "confidence": 0.9568837840457497,
+      "decision_factors": [
+        {
+          "factor": "Current Win Streak",
+          "importance": 0.7507,
+          "value": 0.0,
+          "contribution": 0.7204
+        },
+        {
+          "factor": "Win Rate (Rolling 5 games)",
+          "importance": 0.0543,
+          "value": 0.5,
+          "contribution": 0.0547
+        },
+        {
+          "factor": "Win Rate (Last 5 Games)",
+          "importance": 0.0521,
+          "value": 0.5,
+          "contribution": 0.0499
+        },
+        {
+          "factor": "Win Rate (Rolling 10 games)",
+          "importance": 0.0268,
+          "value": 0.5,
+          "contribution": 0.027
+        },
+        {
+          "factor": "Points (Rolling 5 games)",
+          "importance": 0.0138,
+          "value": 120.28,
+          "contribution": 0.0214
+        }
+      ],
+      "prediction_timestamp": "2025-11-05T22:23:56.511449"
+    },
+    {
+      "game_id": "0022500172",
+      "game_date": "11/05/2025",
+      "home_team_id": 1610612765,
+      "away_team_id": 1610612762,
+      "home_team_win_probability": 0.01601347966584225,
+      "away_team_win_probability": 0.9839865203341578,
+      "predicted_winner": "away",
+      "confidence": 0.9839865203341578,
+      "decision_factors": [
+        {
+          "factor": "Current Win Streak",
+          "importance": 0.7507,
+          "value": 0.0,
+          "contribution": 0.7284
+        },
+        {
+          "factor": "Win Rate (Rolling 5 games)",
+          "importance": 0.0543,
+          "value": 0.5,
+          "contribution": 0.0553
+        },
+        {
+          "factor": "Win Rate (Last 5 Games)",
+          "importance": 0.0521,
+          "value": 0.5,
+          "contribution": 0.0505
+        },
+        {
+          "factor": "Win Rate (Rolling 10 games)",
+          "importance": 0.0268,
+          "value": 0.5,
+          "contribution": 0.0273
+        },
+        {
+          "factor": "Win Rate (Rolling 15 games)",
+          "importance": 0.02,
+          "value": 0.5,
+          "contribution": 0.0204
+        }
+      ],
+      "prediction_timestamp": "2025-11-05T22:23:56.525448"
+    },
+    {
+      "game_id": "0022500173",
+      "game_date": "11/05/2025",
+      "home_team_id": 1610612754,
+      "away_team_id": 1610612751,
+      "home_team_win_probability": 0.03741562998405104,
+      "away_team_win_probability": 0.962584370015949,
+      "predicted_winner": "away",
+      "confidence": 0.962584370015949,
+      "decision_factors": [
+        {
+          "factor": "Current Win Streak",
+          "importance": 0.7507,
+          "value": 0.0,
+          "contribution": 0.7246
+        },
+        {
+          "factor": "Win Rate (Rolling 5 games)",
+          "importance": 0.0543,
+          "value": 0.5,
+          "contribution": 0.055
+        },
+        {
+          "factor": "Win Rate (Last 5 Games)",
+          "importance": 0.0521,
+          "value": 0.5,
+          "contribution": 0.0502
+        },
+        {
+          "factor": "Win Rate (Rolling 10 games)",
+          "importance": 0.0268,
+          "value": 0.5,
+          "contribution": 0.0272
+        },
+        {
+          "factor": "Win Rate (Rolling 15 games)",
+          "importance": 0.02,
+          "value": 0.5,
+          "contribution": 0.0203
+        }
+      ],
+      "prediction_timestamp": "2025-11-05T22:23:56.543454"
+    },
+    {
+      "game_id": "0022500174",
+      "game_date": "11/05/2025",
+      "home_team_id": 1610612738,
+      "away_team_id": 1610612764,
+      "home_team_win_probability": 0.01871971595655806,
+      "away_team_win_probability": 0.9812802840434419,
+      "predicted_winner": "away",
+      "confidence": 0.9812802840434419,
+      "decision_factors": [
+        {
+          "factor": "Current Win Streak",
+          "importance": 0.7507,
+          "value": 0.0,
+          "contribution": 0.7268
+        },
+        {
+          "factor": "Win Rate (Rolling 5 games)",
+          "importance": 0.0543,
+          "value": 0.5,
+          "contribution": 0.0552
+        },
+        {
+          "factor": "Win Rate (Last 5 Games)",
+          "importance": 0.0521,
+          "value": 0.5,
+          "contribution": 0.0504
+        },
+        {
+          "factor": "Win Rate (Rolling 10 games)",
+          "importance": 0.0268,
+          "value": 0.5,
+          "contribution": 0.0273
+        },
+        {
+          "factor": "Win Rate (Rolling 15 games)",
+          "importance": 0.02,
+          "value": 0.5,
+          "contribution": 0.0203
+        }
+      ],
+      "prediction_timestamp": "2025-11-05T22:23:56.555450"
+    },
+    {
+      "game_id": "0022500175",
+      "game_date": "11/05/2025",
+      "home_team_id": 1610612752,
+      "away_team_id": 1610612750,
+      "home_team_win_probability": 0.015515246138196959,
+      "away_team_win_probability": 0.984484753861803,
+      "predicted_winner": "away",
+      "confidence": 0.984484753861803,
+      "decision_factors": [
+        {
+          "factor": "Current Win Streak",
+          "importance": 0.7507,
+          "value": 0.0,
+          "contribution": 0.7273
+        },
+        {
+          "factor": "Win Rate (Rolling 5 games)",
+          "importance": 0.0543,
+          "value": 0.5,
+          "contribution": 0.0552
+        },
+        {
+          "factor": "Win Rate (Last 5 Games)",
+          "importance": 0.0521,
+          "value": 0.5,
+          "contribution": 0.0504
+        },
+        {
+          "factor": "Win Rate (Rolling 10 games)",
+          "importance": 0.0268,
+          "value": 0.5,
+          "contribution": 0.0273
+        },
+        {
+          "factor": "Win Rate (Rolling 15 games)",
+          "importance": 0.02,
+          "value": 0.5,
+          "contribution": 0.0204
+        }
+      ],
+      "prediction_timestamp": "2025-11-05T22:23:56.565447"
+    },
+    {
+      "game_id": "0022500176",
+      "game_date": "11/05/2025",
+      "home_team_id": 1610612763,
+      "away_team_id": 1610612745,
+      "home_team_win_probability": 0.036941176470588234,
+      "away_team_win_probability": 0.9630588235294117,
+      "predicted_winner": "away",
+      "confidence": 0.9630588235294117,
+      "decision_factors": [
+        {
+          "factor": "Current Win Streak",
+          "importance": 0.7507,
+          "value": 0.0,
+          "contribution": 0.7206
+        },
+        {
+          "factor": "Win Rate (Rolling 5 games)",
+          "importance": 0.0543,
+          "value": 0.5,
+          "contribution": 0.0547
+        },
+        {
+          "factor": "Win Rate (Last 5 Games)",
+          "importance": 0.0521,
+          "value": 0.5,
+          "contribution": 0.05
+        },
+        {
+          "factor": "Win Rate (Rolling 10 games)",
+          "importance": 0.0268,
+          "value": 0.5,
+          "contribution": 0.027
+        },
+        {
+          "factor": "Points (Rolling 5 games)",
+          "importance": 0.0138,
+          "value": 119.33,
+          "contribution": 0.0208
+        }
+      ],
+      "prediction_timestamp": "2025-11-05T22:23:56.575447"
+    },
+    {
+      "game_id": "0022500177",
+      "game_date": "11/05/2025",
+      "home_team_id": 1610612742,
+      "away_team_id": 1610612740,
+      "home_team_win_probability": 0.026859234980508483,
+      "away_team_win_probability": 0.9731407650194915,
+      "predicted_winner": "away",
+      "confidence": 0.9731407650194915,
+      "decision_factors": [
+        {
+          "factor": "Current Win Streak",
+          "importance": 0.7507,
+          "value": 0.0,
+          "contribution": 0.7298
+        },
+        {
+          "factor": "Win Rate (Rolling 5 games)",
+          "importance": 0.0543,
+          "value": 0.5,
+          "contribution": 0.0554
+        },
+        {
+          "factor": "Win Rate (Last 5 Games)",
+          "importance": 0.0521,
+          "value": 0.5,
+          "contribution": 0.0506
+        },
+        {
+          "factor": "Win Rate (Rolling 10 games)",
+          "importance": 0.0268,
+          "value": 0.5,
+          "contribution": 0.0274
+        },
+        {
+          "factor": "Win Rate (Rolling 15 games)",
+          "importance": 0.02,
+          "value": 0.5,
+          "contribution": 0.0204
+        }
+      ],
+      "prediction_timestamp": "2025-11-05T22:23:56.586448"
+    },
+    {
+      "game_id": "0022500178",
+      "game_date": "11/05/2025",
+      "home_team_id": 1610612743,
+      "away_team_id": 1610612748,
+      "home_team_win_probability": 0.07076168929110105,
+      "away_team_win_probability": 0.929238310708899,
+      "predicted_winner": "away",
+      "confidence": 0.929238310708899,
+      "decision_factors": [
+        {
+          "factor": "Current Win Streak",
+          "importance": 0.7507,
+          "value": 0.0,
+          "contribution": 0.7222
+        },
+        {
+          "factor": "Win Rate (Rolling 5 games)",
+          "importance": 0.0543,
+          "value": 0.5,
+          "contribution": 0.0548
+        },
+        {
+          "factor": "Win Rate (Last 5 Games)",
+          "importance": 0.0521,
+          "value": 0.5,
+          "contribution": 0.0501
+        },
+        {
+          "factor": "Win Rate (Rolling 10 games)",
+          "importance": 0.0268,
+          "value": 0.5,
+          "contribution": 0.0271
+        },
+        {
+          "factor": "Points (Rolling 5 games)",
+          "importance": 0.0138,
+          "value": 118.44,
+          "contribution": 0.0203
+        }
+      ],
+      "prediction_timestamp": "2025-11-05T22:23:56.597445"
+    },
+    {
+      "game_id": "0022500179",
+      "game_date": "11/05/2025",
+      "home_team_id": 1610612747,
+      "away_team_id": 1610612759,
+      "home_team_win_probability": 0.024131592455257218,
+      "away_team_win_probability": 0.9758684075447428,
+      "predicted_winner": "away",
+      "confidence": 0.9758684075447428,
+      "decision_factors": [
+        {
+          "factor": "Current Win Streak",
+          "importance": 0.7507,
+          "value": 0.0,
+          "contribution": 0.7321
+        },
+        {
+          "factor": "Win Rate (Rolling 5 games)",
+          "importance": 0.0543,
+          "value": 0.5,
+          "contribution": 0.0556
+        },
+        {
+          "factor": "Win Rate (Last 5 Games)",
+          "importance": 0.0521,
+          "value": 0.5,
+          "contribution": 0.0508
+        },
+        {
+          "factor": "Win Rate (Rolling 10 games)",
+          "importance": 0.0268,
+          "value": 0.5,
+          "contribution": 0.0275
+        },
+        {
+          "factor": "Win Rate (Rolling 15 games)",
+          "importance": 0.02,
+          "value": 0.5,
+          "contribution": 0.0205
+        }
+      ],
+      "prediction_timestamp": "2025-11-05T22:23:56.609470"
+    },
+    {
+      "game_id": "0022500180",
+      "game_date": "11/05/2025",
+      "home_team_id": 1610612757,
+      "away_team_id": 1610612760,
+      "home_team_win_probability": 0.01871794871794872,
+      "away_team_win_probability": 0.9812820512820513,
+      "predicted_winner": "away",
+      "confidence": 0.9812820512820513,
+      "decision_factors": [
+        {
+          "factor": "Current Win Streak",
+          "importance": 0.7507,
+          "value": 0.0,
+          "contribution": 0.7332
+        },
+        {
+          "factor": "Win Rate (Rolling 5 games)",
+          "importance": 0.0543,
+          "value": 0.5,
+          "contribution": 0.0557
+        },
+        {
+          "factor": "Win Rate (Last 5 Games)",
+          "importance": 0.0521,
+          "value": 0.5,
+          "contribution": 0.0508
+        },
+        {
+          "factor": "Win Rate (Rolling 10 games)",
+          "importance": 0.0268,
+          "value": 0.5,
+          "contribution": 0.0275
+        },
+        {
+          "factor": "Win Rate (Rolling 15 games)",
+          "importance": 0.02,
+          "value": 0.5,
+          "contribution": 0.0205
+        }
+      ],
+      "prediction_timestamp": "2025-11-05T22:23:56.619446"
+    },
+    {
+      "game_id": "0022500181",
+      "game_date": "11/05/2025",
+      "home_team_id": 1610612758,
+      "away_team_id": 1610612744,
+      "home_team_win_probability": 0.02792526005548971,
+      "away_team_win_probability": 0.9720747399445103,
+      "predicted_winner": "away",
+      "confidence": 0.9720747399445103,
+      "decision_factors": [
+        {
+          "factor": "Current Win Streak",
+          "importance": 0.7507,
+          "value": 0.0,
+          "contribution": 0.7282
+        },
+        {
+          "factor": "Win Rate (Rolling 5 games)",
+          "importance": 0.0543,
+          "value": 0.5,
+          "contribution": 0.0553
+        },
+        {
+          "factor": "Win Rate (Last 5 Games)",
+          "importance": 0.0521,
+          "value": 0.5,
+          "contribution": 0.0505
+        },
+        {
+          "factor": "Win Rate (Rolling 10 games)",
+          "importance": 0.0268,
+          "value": 0.5,
+          "contribution": 0.0273
+        },
+        {
+          "factor": "Win Rate (Rolling 15 games)",
+          "importance": 0.02,
+          "value": 0.5,
+          "contribution": 0.0204
+        }
+      ],
+      "prediction_timestamp": "2025-11-05T22:23:56.630465"
+    },
+    {
+      "game_id": "0022500182",
+      "game_date": "11/06/2025",
+      "home_team_id": 1610612756,
+      "away_team_id": 1610612746,
+      "home_team_win_probability": 0.04881139503319955,
+      "away_team_win_probability": 0.9511886049668005,
+      "predicted_winner": "away",
+      "confidence": 0.9511886049668005,
+      "decision_factors": [
+        {
+          "factor": "Current Win Streak",
+          "importance": 0.7507,
+          "value": 0.0,
+          "contribution": 0.7297
+        },
+        {
+          "factor": "Win Rate (Rolling 5 games)",
+          "importance": 0.0543,
+          "value": 0.5,
+          "contribution": 0.0554
+        },
+        {
+          "factor": "Win Rate (Last 5 Games)",
+          "importance": 0.0521,
+          "value": 0.5,
+          "contribution": 0.0506
+        },
+        {
+          "factor": "Win Rate (Rolling 10 games)",
+          "importance": 0.0268,
+          "value": 0.5,
+          "contribution": 0.0274
+        },
+        {
+          "factor": "Win Rate (Rolling 15 games)",
+          "importance": 0.02,
+          "value": 0.5,
+          "contribution": 0.0204
+        }
+      ],
+      "prediction_timestamp": "2025-11-05T22:23:56.643299"
+    },
+    {
+      "game_id": "0022500028",
+      "game_date": "11/07/2025",
+      "home_team_id": 1610612753,
+      "away_team_id": 1610612738,
+      "home_team_win_probability": 0.07147979797979798,
+      "away_team_win_probability": 0.928520202020202,
+      "predicted_winner": "away",
+      "confidence": 0.928520202020202,
+      "decision_factors": [
+        {
+          "factor": "Current Win Streak",
+          "importance": 0.7507,
+          "value": 0.0,
+          "contribution": 0.7301
+        },
+        {
+          "factor": "Win Rate (Rolling 5 games)",
+          "importance": 0.0543,
+          "value": 0.5,
+          "contribution": 0.0554
+        },
+        {
+          "factor": "Win Rate (Last 5 Games)",
+          "importance": 0.0521,
+          "value": 0.5,
+          "contribution": 0.0506
+        },
+        {
+          "factor": "Win Rate (Rolling 10 games)",
+          "importance": 0.0268,
+          "value": 0.5,
+          "contribution": 0.0274
+        },
+        {
+          "factor": "Win Rate (Rolling 15 games)",
+          "importance": 0.02,
+          "value": 0.5,
+          "contribution": 0.0204
+        }
+      ],
+      "prediction_timestamp": "2025-11-05T22:23:56.652316"
+    },
+    {
+      "game_id": "0022500029",
+      "game_date": "11/07/2025",
+      "home_team_id": 1610612764,
+      "away_team_id": 1610612739,
+      "home_team_win_probability": 0.044678362573099414,
+      "away_team_win_probability": 0.9553216374269006,
+      "predicted_winner": "away",
+      "confidence": 0.9553216374269006,
+      "decision_factors": [
+        {
+          "factor": "Current Win Streak",
+          "importance": 0.7507,
+          "value": 0.0,
+          "contribution": 0.7335
+        },
+        {
+          "factor": "Win Rate (Rolling 5 games)",
+          "importance": 0.0543,
+          "value": 0.5,
+          "contribution": 0.0557
+        },
+        {
+          "factor": "Win Rate (Last 5 Games)",
+          "importance": 0.0521,
+          "value": 0.5,
+          "contribution": 0.0509
+        },
+        {
+          "factor": "Win Rate (Rolling 10 games)",
+          "importance": 0.0268,
+          "value": 0.5,
+          "contribution": 0.0275
+        },
+        {
+          "factor": "Win Rate (Rolling 15 games)",
+          "importance": 0.02,
+          "value": 0.5,
+          "contribution": 0.0205
+        }
+      ],
+      "prediction_timestamp": "2025-11-05T22:23:56.703300"
+    },
+    {
+      "game_id": "0022500030",
+      "game_date": "11/07/2025",
+      "home_team_id": 1610612737,
+      "away_team_id": 1610612761,
+      "home_team_win_probability": 0.06794117647058823,
+      "away_team_win_probability": 0.9320588235294118,
+      "predicted_winner": "away",
+      "confidence": 0.9320588235294118,
+      "decision_factors": [
+        {
+          "factor": "Current Win Streak",
+          "importance": 0.7507,
+          "value": 0.0,
+          "contribution": 0.7239
+        },
+        {
+          "factor": "Win Rate (Rolling 5 games)",
+          "importance": 0.0543,
+          "value": 0.5,
+          "contribution": 0.055
+        },
+        {
+          "factor": "Win Rate (Last 5 Games)",
+          "importance": 0.0521,
+          "value": 0.5,
+          "contribution": 0.0502
+        },
+        {
+          "factor": "Win Rate (Rolling 10 games)",
+          "importance": 0.0268,
+          "value": 0.5,
+          "contribution": 0.0272
+        },
+        {
+          "factor": "Win Rate (Rolling 15 games)",
+          "importance": 0.02,
+          "value": 0.5,
+          "contribution": 0.0203
+        }
+      ],
+      "prediction_timestamp": "2025-11-05T22:23:56.714300"
+    },
+    {
+      "game_id": "0022500031",
+      "game_date": "11/07/2025",
+      "home_team_id": 1610612751,
+      "away_team_id": 1610612765,
+      "home_team_win_probability": 0.051469017094017085,
+      "away_team_win_probability": 0.9485309829059829,
+      "predicted_winner": "away",
+      "confidence": 0.9485309829059829,
+      "decision_factors": [
+        {
+          "factor": "Current Win Streak",
+          "importance": 0.7507,
+          "value": 0.0,
+          "contribution": 0.73
+        },
+        {
+          "factor": "Win Rate (Rolling 5 games)",
+          "importance": 0.0543,
+          "value": 0.5,
+          "contribution": 0.0554
+        },
+        {
+          "factor": "Win Rate (Last 5 Games)",
+          "importance": 0.0521,
+          "value": 0.5,
+          "contribution": 0.0506
+        },
+        {
+          "factor": "Win Rate (Rolling 10 games)",
+          "importance": 0.0268,
+          "value": 0.5,
+          "contribution": 0.0274
+        },
+        {
+          "factor": "Win Rate (Rolling 15 games)",
+          "importance": 0.02,
+          "value": 0.5,
+          "contribution": 0.0204
+        }
+      ],
+      "prediction_timestamp": "2025-11-05T22:23:56.726301"
+    },
+    {
+      "game_id": "0022500032",
+      "game_date": "11/07/2025",
+      "home_team_id": 1610612759,
+      "away_team_id": 1610612745,
+      "home_team_win_probability": 0.03410502099787814,
+      "away_team_win_probability": 0.9658949790021218,
+      "predicted_winner": "away",
+      "confidence": 0.9658949790021218,
+      "decision_factors": [
+        {
+          "factor": "Current Win Streak",
+          "importance": 0.7507,
+          "value": 0.0,
+          "contribution": 0.7311
+        },
+        {
+          "factor": "Win Rate (Rolling 5 games)",
+          "importance": 0.0543,
+          "value": 0.5,
+          "contribution": 0.0555
+        },
+        {
+          "factor": "Win Rate (Last 5 Games)",
+          "importance": 0.0521,
+          "value": 0.5,
+          "contribution": 0.0507
+        },
+        {
+          "factor": "Win Rate (Rolling 10 games)",
+          "importance": 0.0268,
+          "value": 0.5,
+          "contribution": 0.0274
+        },
+        {
+          "factor": "Win Rate (Rolling 15 games)",
+          "importance": 0.02,
+          "value": 0.5,
+          "contribution": 0.0205
+        }
+      ],
+      "prediction_timestamp": "2025-11-05T22:23:56.736299"
+    },
+    {
+      "game_id": "0022500033",
+      "game_date": "11/07/2025",
+      "home_team_id": 1610612748,
+      "away_team_id": 1610612766,
+      "home_team_win_probability": 0.02396393602038763,
+      "away_team_win_probability": 0.9760360639796124,
+      "predicted_winner": "away",
+      "confidence": 0.9760360639796124,
+      "decision_factors": [
+        {
+          "factor": "Current Win Streak",
+          "importance": 0.7507,
+          "value": 0.0,
+          "contribution": 0.7337
+        },
+        {
+          "factor": "Win Rate (Rolling 5 games)",
+          "importance": 0.0543,
+          "value": 0.5,
+          "contribution": 0.0557
+        },
+        {
+          "factor": "Win Rate (Last 5 Games)",
+          "importance": 0.0521,
+          "value": 0.5,
+          "contribution": 0.0509
+        },
+        {
+          "factor": "Win Rate (Rolling 10 games)",
+          "importance": 0.0268,
+          "value": 0.5,
+          "contribution": 0.0275
+        },
+        {
+          "factor": "Win Rate (Rolling 15 games)",
+          "importance": 0.02,
+          "value": 0.5,
+          "contribution": 0.0205
+        }
+      ],
+      "prediction_timestamp": "2025-11-05T22:23:56.747300"
+    },
+    {
+      "game_id": "0022500034",
+      "game_date": "11/07/2025",
+      "home_team_id": 1610612763,
+      "away_team_id": 1610612742,
+      "home_team_win_probability": 0.036941176470588234,
+      "away_team_win_probability": 0.9630588235294117,
+      "predicted_winner": "away",
+      "confidence": 0.9630588235294117,
+      "decision_factors": [
+        {
+          "factor": "Current Win Streak",
+          "importance": 0.7507,
+          "value": 0.0,
+          "contribution": 0.7206
+        },
+        {
+          "factor": "Win Rate (Rolling 5 games)",
+          "importance": 0.0543,
+          "value": 0.5,
+          "contribution": 0.0547
+        },
+        {
+          "factor": "Win Rate (Last 5 Games)",
+          "importance": 0.0521,
+          "value": 0.5,
+          "contribution": 0.05
+        },
+        {
+          "factor": "Win Rate (Rolling 10 games)",
+          "importance": 0.0268,
+          "value": 0.5,
+          "contribution": 0.027
+        },
+        {
+          "factor": "Points (Rolling 5 games)",
+          "importance": 0.0138,
+          "value": 119.33,
+          "contribution": 0.0208
+        }
+      ],
+      "prediction_timestamp": "2025-11-05T22:23:56.757300"
+    },
+    {
+      "game_id": "0022500035",
+      "game_date": "11/07/2025",
+      "home_team_id": 1610612749,
+      "away_team_id": 1610612741,
+      "home_team_win_probability": 0.040220837720837725,
+      "away_team_win_probability": 0.9597791622791623,
+      "predicted_winner": "away",
+      "confidence": 0.9597791622791623,
+      "decision_factors": [
+        {
+          "factor": "Current Win Streak",
+          "importance": 0.7507,
+          "value": 0.0,
+          "contribution": 0.729
+        },
+        {
+          "factor": "Win Rate (Rolling 5 games)",
+          "importance": 0.0543,
+          "value": 0.5,
+          "contribution": 0.0553
+        },
+        {
+          "factor": "Win Rate (Last 5 Games)",
+          "importance": 0.0521,
+          "value": 0.5,
+          "contribution": 0.0505
+        },
+        {
+          "factor": "Win Rate (Rolling 10 games)",
+          "importance": 0.0268,
+          "value": 0.5,
+          "contribution": 0.0273
+        },
+        {
+          "factor": "Win Rate (Rolling 15 games)",
+          "importance": 0.02,
+          "value": 0.5,
+          "contribution": 0.0204
+        }
+      ],
+      "prediction_timestamp": "2025-11-05T22:23:56.771298"
+    },
+    {
+      "game_id": "0022500036",
+      "game_date": "11/07/2025",
+      "home_team_id": 1610612750,
+      "away_team_id": 1610612762,
+      "home_team_win_probability": 0.026680772420264596,
+      "away_team_win_probability": 0.9733192275797354,
+      "predicted_winner": "away",
+      "confidence": 0.9733192275797354,
+      "decision_factors": [
+        {
+          "factor": "Current Win Streak",
+          "importance": 0.7507,
+          "value": 0.0,
+          "contribution": 0.7289
+        },
+        {
+          "factor": "Win Rate (Rolling 5 games)",
+          "importance": 0.0543,
+          "value": 0.5,
+          "contribution": 0.0553
+        },
+        {
+          "factor": "Win Rate (Last 5 Games)",
+          "importance": 0.0521,
+          "value": 0.5,
+          "contribution": 0.0505
+        },
+        {
+          "factor": "Win Rate (Rolling 10 games)",
+          "importance": 0.0268,
+          "value": 0.5,
+          "contribution": 0.0273
+        },
+        {
+          "factor": "Win Rate (Rolling 15 games)",
+          "importance": 0.02,
+          "value": 0.5,
+          "contribution": 0.0204
+        }
+      ],
+      "prediction_timestamp": "2025-11-05T22:23:56.799298"
+    },
+    {
+      "game_id": "0022500037",
+      "game_date": "11/07/2025",
+      "home_team_id": 1610612743,
+      "away_team_id": 1610612744,
+      "home_team_win_probability": 0.07076168929110105,
+      "away_team_win_probability": 0.929238310708899,
+      "predicted_winner": "away",
+      "confidence": 0.929238310708899,
+      "decision_factors": [
+        {
+          "factor": "Current Win Streak",
+          "importance": 0.7507,
+          "value": 0.0,
+          "contribution": 0.7222
+        },
+        {
+          "factor": "Win Rate (Rolling 5 games)",
+          "importance": 0.0543,
+          "value": 0.5,
+          "contribution": 0.0548
+        },
+        {
+          "factor": "Win Rate (Last 5 Games)",
+          "importance": 0.0521,
+          "value": 0.5,
+          "contribution": 0.0501
+        },
+        {
+          "factor": "Win Rate (Rolling 10 games)",
+          "importance": 0.0268,
+          "value": 0.5,
+          "contribution": 0.0271
+        },
+        {
+          "factor": "Points (Rolling 5 games)",
+          "importance": 0.0138,
+          "value": 118.44,
+          "contribution": 0.0203
+        }
+      ],
+      "prediction_timestamp": "2025-11-05T22:23:56.813300"
+    },
+    {
+      "game_id": "0022500038",
+      "game_date": "11/07/2025",
+      "home_team_id": 1610612758,
+      "away_team_id": 1610612760,
+      "home_team_win_probability": 0.02792526005548971,
+      "away_team_win_probability": 0.9720747399445103,
+      "predicted_winner": "away",
+      "confidence": 0.9720747399445103,
+      "decision_factors": [
+        {
+          "factor": "Current Win Streak",
+          "importance": 0.7507,
+          "value": 0.0,
+          "contribution": 0.7282
+        },
+        {
+          "factor": "Win Rate (Rolling 5 games)",
+          "importance": 0.0543,
+          "value": 0.5,
+          "contribution": 0.0553
+        },
+        {
+          "factor": "Win Rate (Last 5 Games)",
+          "importance": 0.0521,
+          "value": 0.5,
+          "contribution": 0.0505
+        },
+        {
+          "factor": "Win Rate (Rolling 10 games)",
+          "importance": 0.0268,
+          "value": 0.5,
+          "contribution": 0.0273
+        },
+        {
+          "factor": "Win Rate (Rolling 15 games)",
+          "importance": 0.02,
+          "value": 0.5,
+          "contribution": 0.0204
+        }
+      ],
+      "prediction_timestamp": "2025-11-05T22:23:56.823300"
+    },
+    {
+      "game_id": "0022500183",
+      "game_date": "11/08/2025",
+      "home_team_id": 1610612764,
+      "away_team_id": 1610612742,
+      "home_team_win_probability": 0.044678362573099414,
+      "away_team_win_probability": 0.9553216374269006,
+      "predicted_winner": "away",
+      "confidence": 0.9553216374269006,
+      "decision_factors": [
+        {
+          "factor": "Current Win Streak",
+          "importance": 0.7507,
+          "value": 0.0,
+          "contribution": 0.7335
+        },
+        {
+          "factor": "Win Rate (Rolling 5 games)",
+          "importance": 0.0543,
+          "value": 0.5,
+          "contribution": 0.0557
+        },
+        {
+          "factor": "Win Rate (Last 5 Games)",
+          "importance": 0.0521,
+          "value": 0.5,
+          "contribution": 0.0509
+        },
+        {
+          "factor": "Win Rate (Rolling 10 games)",
+          "importance": 0.0268,
+          "value": 0.5,
+          "contribution": 0.0275
+        },
+        {
+          "factor": "Win Rate (Rolling 15 games)",
+          "importance": 0.02,
+          "value": 0.5,
+          "contribution": 0.0205
+        }
+      ],
+      "prediction_timestamp": "2025-11-05T22:23:56.833300"
+    },
+    {
+      "game_id": "0022500184",
+      "game_date": "11/08/2025",
+      "home_team_id": 1610612755,
+      "away_team_id": 1610612761,
+      "home_team_win_probability": 0.01785666023166023,
+      "away_team_win_probability": 0.9821433397683398,
+      "predicted_winner": "away",
+      "confidence": 0.9821433397683398,
+      "decision_factors": [
+        {
+          "factor": "Current Win Streak",
+          "importance": 0.7507,
+          "value": 0.0,
+          "contribution": 0.7335
+        },
+        {
+          "factor": "Win Rate (Rolling 5 games)",
+          "importance": 0.0543,
+          "value": 0.5,
+          "contribution": 0.0557
+        },
+        {
+          "factor": "Win Rate (Last 5 Games)",
+          "importance": 0.0521,
+          "value": 0.5,
+          "contribution": 0.0509
+        },
+        {
+          "factor": "Win Rate (Rolling 10 games)",
+          "importance": 0.0268,
+          "value": 0.5,
+          "contribution": 0.0275
+        },
+        {
+          "factor": "Win Rate (Rolling 15 games)",
+          "importance": 0.02,
+          "value": 0.5,
+          "contribution": 0.0205
+        }
+      ],
+      "prediction_timestamp": "2025-11-05T22:23:56.843300"
+    },
+    {
+      "game_id": "0022500185",
+      "game_date": "11/08/2025",
+      "home_team_id": 1610612737,
+      "away_team_id": 1610612747,
+      "home_team_win_probability": 0.06794117647058823,
+      "away_team_win_probability": 0.9320588235294118,
+      "predicted_winner": "away",
+      "confidence": 0.9320588235294118,
+      "decision_factors": [
+        {
+          "factor": "Current Win Streak",
+          "importance": 0.7507,
+          "value": 0.0,
+          "contribution": 0.7239
+        },
+        {
+          "factor": "Win Rate (Rolling 5 games)",
+          "importance": 0.0543,
+          "value": 0.5,
+          "contribution": 0.055
+        },
+        {
+          "factor": "Win Rate (Last 5 Games)",
+          "importance": 0.0521,
+          "value": 0.5,
+          "contribution": 0.0502
+        },
+        {
+          "factor": "Win Rate (Rolling 10 games)",
+          "importance": 0.0268,
+          "value": 0.5,
+          "contribution": 0.0272
+        },
+        {
+          "factor": "Win Rate (Rolling 15 games)",
+          "importance": 0.02,
+          "value": 0.5,
+          "contribution": 0.0203
+        }
+      ],
+      "prediction_timestamp": "2025-11-05T22:23:56.855300"
+    },
+    {
+      "game_id": "0022500186",
+      "game_date": "11/08/2025",
+      "home_team_id": 1610612739,
+      "away_team_id": 1610612741,
+      "home_team_win_probability": 0.04311621595425026,
+      "away_team_win_probability": 0.9568837840457497,
+      "predicted_winner": "away",
+      "confidence": 0.9568837840457497,
+      "decision_factors": [
+        {
+          "factor": "Current Win Streak",
+          "importance": 0.7507,
+          "value": 0.0,
+          "contribution": 0.7204
+        },
+        {
+          "factor": "Win Rate (Rolling 5 games)",
+          "importance": 0.0543,
+          "value": 0.5,
+          "contribution": 0.0547
+        },
+        {
+          "factor": "Win Rate (Last 5 Games)",
+          "importance": 0.0521,
+          "value": 0.5,
+          "contribution": 0.0499
+        },
+        {
+          "factor": "Win Rate (Rolling 10 games)",
+          "importance": 0.0268,
+          "value": 0.5,
+          "contribution": 0.027
+        },
+        {
+          "factor": "Points (Rolling 5 games)",
+          "importance": 0.0138,
+          "value": 120.28,
+          "contribution": 0.0214
+        }
+      ],
+      "prediction_timestamp": "2025-11-05T22:23:56.865300"
+    },
+    {
+      "game_id": "0022500187",
+      "game_date": "11/08/2025",
+      "home_team_id": 1610612748,
+      "away_team_id": 1610612757,
+      "home_team_win_probability": 0.02396393602038763,
+      "away_team_win_probability": 0.9760360639796124,
+      "predicted_winner": "away",
+      "confidence": 0.9760360639796124,
+      "decision_factors": [
+        {
+          "factor": "Current Win Streak",
+          "importance": 0.7507,
+          "value": 0.0,
+          "contribution": 0.7337
+        },
+        {
+          "factor": "Win Rate (Rolling 5 games)",
+          "importance": 0.0543,
+          "value": 0.5,
+          "contribution": 0.0557
+        },
+        {
+          "factor": "Win Rate (Last 5 Games)",
+          "importance": 0.0521,
+          "value": 0.5,
+          "contribution": 0.0509
+        },
+        {
+          "factor": "Win Rate (Rolling 10 games)",
+          "importance": 0.0268,
+          "value": 0.5,
+          "contribution": 0.0275
+        },
+        {
+          "factor": "Win Rate (Rolling 15 games)",
+          "importance": 0.02,
+          "value": 0.5,
+          "contribution": 0.0205
+        }
+      ],
+      "prediction_timestamp": "2025-11-05T22:23:56.877300"
+    },
+    {
+      "game_id": "0022500188",
+      "game_date": "11/08/2025",
+      "home_team_id": 1610612759,
+      "away_team_id": 1610612740,
+      "home_team_win_probability": 0.03410502099787814,
+      "away_team_win_probability": 0.9658949790021218,
+      "predicted_winner": "away",
+      "confidence": 0.9658949790021218,
+      "decision_factors": [
+        {
+          "factor": "Current Win Streak",
+          "importance": 0.7507,
+          "value": 0.0,
+          "contribution": 0.7311
+        },
+        {
+          "factor": "Win Rate (Rolling 5 games)",
+          "importance": 0.0543,
+          "value": 0.5,
+          "contribution": 0.0555
+        },
+        {
+          "factor": "Win Rate (Last 5 Games)",
+          "importance": 0.0521,
+          "value": 0.5,
+          "contribution": 0.0507
+        },
+        {
+          "factor": "Win Rate (Rolling 10 games)",
+          "importance": 0.0268,
+          "value": 0.5,
+          "contribution": 0.0274
+        },
+        {
+          "factor": "Win Rate (Rolling 15 games)",
+          "importance": 0.02,
+          "value": 0.5,
+          "contribution": 0.0205
+        }
+      ],
+      "prediction_timestamp": "2025-11-05T22:23:56.887300"
+    },
+    {
+      "game_id": "0022500189",
+      "game_date": "11/08/2025",
+      "home_team_id": 1610612743,
+      "away_team_id": 1610612754,
+      "home_team_win_probability": 0.07076168929110105,
+      "away_team_win_probability": 0.929238310708899,
+      "predicted_winner": "away",
+      "confidence": 0.929238310708899,
+      "decision_factors": [
+        {
+          "factor": "Current Win Streak",
+          "importance": 0.7507,
+          "value": 0.0,
+          "contribution": 0.7222
+        },
+        {
+          "factor": "Win Rate (Rolling 5 games)",
+          "importance": 0.0543,
+          "value": 0.5,
+          "contribution": 0.0548
+        },
+        {
+          "factor": "Win Rate (Last 5 Games)",
+          "importance": 0.0521,
+          "value": 0.5,
+          "contribution": 0.0501
+        },
+        {
+          "factor": "Win Rate (Rolling 10 games)",
+          "importance": 0.0268,
+          "value": 0.5,
+          "contribution": 0.0271
+        },
+        {
+          "factor": "Points (Rolling 5 games)",
+          "importance": 0.0138,
+          "value": 118.44,
+          "contribution": 0.0203
+        }
+      ],
+      "prediction_timestamp": "2025-11-05T22:23:56.897300"
+    },
+    {
+      "game_id": "0022500190",
+      "game_date": "11/08/2025",
+      "home_team_id": 1610612746,
+      "away_team_id": 1610612756,
+      "home_team_win_probability": 0.03814354202507409,
+      "away_team_win_probability": 0.9618564579749259,
+      "predicted_winner": "away",
+      "confidence": 0.9618564579749259,
+      "decision_factors": [
+        {
+          "factor": "Current Win Streak",
+          "importance": 0.7507,
+          "value": 0.0,
+          "contribution": 0.7307
+        },
+        {
+          "factor": "Win Rate (Rolling 5 games)",
+          "importance": 0.0543,
+          "value": 0.5,
+          "contribution": 0.0555
+        },
+        {
+          "factor": "Win Rate (Last 5 Games)",
+          "importance": 0.0521,
+          "value": 0.5,
+          "contribution": 0.0507
+        },
+        {
+          "factor": "Win Rate (Rolling 10 games)",
+          "importance": 0.0268,
+          "value": 0.5,
+          "contribution": 0.0274
+        },
+        {
+          "factor": "Win Rate (Rolling 15 games)",
+          "importance": 0.02,
+          "value": 0.5,
+          "contribution": 0.0205
+        }
+      ],
+      "prediction_timestamp": "2025-11-05T22:23:56.909304"
+    }
+  ],
+  "model_info": {
+    "game_model_loaded": true,
+    "preprocessors_loaded": true
+  },
+  "summary": "Predictions generated for 31 games over 3 days"
+}

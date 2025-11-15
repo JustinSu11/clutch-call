@@ -1,0 +1,1462 @@
+{
+  "prediction_date": "2025-11-13T12:59:35.200099",
+  "prediction_window_days": 3,
+  "games_predicted": 25,
+  "game_outcomes": [
+    {
+      "game_id": "0022500225",
+      "game_date": "2025-11-13T00:00:00",
+      "home_team_id": 1610612739,
+      "away_team_id": 1610612761,
+      "home_team_win_probability": 0.7220667871269769,
+      "away_team_win_probability": 0.2779332128730231,
+      "predicted_winner": "home",
+      "confidence": 0.7220667871269769,
+      "decision_factors": [
+        {
+          "factor": "Win Rate (Rolling 15 games)",
+          "importance": 0.3944,
+          "value": 0.6,
+          "contribution": 0.368,
+          "impact": 0.2,
+          "effect": "increases win probability",
+          "delta": 0.1
+        },
+        {
+          "factor": "Home Court Advantage",
+          "importance": 0.076,
+          "value": 1.0,
+          "contribution": 0.1182,
+          "impact": 1.0,
+          "effect": "increases win probability",
+          "delta": 0.5
+        },
+        {
+          "factor": "Free Throw Percentage",
+          "importance": 0.1318,
+          "value": 0.78,
+          "contribution": 0.1055,
+          "impact": 0.03,
+          "effect": "increases win probability",
+          "delta": -0.0
+        },
+        {
+          "factor": "Win Rate (Last 10 Games)",
+          "importance": 0.1008,
+          "value": 0.6,
+          "contribution": 0.094,
+          "impact": 0.2,
+          "effect": "decreases win probability",
+          "delta": 0.1
+        },
+        {
+          "factor": "Three-Point Percentage",
+          "importance": 0.0501,
+          "value": 0.38,
+          "contribution": 0.0736,
+          "impact": 0.8875,
+          "effect": "decreases win probability",
+          "delta": -0.07
+        }
+      ],
+      "prediction_timestamp": "2025-11-13T12:59:35.054867"
+    },
+    {
+      "game_id": "0022500226",
+      "game_date": "2025-11-13T00:00:00",
+      "home_team_id": 1610612756,
+      "away_team_id": 1610612754,
+      "home_team_win_probability": 0.4059517815067126,
+      "away_team_win_probability": 0.5940482184932874,
+      "predicted_winner": "away",
+      "confidence": 0.5940482184932874,
+      "decision_factors": [
+        {
+          "factor": "Win Rate (Rolling 15 games)",
+          "importance": 0.3944,
+          "value": 0.1,
+          "contribution": 0.4254,
+          "impact": 0.8,
+          "effect": "decreases win probability",
+          "delta": -0.4
+        },
+        {
+          "factor": "Win Rate (Last 10 Games)",
+          "importance": 0.1008,
+          "value": 0.1,
+          "contribution": 0.1087,
+          "impact": 0.8,
+          "effect": "increases win probability",
+          "delta": -0.4
+        },
+        {
+          "factor": "Free Throw Percentage",
+          "importance": 0.1318,
+          "value": 0.81,
+          "contribution": 0.1011,
+          "impact": 0.28,
+          "effect": "decreases win probability",
+          "delta": 0.03
+        },
+        {
+          "factor": "Home Court Advantage",
+          "importance": 0.076,
+          "value": 1.0,
+          "contribution": 0.0911,
+          "impact": 1.0,
+          "effect": "increases win probability",
+          "delta": 0.5
+        },
+        {
+          "factor": "Three-Point Percentage",
+          "importance": 0.0501,
+          "value": 0.38,
+          "contribution": 0.0582,
+          "impact": 0.9375,
+          "effect": "decreases win probability",
+          "delta": -0.08
+        }
+      ],
+      "prediction_timestamp": "2025-11-13T12:59:35.062928"
+    },
+    {
+      "game_id": "0022500227",
+      "game_date": "2025-11-13T00:00:00",
+      "home_team_id": 1610612762,
+      "away_team_id": 1610612737,
+      "home_team_win_probability": 0.24413603807920167,
+      "away_team_win_probability": 0.7558639619207983,
+      "predicted_winner": "away",
+      "confidence": 0.7558639619207983,
+      "decision_factors": [
+        {
+          "factor": "Win Rate (Rolling 15 games)",
+          "importance": 0.3944,
+          "value": 0.1,
+          "contribution": 0.4278,
+          "impact": 0.8,
+          "effect": "decreases win probability",
+          "delta": -0.4
+        },
+        {
+          "factor": "Win Rate (Last 10 Games)",
+          "importance": 0.1008,
+          "value": 0.1,
+          "contribution": 0.1093,
+          "impact": 0.8,
+          "effect": "increases win probability",
+          "delta": -0.4
+        },
+        {
+          "factor": "Home Court Advantage",
+          "importance": 0.076,
+          "value": 1.0,
+          "contribution": 0.0916,
+          "impact": 1.0,
+          "effect": "increases win probability",
+          "delta": 0.5
+        },
+        {
+          "factor": "Free Throw Percentage",
+          "importance": 0.1318,
+          "value": 0.77,
+          "contribution": 0.0866,
+          "impact": 0.09,
+          "effect": "increases win probability",
+          "delta": -0.01
+        },
+        {
+          "factor": "Three-Point Percentage",
+          "importance": 0.0501,
+          "value": 0.35,
+          "contribution": 0.0604,
+          "impact": 1.0,
+          "effect": "decreases win probability",
+          "delta": -0.1
+        }
+      ],
+      "prediction_timestamp": "2025-11-13T12:59:35.068541"
+    },
+    {
+      "game_id": "0022500039",
+      "game_date": "2025-11-14T00:00:00",
+      "home_team_id": 1610612752,
+      "away_team_id": 1610612748,
+      "home_team_win_probability": 0.6932125333950805,
+      "away_team_win_probability": 0.3067874666049195,
+      "predicted_winner": "home",
+      "confidence": 0.6932125333950805,
+      "decision_factors": [
+        {
+          "factor": "Win Rate (Rolling 15 games)",
+          "importance": 0.3944,
+          "value": 0.6,
+          "contribution": 0.3629,
+          "impact": 0.2,
+          "effect": "increases win probability",
+          "delta": 0.1
+        },
+        {
+          "factor": "Free Throw Percentage",
+          "importance": 0.1318,
+          "value": 0.8,
+          "contribution": 0.1192,
+          "impact": 0.18,
+          "effect": "decreases win probability",
+          "delta": 0.02
+        },
+        {
+          "factor": "Home Court Advantage",
+          "importance": 0.076,
+          "value": 1.0,
+          "contribution": 0.1166,
+          "impact": 1.0,
+          "effect": "increases win probability",
+          "delta": 0.5
+        },
+        {
+          "factor": "Win Rate (Last 10 Games)",
+          "importance": 0.1008,
+          "value": 0.6,
+          "contribution": 0.0927,
+          "impact": 0.2,
+          "effect": "decreases win probability",
+          "delta": 0.1
+        },
+        {
+          "factor": "Three-Point Percentage",
+          "importance": 0.0501,
+          "value": 0.37,
+          "contribution": 0.0769,
+          "impact": 1.0,
+          "effect": "decreases win probability",
+          "delta": -0.08
+        }
+      ],
+      "prediction_timestamp": "2025-11-13T12:59:35.074539"
+    },
+    {
+      "game_id": "0022500040",
+      "game_date": "2025-11-14T00:00:00",
+      "home_team_id": 1610612753,
+      "away_team_id": 1610612751,
+      "home_team_win_probability": 0.6250483625945452,
+      "away_team_win_probability": 0.3749516374054548,
+      "predicted_winner": "home",
+      "confidence": 0.6250483625945452,
+      "decision_factors": [
+        {
+          "factor": "Win Rate (Rolling 15 games)",
+          "importance": 0.3944,
+          "value": 0.7,
+          "contribution": 0.3938,
+          "impact": 0.4,
+          "effect": "increases win probability",
+          "delta": 0.2
+        },
+        {
+          "factor": "Home Court Advantage",
+          "importance": 0.076,
+          "value": 1.0,
+          "contribution": 0.1084,
+          "impact": 1.0,
+          "effect": "increases win probability",
+          "delta": 0.5
+        },
+        {
+          "factor": "Win Rate (Last 10 Games)",
+          "importance": 0.1008,
+          "value": 0.7,
+          "contribution": 0.1006,
+          "impact": 0.4,
+          "effect": "decreases win probability",
+          "delta": 0.2
+        },
+        {
+          "factor": "Free Throw Percentage",
+          "importance": 0.1318,
+          "value": 0.78,
+          "contribution": 0.0968,
+          "impact": 0.03,
+          "effect": "increases win probability",
+          "delta": -0.0
+        },
+        {
+          "factor": "Three-Point Percentage",
+          "importance": 0.0501,
+          "value": 0.32,
+          "contribution": 0.0715,
+          "impact": 1.0,
+          "effect": "decreases win probability",
+          "delta": -0.13
+        }
+      ],
+      "prediction_timestamp": "2025-11-13T12:59:35.080159"
+    },
+    {
+      "game_id": "0022500041",
+      "game_date": "2025-11-14T00:00:00",
+      "home_team_id": 1610612765,
+      "away_team_id": 1610612755,
+      "home_team_win_probability": 0.5281350045216358,
+      "away_team_win_probability": 0.47186499547836425,
+      "predicted_winner": "home",
+      "confidence": 0.5281350045216358,
+      "decision_factors": [
+        {
+          "factor": "Win Rate (Rolling 15 games)",
+          "importance": 0.3944,
+          "value": 0.4,
+          "contribution": 0.3616,
+          "impact": 0.2,
+          "effect": "decreases win probability",
+          "delta": -0.1
+        },
+        {
+          "factor": "Home Court Advantage",
+          "importance": 0.076,
+          "value": 1.0,
+          "contribution": 0.1161,
+          "impact": 1.0,
+          "effect": "increases win probability",
+          "delta": 0.5
+        },
+        {
+          "factor": "Free Throw Percentage",
+          "importance": 0.1318,
+          "value": 0.77,
+          "contribution": 0.1128,
+          "impact": 0.12,
+          "effect": "increases win probability",
+          "delta": -0.01
+        },
+        {
+          "factor": "Win Rate (Last 10 Games)",
+          "importance": 0.1008,
+          "value": 0.4,
+          "contribution": 0.0924,
+          "impact": 0.2,
+          "effect": "increases win probability",
+          "delta": -0.1
+        },
+        {
+          "factor": "Three-Point Percentage",
+          "importance": 0.0501,
+          "value": 0.36,
+          "contribution": 0.0766,
+          "impact": 1.0,
+          "effect": "decreases win probability",
+          "delta": -0.09
+        }
+      ],
+      "prediction_timestamp": "2025-11-13T12:59:35.085163"
+    },
+    {
+      "game_id": "0022500042",
+      "game_date": "2025-11-14T00:00:00",
+      "home_team_id": 1610612745,
+      "away_team_id": 1610612757,
+      "home_team_win_probability": 0.6599514058982741,
+      "away_team_win_probability": 0.34004859410172594,
+      "predicted_winner": "home",
+      "confidence": 0.6599514058982741,
+      "decision_factors": [
+        {
+          "factor": "Win Rate (Rolling 15 games)",
+          "importance": 0.3944,
+          "value": 0.6,
+          "contribution": 0.3597,
+          "impact": 0.2,
+          "effect": "increases win probability",
+          "delta": 0.1
+        },
+        {
+          "factor": "Free Throw Percentage",
+          "importance": 0.1318,
+          "value": 0.74,
+          "contribution": 0.1422,
+          "impact": 0.42,
+          "effect": "increases win probability",
+          "delta": -0.04
+        },
+        {
+          "factor": "Home Court Advantage",
+          "importance": 0.076,
+          "value": 1.0,
+          "contribution": 0.1155,
+          "impact": 1.0,
+          "effect": "increases win probability",
+          "delta": 0.5
+        },
+        {
+          "factor": "Win Rate (Last 10 Games)",
+          "importance": 0.1008,
+          "value": 0.6,
+          "contribution": 0.0919,
+          "impact": 0.2,
+          "effect": "decreases win probability",
+          "delta": 0.1
+        },
+        {
+          "factor": "Three-Point Percentage",
+          "importance": 0.0501,
+          "value": 0.35,
+          "contribution": 0.0762,
+          "impact": 1.0,
+          "effect": "decreases win probability",
+          "delta": -0.1
+        }
+      ],
+      "prediction_timestamp": "2025-11-13T12:59:35.090789"
+    },
+    {
+      "game_id": "0022500043",
+      "game_date": "2025-11-14T00:00:00",
+      "home_team_id": 1610612749,
+      "away_team_id": 1610612766,
+      "home_team_win_probability": 0.7465251849908218,
+      "away_team_win_probability": 0.25347481500917823,
+      "predicted_winner": "home",
+      "confidence": 0.7465251849908218,
+      "decision_factors": [
+        {
+          "factor": "Win Rate (Rolling 15 games)",
+          "importance": 0.3944,
+          "value": 0.8,
+          "contribution": 0.3982,
+          "impact": 0.6,
+          "effect": "increases win probability",
+          "delta": 0.3
+        },
+        {
+          "factor": "Free Throw Percentage",
+          "importance": 0.1318,
+          "value": 0.75,
+          "contribution": 0.1114,
+          "impact": 0.34,
+          "effect": "increases win probability",
+          "delta": -0.03
+        },
+        {
+          "factor": "Win Rate (Last 10 Games)",
+          "importance": 0.1008,
+          "value": 0.8,
+          "contribution": 0.1017,
+          "impact": 0.6,
+          "effect": "decreases win probability",
+          "delta": 0.3
+        },
+        {
+          "factor": "Home Court Advantage",
+          "importance": 0.076,
+          "value": 1.0,
+          "contribution": 0.0959,
+          "impact": 1.0,
+          "effect": "increases win probability",
+          "delta": 0.5
+        },
+        {
+          "factor": "Three-Point Percentage",
+          "importance": 0.0501,
+          "value": 0.38,
+          "contribution": 0.0585,
+          "impact": 0.85,
+          "effect": "decreases win probability",
+          "delta": -0.07
+        }
+      ],
+      "prediction_timestamp": "2025-11-13T12:59:35.098077"
+    },
+    {
+      "game_id": "0022500044",
+      "game_date": "2025-11-14T00:00:00",
+      "home_team_id": 1610612750,
+      "away_team_id": 1610612758,
+      "home_team_win_probability": 0.7127399942102723,
+      "away_team_win_probability": 0.28726000578972766,
+      "predicted_winner": "home",
+      "confidence": 0.7127399942102723,
+      "decision_factors": [
+        {
+          "factor": "Win Rate (Rolling 15 games)",
+          "importance": 0.3944,
+          "value": 0.8,
+          "contribution": 0.4146,
+          "impact": 0.6,
+          "effect": "increases win probability",
+          "delta": 0.3
+        },
+        {
+          "factor": "Win Rate (Last 10 Games)",
+          "importance": 0.1008,
+          "value": 0.8,
+          "contribution": 0.1059,
+          "impact": 0.6,
+          "effect": "decreases win probability",
+          "delta": 0.3
+        },
+        {
+          "factor": "Home Court Advantage",
+          "importance": 0.076,
+          "value": 1.0,
+          "contribution": 0.0999,
+          "impact": 1.0,
+          "effect": "increases win probability",
+          "delta": 0.5
+        },
+        {
+          "factor": "Free Throw Percentage",
+          "importance": 0.1318,
+          "value": 0.78,
+          "contribution": 0.0909,
+          "impact": 0.05,
+          "effect": "decreases win probability",
+          "delta": 0.01
+        },
+        {
+          "factor": "Three-Point Percentage",
+          "importance": 0.0501,
+          "value": 0.37,
+          "contribution": 0.0646,
+          "impact": 0.9625,
+          "effect": "decreases win probability",
+          "delta": -0.08
+        }
+      ],
+      "prediction_timestamp": "2025-11-13T12:59:35.104080"
+    },
+    {
+      "game_id": "0022500045",
+      "game_date": "2025-11-14T00:00:00",
+      "home_team_id": 1610612740,
+      "away_team_id": 1610612747,
+      "home_team_win_probability": 0.4042143941357875,
+      "away_team_win_probability": 0.5957856058642125,
+      "predicted_winner": "away",
+      "confidence": 0.5957856058642125,
+      "decision_factors": [
+        {
+          "factor": "Win Rate (Rolling 15 games)",
+          "importance": 0.3944,
+          "value": 0.2,
+          "contribution": 0.4036,
+          "impact": 0.6,
+          "effect": "decreases win probability",
+          "delta": -0.3
+        },
+        {
+          "factor": "Free Throw Percentage",
+          "importance": 0.1318,
+          "value": 0.76,
+          "contribution": 0.1053,
+          "impact": 0.25,
+          "effect": "increases win probability",
+          "delta": -0.03
+        },
+        {
+          "factor": "Win Rate (Last 10 Games)",
+          "importance": 0.1008,
+          "value": 0.2,
+          "contribution": 0.1031,
+          "impact": 0.6,
+          "effect": "increases win probability",
+          "delta": -0.3
+        },
+        {
+          "factor": "Home Court Advantage",
+          "importance": 0.076,
+          "value": 1.0,
+          "contribution": 0.0972,
+          "impact": 1.0,
+          "effect": "increases win probability",
+          "delta": 0.5
+        },
+        {
+          "factor": "Three-Point Percentage",
+          "importance": 0.0501,
+          "value": 0.35,
+          "contribution": 0.0641,
+          "impact": 1.0,
+          "effect": "decreases win probability",
+          "delta": -0.1
+        }
+      ],
+      "prediction_timestamp": "2025-11-13T12:59:35.109145"
+    },
+    {
+      "game_id": "0022500046",
+      "game_date": "2025-11-14T00:00:00",
+      "home_team_id": 1610612742,
+      "away_team_id": 1610612746,
+      "home_team_win_probability": 0.5565173830708651,
+      "away_team_win_probability": 0.44348261692913493,
+      "predicted_winner": "home",
+      "confidence": 0.5565173830708651,
+      "decision_factors": [
+        {
+          "factor": "Win Rate (Rolling 15 games)",
+          "importance": 0.3944,
+          "value": 0.4,
+          "contribution": 0.363,
+          "impact": 0.2,
+          "effect": "decreases win probability",
+          "delta": -0.1
+        },
+        {
+          "factor": "Home Court Advantage",
+          "importance": 0.076,
+          "value": 1.0,
+          "contribution": 0.1166,
+          "impact": 1.0,
+          "effect": "increases win probability",
+          "delta": 0.5
+        },
+        {
+          "factor": "Free Throw Percentage",
+          "importance": 0.1318,
+          "value": 0.77,
+          "contribution": 0.1132,
+          "impact": 0.12,
+          "effect": "increases win probability",
+          "delta": -0.01
+        },
+        {
+          "factor": "Win Rate (Last 10 Games)",
+          "importance": 0.1008,
+          "value": 0.4,
+          "contribution": 0.0928,
+          "impact": 0.2,
+          "effect": "increases win probability",
+          "delta": -0.1
+        },
+        {
+          "factor": "Three-Point Percentage",
+          "importance": 0.0501,
+          "value": 0.36,
+          "contribution": 0.0769,
+          "impact": 1.0,
+          "effect": "decreases win probability",
+          "delta": -0.09
+        }
+      ],
+      "prediction_timestamp": "2025-11-13T12:59:35.114150"
+    },
+    {
+      "game_id": "0022500047",
+      "game_date": "2025-11-14T00:00:00",
+      "home_team_id": 1610612759,
+      "away_team_id": 1610612744,
+      "home_team_win_probability": 0.5126905755580526,
+      "away_team_win_probability": 0.48730942444194736,
+      "predicted_winner": "home",
+      "confidence": 0.5126905755580526,
+      "decision_factors": [
+        {
+          "factor": "Win Rate (Rolling 15 games)",
+          "importance": 0.3944,
+          "value": 0.3,
+          "contribution": 0.3969,
+          "impact": 0.4,
+          "effect": "decreases win probability",
+          "delta": -0.2
+        },
+        {
+          "factor": "Home Court Advantage",
+          "importance": 0.076,
+          "value": 1.0,
+          "contribution": 0.1093,
+          "impact": 1.0,
+          "effect": "increases win probability",
+          "delta": 0.5
+        },
+        {
+          "factor": "Free Throw Percentage",
+          "importance": 0.1318,
+          "value": 0.77,
+          "contribution": 0.108,
+          "impact": 0.14,
+          "effect": "increases win probability",
+          "delta": -0.01
+        },
+        {
+          "factor": "Win Rate (Last 10 Games)",
+          "importance": 0.1008,
+          "value": 0.3,
+          "contribution": 0.1014,
+          "impact": 0.4,
+          "effect": "increases win probability",
+          "delta": -0.2
+        },
+        {
+          "factor": "Three-Point Percentage",
+          "importance": 0.0501,
+          "value": 0.35,
+          "contribution": 0.0721,
+          "impact": 1.0,
+          "effect": "decreases win probability",
+          "delta": -0.1
+        }
+      ],
+      "prediction_timestamp": "2025-11-13T12:59:35.119091"
+    },
+    {
+      "game_id": "0022500228",
+      "game_date": "2025-11-15T00:00:00",
+      "home_team_id": 1610612739,
+      "away_team_id": 1610612763,
+      "home_team_win_probability": 0.7223103306467474,
+      "away_team_win_probability": 0.27768966935325257,
+      "predicted_winner": "home",
+      "confidence": 0.7223103306467474,
+      "decision_factors": [
+        {
+          "factor": "Win Rate (Rolling 15 games)",
+          "importance": 0.3944,
+          "value": 0.6,
+          "contribution": 0.368,
+          "impact": 0.2,
+          "effect": "increases win probability",
+          "delta": 0.1
+        },
+        {
+          "factor": "Home Court Advantage",
+          "importance": 0.076,
+          "value": 1.0,
+          "contribution": 0.1182,
+          "impact": 1.0,
+          "effect": "increases win probability",
+          "delta": 0.5
+        },
+        {
+          "factor": "Free Throw Percentage",
+          "importance": 0.1318,
+          "value": 0.78,
+          "contribution": 0.1055,
+          "impact": 0.03,
+          "effect": "increases win probability",
+          "delta": -0.0
+        },
+        {
+          "factor": "Win Rate (Last 10 Games)",
+          "importance": 0.1008,
+          "value": 0.6,
+          "contribution": 0.094,
+          "impact": 0.2,
+          "effect": "decreases win probability",
+          "delta": 0.1
+        },
+        {
+          "factor": "Three-Point Percentage",
+          "importance": 0.0501,
+          "value": 0.38,
+          "contribution": 0.0736,
+          "impact": 0.8875,
+          "effect": "decreases win probability",
+          "delta": -0.07
+        }
+      ],
+      "prediction_timestamp": "2025-11-13T12:59:35.127095"
+    },
+    {
+      "game_id": "0022500229",
+      "game_date": "2025-11-15T00:00:00",
+      "home_team_id": 1610612766,
+      "away_team_id": 1610612760,
+      "home_team_win_probability": 0.2976014501207266,
+      "away_team_win_probability": 0.7023985498792734,
+      "predicted_winner": "away",
+      "confidence": 0.7023985498792734,
+      "decision_factors": [
+        {
+          "factor": "Win Rate (Rolling 15 games)",
+          "importance": 0.3944,
+          "value": 0.1,
+          "contribution": 0.4259,
+          "impact": 0.8,
+          "effect": "decreases win probability",
+          "delta": -0.4
+        },
+        {
+          "factor": "Win Rate (Last 10 Games)",
+          "importance": 0.1008,
+          "value": 0.1,
+          "contribution": 0.1088,
+          "impact": 0.8,
+          "effect": "increases win probability",
+          "delta": -0.4
+        },
+        {
+          "factor": "Home Court Advantage",
+          "importance": 0.076,
+          "value": 1.0,
+          "contribution": 0.0912,
+          "impact": 1.0,
+          "effect": "increases win probability",
+          "delta": 0.5
+        },
+        {
+          "factor": "Free Throw Percentage",
+          "importance": 0.1318,
+          "value": 0.78,
+          "contribution": 0.0806,
+          "impact": 0.02,
+          "effect": "decreases win probability",
+          "delta": 0.0
+        },
+        {
+          "factor": "Three-Point Percentage",
+          "importance": 0.0501,
+          "value": 0.34,
+          "contribution": 0.0602,
+          "impact": 1.0,
+          "effect": "decreases win probability",
+          "delta": -0.11
+        }
+      ],
+      "prediction_timestamp": "2025-11-13T12:59:35.132091"
+    },
+    {
+      "game_id": "0022500230",
+      "game_date": "2025-11-15T00:00:00",
+      "home_team_id": 1610612754,
+      "away_team_id": 1610612761,
+      "home_team_win_probability": 0.7542522771675021,
+      "away_team_win_probability": 0.2457477228324979,
+      "predicted_winner": "home",
+      "confidence": 0.7542522771675021,
+      "decision_factors": [
+        {
+          "factor": "Win Rate (Rolling 15 games)",
+          "importance": 0.3944,
+          "value": 0.8,
+          "contribution": 0.4112,
+          "impact": 0.6,
+          "effect": "increases win probability",
+          "delta": 0.3
+        },
+        {
+          "factor": "Win Rate (Last 10 Games)",
+          "importance": 0.1008,
+          "value": 0.8,
+          "contribution": 0.1051,
+          "impact": 0.6,
+          "effect": "decreases win probability",
+          "delta": 0.3
+        },
+        {
+          "factor": "Home Court Advantage",
+          "importance": 0.076,
+          "value": 1.0,
+          "contribution": 0.099,
+          "impact": 1.0,
+          "effect": "increases win probability",
+          "delta": 0.5
+        },
+        {
+          "factor": "Free Throw Percentage",
+          "importance": 0.1318,
+          "value": 0.78,
+          "contribution": 0.0893,
+          "impact": 0.04,
+          "effect": "decreases win probability",
+          "delta": 0.0
+        },
+        {
+          "factor": "Three-Point Percentage",
+          "importance": 0.0501,
+          "value": 0.37,
+          "contribution": 0.0653,
+          "impact": 1.0,
+          "effect": "decreases win probability",
+          "delta": -0.08
+        }
+      ],
+      "prediction_timestamp": "2025-11-13T12:59:35.137096"
+    },
+    {
+      "game_id": "0022500231",
+      "game_date": "2025-11-15T00:00:00",
+      "home_team_id": 1610612749,
+      "away_team_id": 1610612747,
+      "home_team_win_probability": 0.7466400162589535,
+      "away_team_win_probability": 0.2533599837410465,
+      "predicted_winner": "home",
+      "confidence": 0.7466400162589535,
+      "decision_factors": [
+        {
+          "factor": "Win Rate (Rolling 15 games)",
+          "importance": 0.3944,
+          "value": 0.8,
+          "contribution": 0.3982,
+          "impact": 0.6,
+          "effect": "increases win probability",
+          "delta": 0.3
+        },
+        {
+          "factor": "Free Throw Percentage",
+          "importance": 0.1318,
+          "value": 0.75,
+          "contribution": 0.1114,
+          "impact": 0.34,
+          "effect": "increases win probability",
+          "delta": -0.03
+        },
+        {
+          "factor": "Win Rate (Last 10 Games)",
+          "importance": 0.1008,
+          "value": 0.8,
+          "contribution": 0.1017,
+          "impact": 0.6,
+          "effect": "decreases win probability",
+          "delta": 0.3
+        },
+        {
+          "factor": "Home Court Advantage",
+          "importance": 0.076,
+          "value": 1.0,
+          "contribution": 0.0959,
+          "impact": 1.0,
+          "effect": "increases win probability",
+          "delta": 0.5
+        },
+        {
+          "factor": "Three-Point Percentage",
+          "importance": 0.0501,
+          "value": 0.38,
+          "contribution": 0.0585,
+          "impact": 0.85,
+          "effect": "decreases win probability",
+          "delta": -0.07
+        }
+      ],
+      "prediction_timestamp": "2025-11-13T12:59:35.145093"
+    },
+    {
+      "game_id": "0022500232",
+      "game_date": "2025-11-15T00:00:00",
+      "home_team_id": 1610612750,
+      "away_team_id": 1610612743,
+      "home_team_win_probability": 0.7128642441196623,
+      "away_team_win_probability": 0.2871357558803377,
+      "predicted_winner": "home",
+      "confidence": 0.7128642441196623,
+      "decision_factors": [
+        {
+          "factor": "Win Rate (Rolling 15 games)",
+          "importance": 0.3944,
+          "value": 0.8,
+          "contribution": 0.4146,
+          "impact": 0.6,
+          "effect": "increases win probability",
+          "delta": 0.3
+        },
+        {
+          "factor": "Win Rate (Last 10 Games)",
+          "importance": 0.1008,
+          "value": 0.8,
+          "contribution": 0.1059,
+          "impact": 0.6,
+          "effect": "decreases win probability",
+          "delta": 0.3
+        },
+        {
+          "factor": "Home Court Advantage",
+          "importance": 0.076,
+          "value": 1.0,
+          "contribution": 0.0999,
+          "impact": 1.0,
+          "effect": "increases win probability",
+          "delta": 0.5
+        },
+        {
+          "factor": "Free Throw Percentage",
+          "importance": 0.1318,
+          "value": 0.78,
+          "contribution": 0.0909,
+          "impact": 0.05,
+          "effect": "decreases win probability",
+          "delta": 0.01
+        },
+        {
+          "factor": "Three-Point Percentage",
+          "importance": 0.0501,
+          "value": 0.37,
+          "contribution": 0.0646,
+          "impact": 0.9625,
+          "effect": "decreases win probability",
+          "delta": -0.08
+        }
+      ],
+      "prediction_timestamp": "2025-11-13T12:59:35.150092"
+    },
+    {
+      "game_id": "0022500233",
+      "game_date": "2025-11-16T00:00:00",
+      "home_team_id": 1610612738,
+      "away_team_id": 1610612746,
+      "home_team_win_probability": 0.7922135757540654,
+      "away_team_win_probability": 0.20778642424593463,
+      "predicted_winner": "home",
+      "confidence": 0.7922135757540654,
+      "decision_factors": [
+        {
+          "factor": "Win Rate (Rolling 15 games)",
+          "importance": 0.3944,
+          "value": 0.8,
+          "contribution": 0.407,
+          "impact": 0.6,
+          "effect": "increases win probability",
+          "delta": 0.3
+        },
+        {
+          "factor": "Win Rate (Last 10 Games)",
+          "importance": 0.1008,
+          "value": 0.8,
+          "contribution": 0.104,
+          "impact": 0.6,
+          "effect": "decreases win probability",
+          "delta": 0.3
+        },
+        {
+          "factor": "Home Court Advantage",
+          "importance": 0.076,
+          "value": 1.0,
+          "contribution": 0.098,
+          "impact": 1.0,
+          "effect": "increases win probability",
+          "delta": 0.5
+        },
+        {
+          "factor": "Free Throw Percentage",
+          "importance": 0.1318,
+          "value": 0.8,
+          "contribution": 0.0977,
+          "impact": 0.15,
+          "effect": "decreases win probability",
+          "delta": 0.02
+        },
+        {
+          "factor": "Three-Point Percentage",
+          "importance": 0.0501,
+          "value": 0.37,
+          "contribution": 0.0647,
+          "impact": 1.0,
+          "effect": "decreases win probability",
+          "delta": -0.08
+        }
+      ],
+      "prediction_timestamp": "2025-11-13T12:59:35.155094"
+    },
+    {
+      "game_id": "0022500234",
+      "game_date": "2025-11-16T00:00:00",
+      "home_team_id": 1610612759,
+      "away_team_id": 1610612758,
+      "home_team_win_probability": 0.5129938454311644,
+      "away_team_win_probability": 0.48700615456883556,
+      "predicted_winner": "home",
+      "confidence": 0.5129938454311644,
+      "decision_factors": [
+        {
+          "factor": "Win Rate (Rolling 15 games)",
+          "importance": 0.3944,
+          "value": 0.3,
+          "contribution": 0.3969,
+          "impact": 0.4,
+          "effect": "decreases win probability",
+          "delta": -0.2
+        },
+        {
+          "factor": "Home Court Advantage",
+          "importance": 0.076,
+          "value": 1.0,
+          "contribution": 0.1093,
+          "impact": 1.0,
+          "effect": "increases win probability",
+          "delta": 0.5
+        },
+        {
+          "factor": "Free Throw Percentage",
+          "importance": 0.1318,
+          "value": 0.77,
+          "contribution": 0.108,
+          "impact": 0.14,
+          "effect": "increases win probability",
+          "delta": -0.01
+        },
+        {
+          "factor": "Win Rate (Last 10 Games)",
+          "importance": 0.1008,
+          "value": 0.3,
+          "contribution": 0.1014,
+          "impact": 0.4,
+          "effect": "increases win probability",
+          "delta": -0.2
+        },
+        {
+          "factor": "Three-Point Percentage",
+          "importance": 0.0501,
+          "value": 0.35,
+          "contribution": 0.0721,
+          "impact": 1.0,
+          "effect": "decreases win probability",
+          "delta": -0.1
+        }
+      ],
+      "prediction_timestamp": "2025-11-13T12:59:35.162097"
+    },
+    {
+      "game_id": "0022500235",
+      "game_date": "2025-11-16T00:00:00",
+      "home_team_id": 1610612764,
+      "away_team_id": 1610612751,
+      "home_team_win_probability": 0.3655775497400292,
+      "away_team_win_probability": 0.6344224502599708,
+      "predicted_winner": "away",
+      "confidence": 0.6344224502599708,
+      "decision_factors": [
+        {
+          "factor": "Win Rate (Rolling 15 games)",
+          "importance": 0.3944,
+          "value": 0.2,
+          "contribution": 0.4136,
+          "impact": 0.6,
+          "effect": "decreases win probability",
+          "delta": -0.3
+        },
+        {
+          "factor": "Win Rate (Last 10 Games)",
+          "importance": 0.1008,
+          "value": 0.2,
+          "contribution": 0.1057,
+          "impact": 0.6,
+          "effect": "increases win probability",
+          "delta": -0.3
+        },
+        {
+          "factor": "Home Court Advantage",
+          "importance": 0.076,
+          "value": 1.0,
+          "contribution": 0.0996,
+          "impact": 1.0,
+          "effect": "increases win probability",
+          "delta": 0.5
+        },
+        {
+          "factor": "Free Throw Percentage",
+          "importance": 0.1318,
+          "value": 0.78,
+          "contribution": 0.0881,
+          "impact": 0.02,
+          "effect": "increases win probability",
+          "delta": -0.0
+        },
+        {
+          "factor": "Three-Point Percentage",
+          "importance": 0.0501,
+          "value": 0.34,
+          "contribution": 0.0657,
+          "impact": 1.0,
+          "effect": "decreases win probability",
+          "delta": -0.11
+        }
+      ],
+      "prediction_timestamp": "2025-11-13T12:59:35.167095"
+    },
+    {
+      "game_id": "0022500236",
+      "game_date": "2025-11-16T00:00:00",
+      "home_team_id": 1610612745,
+      "away_team_id": 1610612753,
+      "home_team_win_probability": 0.6602237665983032,
+      "away_team_win_probability": 0.3397762334016968,
+      "predicted_winner": "home",
+      "confidence": 0.6602237665983032,
+      "decision_factors": [
+        {
+          "factor": "Win Rate (Rolling 15 games)",
+          "importance": 0.3944,
+          "value": 0.6,
+          "contribution": 0.3597,
+          "impact": 0.2,
+          "effect": "increases win probability",
+          "delta": 0.1
+        },
+        {
+          "factor": "Free Throw Percentage",
+          "importance": 0.1318,
+          "value": 0.74,
+          "contribution": 0.1422,
+          "impact": 0.42,
+          "effect": "increases win probability",
+          "delta": -0.04
+        },
+        {
+          "factor": "Home Court Advantage",
+          "importance": 0.076,
+          "value": 1.0,
+          "contribution": 0.1155,
+          "impact": 1.0,
+          "effect": "increases win probability",
+          "delta": 0.5
+        },
+        {
+          "factor": "Win Rate (Last 10 Games)",
+          "importance": 0.1008,
+          "value": 0.6,
+          "contribution": 0.0919,
+          "impact": 0.2,
+          "effect": "decreases win probability",
+          "delta": 0.1
+        },
+        {
+          "factor": "Three-Point Percentage",
+          "importance": 0.0501,
+          "value": 0.35,
+          "contribution": 0.0762,
+          "impact": 1.0,
+          "effect": "decreases win probability",
+          "delta": -0.1
+        }
+      ],
+      "prediction_timestamp": "2025-11-13T12:59:35.171096"
+    },
+    {
+      "game_id": "0022500237",
+      "game_date": "2025-11-16T00:00:00",
+      "home_team_id": 1610612740,
+      "away_team_id": 1610612744,
+      "home_team_win_probability": 0.4045067609635034,
+      "away_team_win_probability": 0.5954932390364966,
+      "predicted_winner": "away",
+      "confidence": 0.5954932390364966,
+      "decision_factors": [
+        {
+          "factor": "Win Rate (Rolling 15 games)",
+          "importance": 0.3944,
+          "value": 0.2,
+          "contribution": 0.4036,
+          "impact": 0.6,
+          "effect": "decreases win probability",
+          "delta": -0.3
+        },
+        {
+          "factor": "Free Throw Percentage",
+          "importance": 0.1318,
+          "value": 0.76,
+          "contribution": 0.1053,
+          "impact": 0.25,
+          "effect": "increases win probability",
+          "delta": -0.03
+        },
+        {
+          "factor": "Win Rate (Last 10 Games)",
+          "importance": 0.1008,
+          "value": 0.2,
+          "contribution": 0.1031,
+          "impact": 0.6,
+          "effect": "increases win probability",
+          "delta": -0.3
+        },
+        {
+          "factor": "Home Court Advantage",
+          "importance": 0.076,
+          "value": 1.0,
+          "contribution": 0.0972,
+          "impact": 1.0,
+          "effect": "increases win probability",
+          "delta": 0.5
+        },
+        {
+          "factor": "Three-Point Percentage",
+          "importance": 0.0501,
+          "value": 0.35,
+          "contribution": 0.0641,
+          "impact": 1.0,
+          "effect": "decreases win probability",
+          "delta": -0.1
+        }
+      ],
+      "prediction_timestamp": "2025-11-13T12:59:35.180091"
+    },
+    {
+      "game_id": "0022500238",
+      "game_date": "2025-11-16T00:00:00",
+      "home_team_id": 1610612742,
+      "away_team_id": 1610612757,
+      "home_team_win_probability": 0.5568169551660855,
+      "away_team_win_probability": 0.44318304483391446,
+      "predicted_winner": "home",
+      "confidence": 0.5568169551660855,
+      "decision_factors": [
+        {
+          "factor": "Win Rate (Rolling 15 games)",
+          "importance": 0.3944,
+          "value": 0.4,
+          "contribution": 0.363,
+          "impact": 0.2,
+          "effect": "decreases win probability",
+          "delta": -0.1
+        },
+        {
+          "factor": "Home Court Advantage",
+          "importance": 0.076,
+          "value": 1.0,
+          "contribution": 0.1166,
+          "impact": 1.0,
+          "effect": "increases win probability",
+          "delta": 0.5
+        },
+        {
+          "factor": "Free Throw Percentage",
+          "importance": 0.1318,
+          "value": 0.77,
+          "contribution": 0.1132,
+          "impact": 0.12,
+          "effect": "increases win probability",
+          "delta": -0.01
+        },
+        {
+          "factor": "Win Rate (Last 10 Games)",
+          "importance": 0.1008,
+          "value": 0.4,
+          "contribution": 0.0928,
+          "impact": 0.2,
+          "effect": "increases win probability",
+          "delta": -0.1
+        },
+        {
+          "factor": "Three-Point Percentage",
+          "importance": 0.0501,
+          "value": 0.36,
+          "contribution": 0.0769,
+          "impact": 1.0,
+          "effect": "decreases win probability",
+          "delta": -0.09
+        }
+      ],
+      "prediction_timestamp": "2025-11-13T12:59:35.185095"
+    },
+    {
+      "game_id": "0022500239",
+      "game_date": "2025-11-16T00:00:00",
+      "home_team_id": 1610612756,
+      "away_team_id": 1610612737,
+      "home_team_win_probability": 0.40639095642974904,
+      "away_team_win_probability": 0.593609043570251,
+      "predicted_winner": "away",
+      "confidence": 0.593609043570251,
+      "decision_factors": [
+        {
+          "factor": "Win Rate (Rolling 15 games)",
+          "importance": 0.3944,
+          "value": 0.1,
+          "contribution": 0.4254,
+          "impact": 0.8,
+          "effect": "decreases win probability",
+          "delta": -0.4
+        },
+        {
+          "factor": "Win Rate (Last 10 Games)",
+          "importance": 0.1008,
+          "value": 0.1,
+          "contribution": 0.1087,
+          "impact": 0.8,
+          "effect": "increases win probability",
+          "delta": -0.4
+        },
+        {
+          "factor": "Free Throw Percentage",
+          "importance": 0.1318,
+          "value": 0.81,
+          "contribution": 0.1011,
+          "impact": 0.28,
+          "effect": "decreases win probability",
+          "delta": 0.03
+        },
+        {
+          "factor": "Home Court Advantage",
+          "importance": 0.076,
+          "value": 1.0,
+          "contribution": 0.0911,
+          "impact": 1.0,
+          "effect": "increases win probability",
+          "delta": 0.5
+        },
+        {
+          "factor": "Three-Point Percentage",
+          "importance": 0.0501,
+          "value": 0.38,
+          "contribution": 0.0582,
+          "impact": 0.9375,
+          "effect": "decreases win probability",
+          "delta": -0.08
+        }
+      ],
+      "prediction_timestamp": "2025-11-13T12:59:35.190098"
+    },
+    {
+      "game_id": "0022500240",
+      "game_date": "2025-11-16T00:00:00",
+      "home_team_id": 1610612762,
+      "away_team_id": 1610612741,
+      "home_team_win_probability": 0.24447219721342206,
+      "away_team_win_probability": 0.7555278027865779,
+      "predicted_winner": "away",
+      "confidence": 0.7555278027865779,
+      "decision_factors": [
+        {
+          "factor": "Win Rate (Rolling 15 games)",
+          "importance": 0.3944,
+          "value": 0.1,
+          "contribution": 0.4278,
+          "impact": 0.8,
+          "effect": "decreases win probability",
+          "delta": -0.4
+        },
+        {
+          "factor": "Win Rate (Last 10 Games)",
+          "importance": 0.1008,
+          "value": 0.1,
+          "contribution": 0.1093,
+          "impact": 0.8,
+          "effect": "increases win probability",
+          "delta": -0.4
+        },
+        {
+          "factor": "Home Court Advantage",
+          "importance": 0.076,
+          "value": 1.0,
+          "contribution": 0.0916,
+          "impact": 1.0,
+          "effect": "increases win probability",
+          "delta": 0.5
+        },
+        {
+          "factor": "Free Throw Percentage",
+          "importance": 0.1318,
+          "value": 0.77,
+          "contribution": 0.0866,
+          "impact": 0.09,
+          "effect": "increases win probability",
+          "delta": -0.01
+        },
+        {
+          "factor": "Three-Point Percentage",
+          "importance": 0.0501,
+          "value": 0.35,
+          "contribution": 0.0604,
+          "impact": 1.0,
+          "effect": "decreases win probability",
+          "delta": -0.1
+        }
+      ],
+      "prediction_timestamp": "2025-11-13T12:59:35.195091"
+    }
+  ],
+  "model_info": {
+    "game_model_loaded": true,
+    "preprocessors_loaded": true
+  },
+  "summary": "Predictions generated for 25 games over 3 days"
+}

@@ -58,31 +58,14 @@ __pycache__/
 *.pyo
 *.pyd
 
-#ml
-/nba_ml_data
 
 *.log
 
 # Data files and outputs
-*.json
+
 !package.json
 !package-lock.json
 !tsconfig.json
 !*.config.json
 !frontend/tsconfig.json
 !components.json
-
-# CSV data files
-*.csv
-
-# Test outputs
-backend/tests/*_output.json
-backend/*_output.json
-backend/*_games.json
-backend/*_games.csv
-backend/upcoming_games.json
-backend/health_check_output.json
-
-# Training data
-backend/models/training_scripts/*.json
-backend/models/training_scripts/*.csv
