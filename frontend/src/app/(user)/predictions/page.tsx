@@ -368,44 +368,57 @@ const EPLProbabilityBar: React.FC<{
     homeTeam: string;
     awayTeam: string;
 }> = ({ homeWin, draw, awayWin, homeTeam, awayTeam }) => {
-    const homeWinPercent = Math.round(homeWin * 100);
-    const drawPercent = Math.round(draw * 100);
-    const awayWinPercent = Math.round(awayWin * 100);
+    // Ensure probabilities sum to 1 and handle edge cases
+    const total = homeWin + draw + awayWin;
+    const normalizedHome = total > 0 ? homeWin / total : 0.33;
+    const normalizedDraw = total > 0 ? draw / total : 0.33;
+    const normalizedAway = total > 0 ? awayWin / total : 0.34;
+    
+    // Calculate percentages that sum to 100%
+    const homeWinPercent = Math.round(normalizedHome * 100);
+    const drawPercent = Math.round(normalizedDraw * 100);
+    const awayWinPercent = 100 - homeWinPercent - drawPercent; // Ensure sum is exactly 100%
     
     return (
         <div className="w-full">
-            <div className="w-24 bg-gray-200 rounded-full h-2.5 mb-2 flex overflow-hidden">
+            <div className="w-32 bg-gray-200 rounded-full h-3 mb-2 flex overflow-hidden">
                 {/* Home team win - Green */}
-                <div
-                    className="h-2.5 bg-green-500"
-                    style={{ width: `${homeWinPercent}%` }}
-                    title={`${homeTeam} win: ${homeWinPercent}%`}
-                ></div>
+                {homeWinPercent > 0 && (
+                    <div
+                        className="h-3 bg-green-500 transition-all duration-300"
+                        style={{ width: `${homeWinPercent}%` }}
+                        title={`${homeTeam} win: ${homeWinPercent}%`}
+                    ></div>
+                )}
                 {/* Draw - Yellow */}
-                <div
-                    className="h-2.5 bg-yellow-500"
-                    style={{ width: `${drawPercent}%` }}
-                    title={`Draw: ${drawPercent}%`}
-                ></div>
+                {drawPercent > 0 && (
+                    <div
+                        className="h-3 bg-yellow-500 transition-all duration-300"
+                        style={{ width: `${drawPercent}%` }}
+                        title={`Draw: ${drawPercent}%`}
+                    ></div>
+                )}
                 {/* Away team win - Red */}
-                <div
-                    className="h-2.5 bg-red-500"
-                    style={{ width: `${awayWinPercent}%` }}
-                    title={`${awayTeam} win: ${awayWinPercent}%`}
-                ></div>
+                {awayWinPercent > 0 && (
+                    <div
+                        className="h-3 bg-red-500 transition-all duration-300"
+                        style={{ width: `${awayWinPercent}%` }}
+                        title={`${awayTeam} win: ${awayWinPercent}%`}
+                    ></div>
+                )}
             </div>
             <div className="text-xs text-text-secondary space-y-1">
                 <div className="flex items-center gap-1">
-                    <div className="w-2 h-2 bg-green-500 rounded"></div>
-                    <span>{homeTeam}: {homeWinPercent}%</span>
+                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                    <span className="font-medium">{homeTeam}: {homeWinPercent}%</span>
                 </div>
                 <div className="flex items-center gap-1">
-                    <div className="w-2 h-2 bg-yellow-500 rounded"></div>
-                    <span>Draw: {drawPercent}%</span>
+                    <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
+                    <span className="font-medium">Draw: {drawPercent}%</span>
                 </div>
                 <div className="flex items-center gap-1">
-                    <div className="w-2 h-2 bg-red-500 rounded"></div>
-                    <span>{awayTeam}: {awayWinPercent}%</span>
+                    <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                    <span className="font-medium">{awayTeam}: {awayWinPercent}%</span>
                 </div>
             </div>
         </div>
