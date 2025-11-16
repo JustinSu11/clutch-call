@@ -1,5 +1,5 @@
 
-nba_api>==1.1.11           # NBA-related data work 
+nba_api==1.1.11           # NBA-related data work 
 Flask>=2.2.0             # Web framework used for route definitions
 Flask-Cors>=3.0.0        # Enables CORS for API consumption from the frontend
 gunicorn>=20.1.0          
