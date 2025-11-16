@@ -100,6 +100,13 @@ export const ROUTES = {
     specific_soccer_match_boxscore: (matchId: string) => `/soccer/game/${matchId}/boxscore`,
     upcoming_soccer_matches: `/soccer/upcoming`,
     soccer_standings: (league: string) => `/soccer/standings?league=${league}`,
+    
+    // EPL Model Routes
+    epl_predict: (home: string, away: string, lastN?: number) => `/soccer/epl/predict?home=${encodeURIComponent(home)}&away=${encodeURIComponent(away)}${lastN ? `&last_n=${lastN}` : ''}`,
+    epl_upcoming: (season?: number) => `/soccer/epl/upcoming${season ? `?season=${season}` : ''}`,
+    epl_teams: `/soccer/epl/teams`,
+    epl_canonicalize: (name: string) => `/soccer/epl/canonicalize?name=${encodeURIComponent(name)}`,
+    epl_info: `/soccer/epl/info`,
 };
 // --- END UPDATE ---
 

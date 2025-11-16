@@ -34,7 +34,7 @@ import {
     getSoccerMatches,
     getSpecificSoccerMatchDetails,
     getSpecificSoccerMatchBoxscore,
-    getUpcomingSoccerMatches
+    getEPLUpcomingMatches
 } from '@/backend_methods/soccer_methods';
 import {
     getTodayAllGames,
@@ -743,11 +743,11 @@ export default function TestingPage() {
                             {loading === 'getSoccerMatches' ? 'Loading...' : 'Get Soccer Matches'}
                         </button>
                         <button
-                            onClick={() => handleTest('getUpcomingSoccerMatches', getUpcomingSoccerMatches)}
-                            disabled={loading === 'getUpcomingSoccerMatches'}
+                            onClick={() => handleTest('getEPLUpcomingMatches', getEPLUpcomingMatches)}
+                            disabled={loading === 'getEPLUpcomingMatches'}
                             className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:bg-emerald-400 transition-colors"
                         >
-                            {loading === 'getUpcomingSoccerMatches' ? 'Loading...' : 'Get Upcoming Soccer Matches'}
+                            {loading === 'getEPLUpcomingMatches' ? 'Loading...' : 'Get EPL Upcoming Matches'}
                         </button>
                     </div>
 

@@ -19,3 +19,11 @@ seaborn>=0.11.0          # Statistical data visualization
 
 # FastAPI for future use
 fastapi           # FastAPI framework for building APIs
+
+# --- Added Dependencies for EPL Model (from hvbhanot) ---
+fastapi==0.115.0      #
+uvicorn[standard]==0.32.0 #
+pydantic==2.10.0      #
+
+requests==2.32.3      #
+xgboost==2.1.3        #

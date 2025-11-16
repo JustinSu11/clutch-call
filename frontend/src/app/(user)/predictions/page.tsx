@@ -10,8 +10,11 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import { parseUpcomingNFLGames, parseNFLTeamStats, parseTodayNFLGames, parseNFLGamesFromEvents } from '@/utils/nfl_parser';
-import { parseNBATeamStats } from '@/utils/nba_parser';
-import { parseUpcomingMLSGames, parseMLSTeamStats } from '@/utils/mls_parser';
+import { parseUpcomingNBAGames, parseNBATeamStats } from '@/utils/nba_parser';
+import { parseUpcomingEPLGames, getEPLMatchPrediction } from '@/utils/epl_parser';
+import { UpcomingGame } from '@/utils/data_class';
+import { get } from 'http';
+import { urlToHttpOptions } from 'url';
 import MatchDialog, { TeamStats } from '@/components/DashboardComponents/Dialog';
 import { getNBAGamePredictions, getNBAMLStatus } from '@/backend_methods/nba_methods';
 import { getNBAStandings } from '@/backend_methods/standings_methods';
@@ -25,7 +28,7 @@ import { getNFLPrediction, getUpcomingNFLGames } from '@/backend_methods/nfl_met
 
 
 // declare data types
-type SportKey = 'All Sports' | 'NFL' | 'NBA' | 'MLS';
+type SportKey = 'All Sports' | 'NFL' | 'NBA' | 'EPL';
 
 type Game = {
     id: string; // Ensure the parsed game object includes an ID
@@ -56,10 +59,14 @@ type Prediction = {
     dateAndTime?: string | Date;  // Add dateAndTime property for proper time display
     homeTeamLogo?: string;
     awayTeamLogo?: string;
-    prediction: string;     // the eventual prediction text
-    confidence: number;     // a number between 0 and 100 showing how confident the AI prediction is
-    analysis?: string;        // Add this field for NFL
-    sport: SportKey;        // the sport this prediction belongs to used for filtering (NFL, NBA, MLS)
+    prediction: string;
+    confidence: number;
+    analysis?: string;        // Add this field
+    sport: SportKey;
+    // EPL probability fields
+    homeWin?: number;
+    draw?: number;
+    awayWin?: number;    // the sport this prediction belongs to used for filtering (NFL, NBA, MLS)
     meta?: PredictionMeta;
 };
 
@@ -198,10 +205,11 @@ const buildNFLPredictions = async (): Promise<Prediction[]> => {
     console.log(`Starting prediction requests for ${predictableGames.length} games...`);
     const predictionPromises = predictableGames.map(async (game) => {
     try {
-        console.log(` Requesting prediction for game ${game.id} (${game.awayTeam} @ ${game.homeTeam})...`);
+        console.log(`Requesting prediction for game ${game.id} (${game.awayTeam} @ ${game.homeTeam})...`);
         // We know game.id is a string here
         const aiPrediction = await getNFLPrediction(game.id);
-        console.log(` Received response for game ${game.id}:`, aiPrediction);
+        console.log(`Received response for game ${game.id}:`, aiPrediction);
+
 
         if (aiPrediction.error) {
             // Handle 422 errors gracefully (expected for games that just started or have insufficient data)
@@ -209,10 +217,10 @@ const buildNFLPredictions = async (): Promise<Prediction[]> => {
             if (errorMsg.includes('Cannot predict upcoming games') || 
                 errorMsg.includes('Insufficient game data') ||
                 errorMsg.includes('422')) {
-                console.log(` Game ${game.id} cannot be predicted yet (expected):`, aiPrediction.error);
+                console.log(`Game ${game.id} cannot be predicted yet (expected):`, aiPrediction.error);
                 return null;
             }
-            console.error(` Failed to get prediction for game ${game.id}:`, aiPrediction.error, aiPrediction.details);
+            console.error(`Failed to get prediction for game ${game.id}:`, aiPrediction.error, aiPrediction.details);
             return null;
         }
 
@@ -279,57 +287,100 @@ const buildNFLPredictions = async (): Promise<Prediction[]> => {
             sport: 'NFL' as SportKey,
         };
         
-        console.log(` Successfully built prediction for game ${game.id}:`, prediction);
+        console.log(`Successfully built prediction for game ${game.id}:`, prediction);
         return prediction;
      
     } catch (error: any) {
         // Handle network errors or 422 errors in the catch block
         const errorMessage = error?.message || '';
-        console.error(` Exception for game ${game.id}:`, error);
+        console.error(`Exception for game ${game.id}:`, error);
         if (errorMessage.includes('422') || 
             errorMessage.includes('Cannot predict upcoming games') ||
             errorMessage.includes('Insufficient game data')) {
-            console.log(` Game ${game.id} cannot be predicted yet (caught error):`, errorMessage);
+            console.log(`Game ${game.id} cannot be predicted yet (caught error):`, errorMessage);
             return null;
         }
-        console.error(` Error fetching prediction for game ${game.id}:`, error);
+        console.error(`Error fetching prediction for game ${game.id}:`, error);
         return null;
     }
 });
 
 // Wait for all the API calls to complete
-console.log(' Waiting for all prediction requests to complete...');
+console.log('Waiting for all prediction requests to complete...');
 const predictions = await Promise.all(predictionPromises);
 
 // Filter out any games that failed to get a prediction
 const filteredPredictions = predictions.filter(p => p !== null) as Prediction[];
-console.log(` Final results: ${filteredPredictions.length} successful predictions out of ${predictableGames.length} eligible games`);
-console.log(' Predictions:', filteredPredictions);
+console.log(`Final results: ${filteredPredictions.length} successful predictions out of ${predictableGames.length} eligible games`);
+console.log('Predictions:', filteredPredictions);
 
 if (filteredPredictions.length === 0 && predictableGames.length > 0) {
-    console.warn(' WARNING: Had eligible games but no successful predictions. Check backend logs for errors.');
+    console.warn('WARNING: Had eligible games but no successful predictions. Check backend logs for errors.');
 }
 
 return filteredPredictions;
 };
 
 
-const buildMLSPredictions = async (): Promise<Prediction[]> => {
+const buildEPLPredictions = async (): Promise<Prediction[]> => {
     /*
-        buildMLSPredictions:
-        This method builds a list of Prediction objects for upcoming MLS games.
+        buildEPLPredictions:
+        This method builds a list of Prediction objects for upcoming EPL games
+        with real win/draw/loss probabilities from the EPL model.
     */
-    const upcomingMLSGames = await parseUpcomingMLSGames();
+    const upcomingEPLGames = await parseUpcomingEPLGames();
 
     // map each game to a Prediction object
-    return upcomingMLSGames.map((game) => ({
-        match: `${game.awayTeam.displayName} at ${game.homeTeam.displayName}`,
-        date: game.dateAndTime ? String(game.dateAndTime) : '', // Keep for backward compatibility
-        dateAndTime: game.dateAndTime || '', // Use dateAndTime for proper time display
-        prediction: `${game.homeTeam.displayName} predicted to win`,
-        confidence: 100,
-        sport: 'MLS'
-    }));
+        // Process each game to get prediction probabilities
+    const predictionPromises = upcomingEPLGames.map(async (game) => {
+        try {
+            // Get actual probabilities from EPL model
+            const probabilities = await getEPLMatchPrediction(
+                game.homeTeam.displayName,
+                game.awayTeam.displayName
+            );
+            
+            // Determine the predicted winner based on highest probability
+            const maxProb = Math.max(probabilities.homeWin, probabilities.draw, probabilities.awayWin);
+            let predictedOutcome = '';
+            if (maxProb === probabilities.homeWin) {
+                predictedOutcome = `${game.homeTeam.displayName} to win`;
+            } else if (maxProb === probabilities.draw) {
+                predictedOutcome = 'Draw predicted';
+            } else {
+                predictedOutcome = `${game.awayTeam.displayName} to win`;
+            }
+            
+            return {
+                match: `${game.awayTeam.displayName} at ${game.homeTeam.displayName}`,
+                date: game.dateAndTime ? String(game.dateAndTime) : '',
+                dateAndTime: game.dateAndTime || '',
+                prediction: predictedOutcome,
+                confidence: Math.round(maxProb * 100), // Convert to percentage for display
+                sport: 'EPL' as SportKey,
+                // Add probability fields for stacked bar
+                homeWin: probabilities.homeWin,
+                draw: probabilities.draw,
+                awayWin: probabilities.awayWin
+            };
+        } catch (error) {
+            console.error(`Error getting EPL prediction for ${game.homeTeam.displayName} vs ${game.awayTeam.displayName}:`, error);
+            // Return fallback prediction with balanced probabilities
+            return {
+                match: `${game.awayTeam.displayName} at ${game.homeTeam.displayName}`,
+                date: game.dateAndTime ? String(game.dateAndTime) : '',
+                dateAndTime: game.dateAndTime || '',
+                prediction: `${game.homeTeam.displayName} predicted to win`,
+                confidence: 40,
+                sport: 'EPL' as SportKey,
+                homeWin: 0.40,
+                draw: 0.30,
+                awayWin: 0.30
+            };
+        }
+    });
+
+    return Promise.all(predictionPromises);
 }
 
 const formatGameDate = (input?: string | null): string => {
@@ -422,6 +473,71 @@ const getConfidenceStyle = (confidence: number) => {
     return { backgroundColor: `hsl(${hue}, 90%, 45%)` };
 };
 
+// Component for EPL stacked probability bars
+const EPLProbabilityBar: React.FC<{
+    homeWin: number;
+    draw: number;
+    awayWin: number;
+    homeTeam: string;
+    awayTeam: string;
+}> = ({ homeWin, draw, awayWin, homeTeam, awayTeam }) => {
+    // Ensure probabilities sum to 1 and handle edge cases
+    const total = homeWin + draw + awayWin;
+    const normalizedHome = total > 0 ? homeWin / total : 0.33;
+    const normalizedDraw = total > 0 ? draw / total : 0.33;
+    const normalizedAway = total > 0 ? awayWin / total : 0.34;
+    
+    // Calculate percentages that sum to 100%
+    const homeWinPercent = Math.round(normalizedHome * 100);
+    const drawPercent = Math.round(normalizedDraw * 100);
+    const awayWinPercent = 100 - homeWinPercent - drawPercent; // Ensure sum is exactly 100%
+    
+    return (
+        <div className="w-full">
+            <div className="w-32 bg-gray-200 rounded-full h-3 mb-2 flex overflow-hidden">
+                {/* Home team win - Green */}
+                {homeWinPercent > 0 && (
+                    <div
+                        className="h-3 bg-green-500 transition-all duration-300"
+                        style={{ width: `${homeWinPercent}%` }}
+                        title={`${homeTeam} win: ${homeWinPercent}%`}
+                    ></div>
+                )}
+                {/* Draw - Yellow */}
+                {drawPercent > 0 && (
+                    <div
+                        className="h-3 bg-yellow-500 transition-all duration-300"
+                        style={{ width: `${drawPercent}%` }}
+                        title={`Draw: ${drawPercent}%`}
+                    ></div>
+                )}
+                {/* Away team win - Red */}
+                {awayWinPercent > 0 && (
+                    <div
+                        className="h-3 bg-red-500 transition-all duration-300"
+                        style={{ width: `${awayWinPercent}%` }}
+                        title={`${awayTeam} win: ${awayWinPercent}%`}
+                    ></div>
+                )}
+            </div>
+            <div className="text-xs text-text-secondary space-y-1">
+                <div className="flex items-center gap-1">
+                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                    <span className="font-medium">{homeTeam}: {homeWinPercent}%</span>
+                </div>
+                <div className="flex items-center gap-1">
+                    <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
+                    <span className="font-medium">Draw: {drawPercent}%</span>
+                </div>
+                <div className="flex items-center gap-1">
+                    <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                    <span className="font-medium">{awayTeam}: {awayWinPercent}%</span>
+                </div>
+            </div>
+        </div>
+    );
+};
+
 const getNFLTeamStats = async (teamName: string) => {
     /*
         getTeamStats:
@@ -439,20 +555,19 @@ const getNFLTeamStats = async (teamName: string) => {
     return stats;
 }
 
-const getMLSTeamStats = async (teamName: string) => {
+const getEPLTeamStats = async (teamName: string) => {
     /*
-        getTeamStats:
-        This method gets the current season stats for a given MLS team.
+        getEPLTeamStats:
+        This method gets the current season stats for a given EPL team.
         
         params:
-            teamName: string - the full display name of the team (e.g., "LA Galaxy")
+            teamName: string - the full display name of the team (e.g., "Arsenal")
         returns:
             stats: dict - an object containing wins, losses, ties, and totalGames
     */
    
-    const stats = await parseMLSTeamStats(`${teamName}`);
-
-    return stats;
+    // Return placeholder stats for EPL teams for now
+    return { wins: 0, losses: 0, ties: 0, totalGames: 0 };
 }
 
 const getNBATeamStats = async (teamName: string) => {
@@ -690,15 +805,27 @@ const PredictionRow: React.FC<{ item: Prediction; onClick?: () => void; nbaTeamL
             <td className="px-4 py-4 text-center align-middle">
                 <div className="text-sm font-medium text-text-primary leading-snug">{item.prediction}</div>
             </td>
-            <td className="px-4 py-4 text-center align-middle">
-                <div className="flex items-center justify-center gap-3">
-                    <div className="h-2 w-20 rounded-full bg-gray-200">
-                        <div
-                            className="h-2 rounded-full"
-                            style={{ ...getConfidenceStyle(item.confidence), width: `${item.confidence}%` }}
-                        ></div>
-                    </div>
-                    <span className="text-sm font-semibold text-text-primary">{item.confidence}%</span>
+            <td className="text-center px-6 py-4 whitespace-nowrap">
+                <div className="flex items-center justify-center">
+                    {item.sport === 'EPL' && item.homeWin && item.draw && item.awayWin ? (
+                        <EPLProbabilityBar
+                            homeWin={item.homeWin}
+                            draw={item.draw}
+                            awayWin={item.awayWin}
+                            homeTeam={homeTeamName}
+                            awayTeam={awayTeamName}
+                        />
+                    ) : (
+                        <>
+                            <div className="w-24 bg-gray-200 rounded-full h-2.5 mr-3">
+                                <div
+                                    className="h-2.5 rounded-full"
+                                    style={{ ...getConfidenceStyle(item.confidence), width: `${item.confidence}%` }}
+                                ></div>
+                            </div>
+                            <span className="text-md font-medium text-text-primary">{item.confidence}%</span>
+                        </>
+                    )}
                 </div>
             </td>
             <td className="px-4 py-4 align-top">
@@ -714,7 +841,7 @@ const PredictionRow: React.FC<{ item: Prediction; onClick?: () => void; nbaTeamL
 
 // --- Main App Component ---
 export default function PredictionsScreen() {
-    const sports: SportKey[] = ['All Sports', 'NFL', 'NBA', 'MLS'];
+    const sports: SportKey[] = ['All Sports', 'NFL', 'NBA', 'EPL'];
     const [activeSport, setActiveSport] = useState<SportKey>('NFL');
     const [predictions, setPredictions] = useState<Prediction[]>([]);
     const [loading, setLoading] = useState(false);
@@ -757,9 +884,9 @@ export default function PredictionsScreen() {
                 homeLogo = prediction.homeTeamLogo || '';
                 awayLogo = prediction.awayTeamLogo || '';
             }
-            else if (prediction.sport === 'MLS') {
-                home = await getMLSTeamStats(homeTeam);
-                away = await getMLSTeamStats(awayTeam);
+            else if (prediction.sport === 'EPL') {
+                home = await getEPLTeamStats(homeTeam);
+                away = await getEPLTeamStats(awayTeam);
             }
             else if (prediction.sport === 'NBA') {
                 // Use standings data instead of fetching team stats
@@ -829,12 +956,12 @@ export default function PredictionsScreen() {
         Promise.all([
             buildNFLPredictions(),
             buildNBAPredictions(),
-            buildMLSPredictions(),
+            buildEPLPredictions(),
         ])
             .then(results => {
                 const flattened = results.flat();
-                console.log(' Setting predictions state with:', flattened.length, 'predictions');
-                console.log(' Predictions data:', flattened);
+                console.log('Setting predictions state with:', flattened.length, 'predictions');
+                console.log('Predictions data:', flattened);
                 setPredictions(flattened);
             })
             .catch((err) => {
@@ -1018,6 +1145,7 @@ export default function PredictionsScreen() {
                             </div>
                         ) : filteredPredictions.length > 0 ? (
                             filteredPredictions.map((item, idx) => {
+                                const [awayTeam, homeTeam] = item.match.split(' at ');
                                 return (
                                     <div
                                         key={idx}
@@ -1032,13 +1160,25 @@ export default function PredictionsScreen() {
                                         </div>
                                         <div className="text-sm text-text-primary mb-3">{item.prediction}</div>
                                         <div className="flex items-center">
-                                            <div className="flex-1 bg-gray-200 rounded-full h-2 mr-3">
-                                                <div
-                                                    className="h-2 rounded-full"
-                                                    style={{ ...getConfidenceStyle(item.confidence), width: `${item.confidence}%` }}
-                                                ></div>
-                                            </div>
-                                            <span className="text-sm font-medium text-text-primary">{item.confidence}%</span>
+                                            {item.sport === 'EPL' && item.homeWin && item.draw && item.awayWin ? (
+                                                <EPLProbabilityBar
+                                                    homeWin={item.homeWin}
+                                                    draw={item.draw}
+                                                    awayWin={item.awayWin}
+                                                    homeTeam={homeTeam ?? ''}
+                                                    awayTeam={awayTeam ?? ''}
+                                                />
+                                            ) : (
+                                                <>
+                                                    <div className="flex-1 bg-gray-200 rounded-full h-2 mr-3">
+                                                        <div
+                                                            className="h-2 rounded-full"
+                                                            style={{ ...getConfidenceStyle(item.confidence), width: `${item.confidence}%` }}
+                                                        ></div>
+                                                    </div>
+                                                    <span className="text-sm font-medium text-text-primary">{item.confidence}%</span>
+                                                </>
+                                            )}
                                         </div>
                                     </div>
                                 );

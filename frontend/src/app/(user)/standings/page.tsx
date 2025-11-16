@@ -10,7 +10,7 @@ import React, { useState, useEffect } from 'react';
 import { getNBAStandings, getNFLStandings, getSoccerStandings } from '@/backend_methods/standings_methods';
 import { Trophy, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 
-type SportKey = 'NBA' | 'NFL' | 'MLS';
+type SportKey = 'NBA' | 'NFL' | 'EPL';
 
 type NBATeam = {
     team_id: number;
@@ -457,7 +457,7 @@ const SoccerStandingsDisplay: React.FC<{ standings: SoccerTeam[], league: string
 };
 
 export default function StandingsPage() {
-    const sports: SportKey[] = ['NBA', 'NFL', 'MLS'];
+    const sports: SportKey[] = ['NBA', 'NFL', 'EPL'];
     const [activeSport, setActiveSport] = useState<SportKey>('NBA');
     const [nbaStandings, setNbaStandings] = useState<{ eastern_conference: NBATeam[], western_conference: NBATeam[] } | null>(null);
     const [nflStandings, setNflStandings] = useState<{ afc_standings: NFLTeam[], nfc_standings: NFLTeam[] } | null>(null);
@@ -485,8 +485,8 @@ export default function StandingsPage() {
                     } else {
                         setNflStandings(data);
                     }
-                } else if (activeSport === 'MLS' && !soccerStandings) {
-                    const data = await getSoccerStandings('MLS');
+                } else if (activeSport === 'EPL' && !soccerStandings) {
+                    const data = await getSoccerStandings('EPL');
                     console.log('Soccer Standings Data:', data);
                     setSoccerStandings(data);
                 }
@@ -535,8 +535,8 @@ export default function StandingsPage() {
                     {activeSport === 'NFL' && nflStandings && (
                         <NFLStandingsDisplay standings={nflStandings} />
                     )}
-                    {activeSport === 'MLS' && soccerStandings && (
-                        <SoccerStandingsDisplay standings={soccerStandings.standings} league="MLS" />
+                    {activeSport === 'EPL' && soccerStandings && (
+                        <SoccerStandingsDisplay standings={soccerStandings.standings} league="EPL" />
                     )}
                 </>
             )}

@@ -9,7 +9,7 @@ Purpose: Carousel for upcoming and live matches for the selected sport.
 'use client'
 import { parseUpcomingNBAGames } from "@/utils/nba_parser"
 import { parseUpcomingNFLGames } from "@/utils/nfl_parser"
-import { parseUpcomingMLSGames } from "@/utils/mls_parser"
+import { parseUpcomingEPLGames } from "@/utils/epl_parser"
 import React, { useState, useRef, useEffect } from "react"
 import Slider from "react-slick"
 import "slick-carousel/slick/slick.css"
@@ -68,19 +68,19 @@ const createMockNFLGame = (): UpcomingGame => {
     };
 };
 
-const createMockMLSGame = (): UpcomingGame => {
+const createMockEPLGame = (): UpcomingGame => {
     const mockHomeTeam: Team = {
-        displayName: "LA Galaxy",
-        abbreviation: "LA",
-        color: "00245D",
-        alternateColor: "FFC425"
+        displayName: "Manchester United",
+        abbreviation: "MUN",
+        color: "DA020E",
+        alternateColor: "FBE122"
     };
     
     const mockAwayTeam: Team = {
-        displayName: "Seattle Sounders FC",
-        abbreviation: "SEA",
-        color: "5D9741",
-        alternateColor: "005595"
+        displayName: "Liverpool",
+        abbreviation: "LIV",
+        color: "C8102E",
+        alternateColor: "00B2A9"
     };
     
     return {
@@ -88,17 +88,18 @@ const createMockMLSGame = (): UpcomingGame => {
         awayTeam: mockAwayTeam,
         gameDate: new Date(),
         dateAndTime: new Date(),
-        league: "MLS",
-        gameId: "mock-live-mls-game"
+        league: "EPL",
+        gameId: "mock-live-epl-game"
     };
 };
 
+
 //returns the upcoming matches as arrays of the UpcomingMatch type
 const fetchAllMatches = async (): Promise<UpcomingGame[]> => {
-    const [nba, nfl, mls] = await Promise.all([
+    const [nba, nfl, epl] = await Promise.all([
         parseUpcomingNBAGames().catch(() => []),
         parseUpcomingNFLGames().catch(() => []),
-        parseUpcomingMLSGames().catch(() => [])
+        parseUpcomingEPLGames().catch(() => [])
     ])
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -111,7 +112,7 @@ const fetchAllMatches = async (): Promise<UpcomingGame[]> => {
         gameId: game.gameId
     }))
 
-    return [...normalize(nba), ...normalize(nfl), ...normalize(mls)]
+    return [...normalize(nba), ...normalize(nfl), ...normalize(epl)]
 }
 
 export default function MatchCarousel({ selectedLeagues }: { selectedLeagues: string[] }) {
@@ -124,6 +125,7 @@ export default function MatchCarousel({ selectedLeagues }: { selectedLeagues: st
     const handleCardExpand = (gameId: string | undefined) => {
         setExpandedGameId(gameId)
     }
+
 
     function upcomingMatchesWithinXDays(a: Date, b: Date, daysAhead = 7) {
         const diff = a.getTime() - b.getTime()
@@ -160,7 +162,7 @@ export default function MatchCarousel({ selectedLeagues }: { selectedLeagues: st
             // Add mock live games for testing (only in development)
             const isDevelopment = process.env.NODE_ENV === 'development';
             if (isDevelopment) {
-                all.unshift(createMockMLSGame());
+                all.unshift(createMockEPLGame());
                 all.unshift(createMockNFLGame());
                 all.unshift(createMockNBAGame());
             }

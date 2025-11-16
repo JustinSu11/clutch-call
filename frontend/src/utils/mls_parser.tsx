@@ -33,7 +33,7 @@ export const parseUpcomingMLSGames = async () => {
     */
 
     // await the response from the backend method
-    const responseData = await mls_methods.getUpcomingSoccerMatches();
+    const responseData = await mls_methods.getSoccerMatches();
 
     // parse major header
     const events = responseData["events"];
@@ -169,6 +169,7 @@ export const parseMLSTeamStats = async (teamName: string) => {
     return { wins: 0, losses: 0, ties: 0, totalGames: 0}
 }; // end parseMLSTeamStats
 
+
 export const parseMLSPreviousGameStats = async (teamName: string) => {
     /*
         parseMLSPreviousGameStats:
@@ -244,4 +245,3 @@ export const parseMLSPreviousGameStats = async (teamName: string) => {
 
     return gameStats;
 }
-

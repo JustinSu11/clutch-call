@@ -39,6 +39,12 @@ export const parseUpcomingNBAGames = async () => {
 
     // parse major header
     const events = responseData["events"];
+    
+    // Check if events exists and is an array
+    if (!events || !Array.isArray(events)) {
+        console.warn('NBA parser: No events found in response or events is not an array:', responseData);
+        return []; // Return empty array if no events
+    }
 
     // declare the Game type
     // each game will have a home team and an away team
@@ -86,7 +92,7 @@ export const parseUpcomingNBAGames = async () => {
         const formattedGameDate = `${month}-${day}-${year}`;
 
         // return { homeTeam, awayTeam, gameDate: formattedGameDate };
-        return { homeTeam, awayTeam, gameDate: formattedGameDate, dateAndTime: date, league, gameId };
+        return { homeTeam, awayTeam, gameDate: new Date(gameDate), dateAndTime: new Date(date), league, gameId };
     });
 
     return games;

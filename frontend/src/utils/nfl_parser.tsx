@@ -2,11 +2,7 @@
 /*
     File: frontend/src/utils/nfl_parser.tsx
     Created: 09/30/2025 by CJ Quintero
-<<<<<<< HEAD
     Last Updated: 11/06/2025 by CJ Quintero
-=======
-    Last Updated: 10/13/2025 by Justin Nguyen
->>>>>>> e61d0a3ad994c2da72dd576eb411a6492fdfa85d
 
     Description: This file contains methods 
     to parse each response from the nfl backend methods provided
@@ -32,8 +28,6 @@ type Game = {
     date: string; // Formatted date string (MM-DD-YYYY)
     gameDate?: string; // Formatted date string (MM-DD-YYYY) - PR#63 property
     dateAndTime?: string; // Raw date from event - PR#63 property
-    homeTeamLogo?: string; // Team logo URL
-    awayTeamLogo?: string; // Team logo URL
     league?: string; // PR#63 property
     gameId?: string; // PR#63 property (alias for id)
     status?: {
@@ -110,8 +104,6 @@ export const parseNFLGamesFromEvents = (events: any[]): Game[] => {
             date: formattedDate,
             gameDate: formattedGameDate, // PR#63 property
             dateAndTime: dateAndTime, // PR#63 property
-            homeTeamLogo: homeTeamData.team?.logo || '',
-            awayTeamLogo: awayTeamData.team?.logo || '',
             league: "NFL", // PR#63 property
             gameId: eventId, // PR#63 property (alias for id)
             status: gameStatus 
@@ -119,6 +111,8 @@ export const parseNFLGamesFromEvents = (events: any[]): Game[] => {
 
     }).filter((game): game is Game => game !== null);
 };
+
+
 
 export const parseUpcomingNFLGames = async (): Promise<UpcomingGame[]> => {
     /*
@@ -197,7 +191,8 @@ export const parseUpcomingNFLGames = async (): Promise<UpcomingGame[]> => {
             awayTeam,
             gameDate: gameDate,
             dateAndTime: dateAndTime ? new Date(dateAndTime) : new Date(),
-            league: "NFL"
+            league: "NFL",
+            gameId: event.id
         };
     }).filter((game: UpcomingGame | null): game is UpcomingGame => game !== null);
 
@@ -233,7 +228,6 @@ export const parseTodayNFLGames = async () => {
         return []; // Return empty array on error
     }
 };
-
 export const parseNFLTeamStats = async (teamName: string) => {
     /*
         parseNFLTeamStats:
@@ -257,6 +251,7 @@ export const parseNFLTeamStats = async (teamName: string) => {
         return `${yyyy}-${mm}-${dd}`;
     })();
 
+    try {
         // await the response from the backend method
         const responseData = await sports_stats_methods.getHistoricalNFLTeamByName(teamName, {
             startDate: `${seasonStartDate}`,              
@@ -314,26 +309,32 @@ export const parseNFLTeamStats = async (teamName: string) => {
             const homeScore = parseInt(event['competitions'][0]['competitors'][0]['score'] || '0');
             const awayScore = parseInt(event['competitions'][0]['competitors'][1]['score'] || '0');
 
-        // determine if the requested team is home or away for this specific game
-        if (homeTeam === teamName) {
-            
-            // if the home team (the requested team) won
-            if (homeScore > awayScore) { wins++;}
-            else if (homeScore < awayScore) { losses++; }
-            else if (homeScore === awayScore) { ties++; } // tie game
-        }
-        else if (awayTeam === teamName) {
-            // if the away team (the requested team) won
-            if (awayScore > homeScore) { wins++; }
-            else if (awayScore < homeScore) { losses++; }
-            else if (awayScore === homeScore) { ties++; } // tie game
-        }
+            // determine if the requested team is home or away for this specific game
+            if (homeTeam === teamName) {
+                
+                // if the home team (the requested team) won
+                if (homeScore > awayScore) { wins++; }
+                else if (homeScore < awayScore) { losses++; }
+                else if (homeScore === awayScore) { ties++; } // tie game
+                totalGames++; // Only count if team was identified
+            }
+            else if (awayTeam === teamName) {
+                // if the away team (the requested team) won
+                if (awayScore > homeScore) { wins++; }
+                else if (awayScore < homeScore) { losses++; }
+                else if (awayScore === homeScore) { ties++; } // tie game
+                totalGames++; // Only count if team was identified
+            }
+        });
 
-        totalGames++;
-    });
-
-    return { wins, losses, ties, totalGames};
+        return { wins, losses, ties, totalGames };
+    } catch (error) {
+        console.error(`Error parsing NFL team stats for ${teamName}:`, error);
+        return { wins: 0, losses: 0, ties: 0, totalGames: 0 };
+    }
 };
+
+
 
 export const parseNFLPreviousGameStats = async (teamName: string) => {
     /*
@@ -366,7 +367,6 @@ export const parseNFLPreviousGameStats = async (teamName: string) => {
         return eventDate.getTime() < Date.now();
     });
 
-
     // array to hold the parsed previous game stats (initialize empty array)
     const gameStats: number[] = [];
 
@@ -391,7 +391,4 @@ export const parseNFLPreviousGameStats = async (teamName: string) => {
     });
 
     return gameStats;
-}
-
-    
-
+};

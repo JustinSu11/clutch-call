@@ -13,9 +13,24 @@ Environment variables:
 """
 
 import os
-from flask import Flask, make_response # Import make_response
+import logging
+from flask import Flask, make_response, request
 from flask_cors import CORS
+from asgiref.wsgi import WsgiToAsgi
 from app.routes import nfl, health, soccer, historical, nba
+
+# === HVB/EPL MODEL IMPORT ===
+try:
+    from app.services.epl_prediction.predictor import build_model
+    HVB_MODEL_ENABLED = True
+    logging.info("Imported EPL model builder.")
+except ImportError as e:
+    logging.critical(f"❌ CRITICAL: Could not import EPL model builder. Error: {e}")
+    HVB_MODEL_ENABLED = False
+# ==================================
+
+# Configure basic logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(levelname)s] %(message)s')
 
 def create_app():
     app = Flask(__name__)
@@ -34,7 +49,6 @@ def create_app():
     @app.before_request
     def handle_preflight():
         # Check if it's an OPTIONS request
-        from flask import request # Import request here
         if request.method == "OPTIONS":
             res = make_response()
             # Add necessary CORS headers manually just in case
@@ -44,6 +58,24 @@ def create_app():
             res.headers.add('Access-Control-Allow-Credentials', 'true')
             return res # Send the response immediately
     # --- END ADDITION ---
+
+    # === EPL MODEL LOADING ===
+    if HVB_MODEL_ENABLED:
+        try:
+            logging.info("Loading EPL Predictor Model... (This may take 10-20 seconds)")
+            app.epl_predictor = build_model()
+            app.epl_model_loaded = True
+            logging.info("✅ EPL Predictor Model loaded successfully.")
+        except Exception as e:
+            # Note: Set your FOOTBALL_DATA_API_KEY environment variable!
+            logging.critical(f"❌ CRITICAL: EPL Predictor 'build_model()' failed. API key set? Error: {e}")
+            app.epl_predictor = None
+            app.epl_model_loaded = False
+    else:
+        logging.warning("EPL model imports failed. EPL routes will be disabled.")
+        app.epl_predictor = None
+        app.epl_model_loaded = False
+    # ================================
 
     api_prefix = os.getenv("API_PREFIX", "/api/v1")
     app.register_blueprint(nfl.bp, url_prefix=f"{api_prefix}/nfl")
@@ -57,9 +89,18 @@ def create_app():
         return {"status": "ok", "message": "Welcome to the True Sense API!"}
     return app
 
+# --- ASGI Wrapper ---
+asgi_app = WsgiToAsgi(create_app())
+
 if __name__ == "__main__":
-    app = create_app()
+    import uvicorn
     host = os.getenv("HOST", "127.0.0.1")
     port = int(os.getenv("PORT", "8000"))
     
-    app.run(host=host, port=port, debug=True)
+    logging.info(f"Starting development server at http://{host}:{port}")
+    uvicorn.run(
+        "run_server:asgi_app",
+        host=host,
+        port=port,
+        reload=False  # <-- Keep this false to prevent import errors
+    )

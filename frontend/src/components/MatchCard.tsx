@@ -7,6 +7,7 @@ Purpose: Displays a single match card for upcoming or live games with improved b
 */
 'use client'
 
+
 import "@/styles/globals.css"
 import formatDate from "@/utils/date-formatter-for-matches"
 import { Team } from "@/utils/data_class"

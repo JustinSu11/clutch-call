@@ -27,7 +27,7 @@ export const getNFLStandings = async (season?: string) => {
     }
 };
 
-export const getSoccerStandings = async (league: string = "MLS", season?: string) => {
+export const getSoccerStandings = async (league: string = "EPL", season?: string) => {
     try {
         await checkBackendHealth();
         let url = ROUTES.soccer_standings(league);
