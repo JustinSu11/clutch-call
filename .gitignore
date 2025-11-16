@@ -69,3 +69,6 @@ __pycache__/
 !*.config.json
 !frontend/tsconfig.json
 !components.json
+
+# NBA ML data directory (no longer used)
+nba_ml_data/
