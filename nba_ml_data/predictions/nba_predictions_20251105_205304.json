@@ -1,0 +1,11 @@
+{
+  "prediction_date": "2025-11-05T20:53:04.773538",
+  "prediction_window_days": 3,
+  "games_predicted": 31,
+  "game_outcomes": [],
+  "model_info": {
+    "game_model_loaded": false,
+    "preprocessors_loaded": true
+  },
+  "summary": "Predictions generated for 31 games over 3 days"
+}

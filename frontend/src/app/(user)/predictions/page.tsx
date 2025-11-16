@@ -16,10 +16,14 @@ import { UpcomingGame } from '@/utils/data_class';
 import { get } from 'http';
 import { urlToHttpOptions } from 'url';
 import MatchDialog, { TeamStats } from '@/components/DashboardComponents/Dialog';
+import { getNBAGamePredictions, getNBAMLStatus } from '@/backend_methods/nba_methods';
+import { getNBAStandings } from '@/backend_methods/standings_methods';
+import { GamePrediction, DecisionFactor } from '@/utils/nba_prediction_parser';
+import { getNBATeamName, getNBATeamAbbreviation, getNBATeamPalette } from '@/utils/nba_team_mapping';
 import formatDate from '@/utils/date-formatter-for-matches';
 
 // Import the method that calls your backend prediction API
-import { getNFLPrediction, getHistoricalNFLGames, getUpcomingNFLGames } from '@/backend_methods/nfl_methods';
+import { getNFLPrediction, getUpcomingNFLGames } from '@/backend_methods/nfl_methods';
 
 
 
@@ -40,9 +44,18 @@ type Game = {
     };
 };
 
+type PredictionMeta = {
+    gameId?: string;
+    homeTeamId?: number;
+    awayTeamId?: number;
+    confidenceDecimal?: number;
+    decisionFactors?: DecisionFactor[];
+    [key: string]: unknown;
+};
+
 type Prediction = {
-    match: string;
-    date?: string;           // Keep for backward compatibility
+    match: string;          // gets built from homeTeam and awayTeam 
+    date?: string;           // MM-DD-YYYY for backward compatibility
     dateAndTime?: string | Date;  // Add dateAndTime property for proper time display
     homeTeamLogo?: string;
     awayTeamLogo?: string;
@@ -53,7 +66,43 @@ type Prediction = {
     // EPL probability fields
     homeWin?: number;
     draw?: number;
-    awayWin?: number;
+    awayWin?: number;    // the sport this prediction belongs to used for filtering (NFL, NBA, MLS)
+    meta?: PredictionMeta;
+};
+
+type NBATrainingStatus = {
+    is_training: boolean;
+    started_at?: string;
+    completed_at?: string;
+    last_success?: boolean | null;
+    last_message?: string | null;
+    last_error?: string | null;
+    requested_seasons?: string[];
+};
+
+type NBAMLStatusResponse = {
+    training_status?: NBATrainingStatus;
+};
+
+type NBAGamePredictionsResponse = {
+    games?: GamePrediction[];
+};
+
+type NBAStandingsResponse = {
+    eastern_conference?: Array<{
+        team_id: number;
+        team_logo?: string | null;
+        wins?: number;
+        losses?: number;
+        win_pct?: number;
+    }>;
+    western_conference?: Array<{
+        team_id: number;
+        team_logo?: string | null;
+        wins?: number;
+        losses?: number;
+        win_pct?: number;
+    }>;
 };
 
 
@@ -94,7 +143,7 @@ const buildNFLPredictions = async (): Promise<Prediction[]> => {
     
     // Convert upcoming games to Game format - use parseNFLGamesFromEvents to get IDs
     if (upcomingGamesRaw && upcomingGamesRaw.events) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
         const upcomingEvents = upcomingGamesRaw.events.filter((event: any) => {
             const eventDate = event.date ? new Date(event.date) : null;
             return eventDate && eventDate > now;
@@ -196,7 +245,7 @@ const buildNFLPredictions = async (): Promise<Prediction[]> => {
         if (Object.keys(decisionFactors).length > 0) {
             // Sort factors by absolute contribution (most influential first)
             const sortedFactors = Object.entries(decisionFactors)
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                 
                 .map(([feature, data]: [string, any]) => ({
                     feature,
                     ...data,
@@ -240,7 +289,7 @@ const buildNFLPredictions = async (): Promise<Prediction[]> => {
         
         console.log(`Successfully built prediction for game ${game.id}:`, prediction);
         return prediction;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     } catch (error: any) {
         // Handle network errors or 422 errors in the catch block
         const errorMessage = error?.message || '';
@@ -281,7 +330,8 @@ const buildEPLPredictions = async (): Promise<Prediction[]> => {
     */
     const upcomingEPLGames = await parseUpcomingEPLGames();
 
-    // Process each game to get prediction probabilities
+    // map each game to a Prediction object
+        // Process each game to get prediction probabilities
     const predictionPromises = upcomingEPLGames.map(async (game) => {
         try {
             // Get actual probabilities from EPL model
@@ -333,23 +383,86 @@ const buildEPLPredictions = async (): Promise<Prediction[]> => {
     return Promise.all(predictionPromises);
 }
 
-const buildNBAPredictions = async (): Promise<Prediction[]> => {
-    /*
-        buildNBAPredictions:
-        This method builds a list of Prediction objects for upcoming NBA games.
-    */
-    const upcomingNBAGames = await parseUpcomingNBAGames();
+const formatGameDate = (input?: string | null): string => {
+    if (!input) {
+        return '';
+    }
 
-    // map each game to a Prediction object
-    return upcomingNBAGames.map((game) => ({
-        match: `${game.awayTeam} at ${game.homeTeam}`,
-        date: game.gameDate ? String(game.gameDate) : '', // Keep for backward compatibility
-        dateAndTime: game.dateAndTime || game.gameDate || '', // Use dateAndTime if available for proper time display
-        prediction: `${game.homeTeam} predicted to win`,
-        confidence: 100,
-        sport: 'NBA'
-    }));
-}
+    const trimmed = input.trim();
+
+    if (trimmed.includes('/')) {
+        const parts = trimmed.split('/');
+        if (parts.length === 3) {
+            const [month, day, year] = parts;
+            return `${month.padStart(2, '0')}-${day.padStart(2, '0')}-${year}`;
+        }
+    }
+
+    const parsed = new Date(trimmed);
+    if (!Number.isNaN(parsed.getTime())) {
+        const month = String(parsed.getMonth() + 1).padStart(2, '0');
+        const day = String(parsed.getDate()).padStart(2, '0');
+        const year = parsed.getFullYear();
+        return `${month}-${day}-${year}`;
+    }
+
+    return trimmed;
+};
+
+const normalizeConfidence = (value?: number | null): number => {
+    if (typeof value !== 'number' || Number.isNaN(value)) {
+        return 0;
+    }
+    const percent = Math.round(value * 100);
+    return Math.min(100, Math.max(0, percent));
+};
+
+const formatTimestamp = (iso?: string | null): string | null => {
+    if (!iso) {
+        return null;
+    }
+    const parsed = new Date(iso);
+    if (Number.isNaN(parsed.getTime())) {
+        return null;
+    }
+    return parsed.toLocaleString();
+};
+
+const buildNBAPredictions = async (): Promise<Prediction[]> => {
+    try {
+    const response = await getNBAGamePredictions(3, true) as NBAGamePredictionsResponse | null | undefined;
+    const games: GamePrediction[] = Array.isArray(response?.games) ? response.games : [];
+
+        return games.map((game) => {
+            const homeName = getNBATeamName(game.home_team_id);
+            const awayName = getNBATeamName(game.away_team_id);
+            const predictedWinnerName = game.predicted_winner === 'home' ? homeName : awayName;
+
+            const confidenceRaw = typeof game.confidence === 'number'
+                ? game.confidence
+                : Math.max(game.home_win_probability ?? 0, game.away_win_probability ?? 0);
+
+            return {
+                match: `${awayName} at ${homeName}`,
+                date: formatGameDate(game.game_date),
+                dateAndTime: game.game_date, // Store full datetime for proper time display
+                prediction: `${predictedWinnerName} predicted to win`,
+                confidence: normalizeConfidence(confidenceRaw),
+                sport: 'NBA',
+                meta: {
+                    gameId: game.game_id,
+                    homeTeamId: game.home_team_id,
+                    awayTeamId: game.away_team_id,
+                    confidenceDecimal: confidenceRaw,
+                    decisionFactors: game.decision_factors,
+                }
+            };
+        });
+    } catch (error) {
+        console.error('Failed to build NBA predictions:', error);
+        return [];
+    }
+};
 
 const getConfidenceStyle = (confidence: number) => {
     /* getConfidenceStyle:
@@ -498,42 +611,199 @@ const SportsFilter: React.FC<{
     </div>
 );
 
-const PredictionRow: React.FC<{ item: Prediction; onClick?: () => void }> = ({ item, onClick }) => {
-    // Parse match string to get team names
-    const [awayTeamName, homeTeamName] = item.match.split(' at ');
+const formatFactorName = (factor: string): string => {
+    // Convert snake_case or technical names to human-readable format
+    const nameMap: Record<string, string> = {
+        'home_win_pct': 'Home Win %',
+        'away_win_pct': 'Away Win %',
+        'home_offensive_rating': 'Home Offense',
+        'away_offensive_rating': 'Away Offense',
+        'home_defensive_rating': 'Home Defense',
+        'away_defensive_rating': 'Away Defense',
+        'home_net_rating': 'Home Net Rating',
+        'away_net_rating': 'Away Net Rating',
+        'home_pace': 'Home Pace',
+        'away_pace': 'Away Pace',
+        'home_elo': 'Home ELO',
+        'away_elo': 'Away ELO',
+        'rest_days_home': 'Home Rest Days',
+        'rest_days_away': 'Away Rest Days',
+        'home_last_5': 'Home Recent Form',
+        'away_last_5': 'Away Recent Form',
+        'home_streak': 'Home Streak',
+        'away_streak': 'Away Streak',
+    };
+    
+    if (nameMap[factor]) {
+        return nameMap[factor];
+    }
+    
+    // Fallback: convert snake_case to Title Case
+    return factor
+        .split('_')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ');
+};
+
+const formatFactorValue = (factor: DecisionFactor): string => {
+    // Format the actual value of the factor for display
+    const value = factor.value;
+    const factorName = factor.factor;
+    
+    // For percentage-based stats
+    if (factorName.includes('pct') || factorName.includes('PCT') || factorName.includes('win')) {
+        return `${(value * 100).toFixed(1)}%`;
+    }
+    
+    // For ratings and pace (typically 90-120 range)
+    if (factorName.includes('rating') || factorName.includes('pace')) {
+        return value.toFixed(1);
+    }
+    
+    // For streak (show with + or -)
+    if (factorName.includes('streak') || factorName.includes('STREAK')) {
+        const streakValue = Math.round(value);
+        return streakValue >= 0 ? `+${streakValue}` : `${streakValue}`;
+    }
+    
+    // For rest days
+    if (factorName.includes('rest') || factorName.includes('REST')) {
+        return `${Math.round(value)} days`;
+    }
+    
+    // For points per game
+    if (factorName.includes('ppg') || factorName.includes('PPG') || factorName.includes('PTS')) {
+        return `${value.toFixed(1)} pts`;
+    }
+    
+    // Default: show as decimal with 1 decimal place
+    return value.toFixed(1);
+};
+
+const buildFallbackAbbreviation = (name: string): string => {
+    if (!name) {
+        return 'NBA';
+    }
+    const initials = name
+        .split(' ')
+        .filter(Boolean)
+        .map((part) => part[0] ?? '')
+        .join('');
+    const fallback = initials || name.substring(0, 3);
+    return fallback.toUpperCase().slice(0, 3);
+};
+
+const NBATeamDisplay: React.FC<{ teamId?: number; name: string; logoUrl?: string }> = ({ teamId, name, logoUrl }) => {
+    const { primary, secondary } = typeof teamId === 'number'
+        ? getNBATeamPalette(teamId)
+        : { primary: '#1F2937', secondary: '#F9FAFB' };
+    const abbreviation = typeof teamId === 'number'
+        ? (getNBATeamAbbreviation(teamId) ?? buildFallbackAbbreviation(name))
+        : buildFallbackAbbreviation(name);
+
+    return (
+        <div className="flex min-w-[150px] items-center gap-3">
+            {logoUrl ? (
+                <img
+                    src={logoUrl}
+                    alt={`${name} logo`}
+                    className="h-10 w-10 object-contain"
+                />
+            ) : (
+                <div
+                    className="flex h-10 w-10 items-center justify-center rounded-full text-xs font-bold uppercase"
+                    style={{ backgroundColor: primary, color: secondary }}
+                >
+                    {abbreviation}
+                </div>
+            )}
+            <span className="text-sm font-semibold text-text-primary text-left leading-snug">
+                {name}
+            </span>
+        </div>
+    );
+};
+
+const PredictionRow: React.FC<{ item: Prediction; onClick?: () => void; nbaTeamLogos?: Record<number, string> }> = ({ item, onClick, nbaTeamLogos }) => {
+    const decisionFactors = item.meta?.decisionFactors;
+    const [awayMatchName = '', homeMatchName = ''] = item.match.split(' at ').map((part) => part?.trim() ?? '');
+    const isNBA = item.sport === 'NBA';
+    const homeTeamId = typeof item.meta?.homeTeamId === 'number' ? item.meta?.homeTeamId : undefined;
+    const awayTeamId = typeof item.meta?.awayTeamId === 'number' ? item.meta?.awayTeamId : undefined;
+    const homeTeamName = isNBA && homeTeamId ? getNBATeamName(homeTeamId) : homeMatchName;
+    const awayTeamName = isNBA && awayTeamId ? getNBATeamName(awayTeamId) : awayMatchName;
+    const homeLogoUrl = isNBA && homeTeamId ? nbaTeamLogos?.[homeTeamId] : item.homeTeamLogo;
+    const awayLogoUrl = isNBA && awayTeamId ? nbaTeamLogos?.[awayTeamId] : item.awayTeamLogo;
+    
+    const renderDecisionFactors = () => {
+        if (item.sport !== 'NBA' || !Array.isArray(decisionFactors) || decisionFactors.length === 0) {
+            return <span className="text-text-secondary italic">N/A</span>;
+        }
+        
+        // Sort by contribution and take top 3
+        const topFactors = [...decisionFactors]
+            .sort((a, b) => (b.contribution || 0) - (a.contribution || 0))
+            .slice(0, 3);
+        
+        return (
+            <div className="space-y-1.5 text-left">
+                {topFactors.map((factor, idx) => (
+                    <div key={idx} className="space-y-0.5">
+                        <div className="flex items-center justify-between gap-2">
+                            <span className="text-xs font-medium text-text-primary">
+                                {formatFactorName(factor.factor)}
+                            </span>
+                            <span className="text-xs font-semibold text-primary">
+                                {(factor.contribution * 100).toFixed(0)}%
+                            </span>
+                        </div>
+                        <div className="text-xs text-text-secondary pl-1">
+                            Value: {formatFactorValue(factor)}
+                        </div>
+                    </div>
+                ))}
+            </div>
+        );
+    };
     
     return (
         <tr onClick={onClick} className="bg-secondary-background hover:bg-secondary cursor-pointer">
-            <td className="text-center px-6 py-4 whitespace-nowrap">
-                <div className="flex items-center justify-center gap-3">
-                    {/* Away team logo */}
-                    {item.awayTeamLogo && (
-                        <img 
-                            src={item.awayTeamLogo} 
-                            alt={awayTeamName} 
-                            className="w-8 h-8 object-contain"
-                        />
-                    )}
-                    <div className="text-md font-medium text-text-primary">
-                        {item.match}
+            <td className="px-4 py-4 align-middle">
+                {isNBA ? (
+                    <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
+                        <NBATeamDisplay teamId={awayTeamId} name={awayTeamName} logoUrl={awayLogoUrl} />
+                        <span className="text-xs font-semibold uppercase text-text-secondary">@</span>
+                        <NBATeamDisplay teamId={homeTeamId} name={homeTeamName} logoUrl={homeLogoUrl} />
                     </div>
-                    {/* Home team logo */}
-                    {item.homeTeamLogo && (
-                        <img 
-                            src={item.homeTeamLogo} 
-                            alt={homeTeamName} 
-                            className="w-8 h-8 object-contain"
-                        />
-                    )}
-                </div>
+                ) : (
+                    <div className="flex items-center justify-center gap-3">
+                        {/* Away team logo */}
+                        {item.awayTeamLogo && (
+                            <img 
+                                src={item.awayTeamLogo} 
+                                alt={awayTeamName} 
+                                className="w-8 h-8 object-contain"
+                            />
+                        )}
+                        <div className="text-sm font-semibold text-text-primary text-center whitespace-normal">{item.match}</div>
+                        {/* Home team logo */}
+                        {item.homeTeamLogo && (
+                            <img 
+                                src={item.homeTeamLogo} 
+                                alt={homeTeamName} 
+                                className="w-8 h-8 object-contain"
+                            />
+                        )}
+                    </div>
+                )}
             </td>
-            <td className="text-center px-6 py-4 whitespace-nowrap">
-                <div className="text-md font-medium text-text-primary">
+            <td className="px-4 py-4 text-center align-middle">
+                <div className="text-sm font-medium text-text-primary">
                     {item.dateAndTime ? formatDate(item.dateAndTime) : (item.date ? formatDate(item.date) : 'N/A')}
                 </div>
             </td>
-            <td className="text-center px-6 py-4 whitespace-nowrap">
-                <div className="text-md font-medium text-text-primary">{item.prediction}</div>
+            <td className="px-4 py-4 text-center align-middle">
+                <div className="text-sm font-medium text-text-primary leading-snug">{item.prediction}</div>
             </td>
             <td className="text-center px-6 py-4 whitespace-nowrap">
                 <div className="flex items-center justify-center">
@@ -575,12 +845,19 @@ export default function PredictionsScreen() {
     const [selectedAway, setSelectedAway] = useState<string | undefined>(undefined);
     const [homeStats, setHomeStats] = useState<TeamStats | null>(null);
     const [awayStats, setAwayStats] = useState<TeamStats | null>(null);
+    const [nbaTrainingStatus, setNbaTrainingStatus] = useState<NBATrainingStatus | null>(null);
+    const [nbaTeamLogos, setNbaTeamLogos] = useState<Record<number, string>>({});
+    const [nbaStandingsData, setNbaStandingsData] = useState<Record<number, { wins: number; losses: number; win_pct: number }>>({});
     const [homeLogo, setHomeLogo] = useState<string>('');
     const [awayLogo, setAwayLogo] = useState<string>('');
+    const [selectedPrediction, setSelectedPrediction] = useState<Prediction | null>(null);
 
-    const openMatchDialog = async (homeTeam: string, awayTeam: string, sport: SportKey) => {
+    const openMatchDialog = async (prediction: Prediction) => {
+        const [awayTeam, homeTeam] = prediction.match.split(' at ').map(t => t?.trim() ?? '');
+        
         setSelectedHome(homeTeam);
         setSelectedAway(awayTeam);
+        setSelectedPrediction(prediction);
         setDialogOpen(true);
         setDialogLoading(true);
         setHomeStats(null);
@@ -592,19 +869,50 @@ export default function PredictionsScreen() {
         try {
             let home = { wins: 0, losses: 0, ties: 0, totalGames: 0 };
             let away = { wins: 0, losses: 0, ties: 0, totalGames: 0 };
-            const homeLogo = '';
-            const awayLogo = '';
-            if (sport === 'NFL') {
+            let homeLogo = '';
+            let awayLogo = '';
+            if (prediction.sport === 'NFL') {
                 home = await getNFLTeamStats(homeTeam);
                 away = await getNFLTeamStats(awayTeam);
+                homeLogo = prediction.homeTeamLogo || '';
+                awayLogo = prediction.awayTeamLogo || '';
             }
-            else if (sport === 'EPL') {
+            else if (prediction.sport === 'EPL') {
                 home = await getEPLTeamStats(homeTeam);
                 away = await getEPLTeamStats(awayTeam);
             }
-            else if (sport === 'NBA') {
-                home = await getNBATeamStats(homeTeam);
-                away = await getNBATeamStats(awayTeam);
+            else if (prediction.sport === 'NBA') {
+                // Use standings data instead of fetching team stats
+                const homeTeamId = prediction.meta?.homeTeamId;
+                const awayTeamId = prediction.meta?.awayTeamId;
+                
+                if (homeTeamId && nbaStandingsData[homeTeamId]) {
+                    const standings = nbaStandingsData[homeTeamId];
+                    home = {
+                        wins: standings.wins,
+                        losses: standings.losses,
+                        ties: 0,
+                        totalGames: standings.wins + standings.losses
+                    };
+                }
+                
+                if (awayTeamId && nbaStandingsData[awayTeamId]) {
+                    const standings = nbaStandingsData[awayTeamId];
+                    away = {
+                        wins: standings.wins,
+                        losses: standings.losses,
+                        ties: 0,
+                        totalGames: standings.wins + standings.losses
+                    };
+                }
+                
+                // Get NBA team logos from the state
+                if (homeTeamId && nbaTeamLogos[homeTeamId]) {
+                    homeLogo = nbaTeamLogos[homeTeamId];
+                }
+                if (awayTeamId && nbaTeamLogos[awayTeamId]) {
+                    awayLogo = nbaTeamLogos[awayTeamId];
+                }
             }
             setHomeStats({
                 wins: home.wins,
@@ -656,65 +964,160 @@ export default function PredictionsScreen() {
             .finally(() => setLoading(false));
     }, []);
 
+    useEffect(() => {
+        let isMounted = true;
+
+        const loadLogos = async () => {
+            try {
+                const standings = await getNBAStandings();
+                if (!isMounted || !standings) {
+                    return;
+                }
+
+                const parsed = standings as NBAStandingsResponse;
+                const allTeams = [
+                    ...(parsed.eastern_conference ?? []),
+                    ...(parsed.western_conference ?? []),
+                ];
+
+                if (allTeams.length === 0) {
+                    return;
+                }
+
+                const logoMap: Record<number, string> = {};
+                const standingsMap: Record<number, { wins: number; losses: number; win_pct: number }> = {};
+                
+                for (const team of allTeams) {
+                    if (typeof team.team_id === 'number') {
+                        if (team.team_logo) {
+                            logoMap[team.team_id] = team.team_logo;
+                        }
+                        // Store wins, losses from standings
+                        if (typeof team.wins === 'number' && typeof team.losses === 'number') {
+                            standingsMap[team.team_id] = {
+                                wins: team.wins,
+                                losses: team.losses,
+                                win_pct: team.win_pct || 0
+                            };
+                        }
+                    }
+                }
+
+                if (isMounted && Object.keys(logoMap).length > 0) {
+                    setNbaTeamLogos(prev => ({ ...prev, ...logoMap }));
+                }
+                
+                if (isMounted && Object.keys(standingsMap).length > 0) {
+                    setNbaStandingsData(standingsMap);
+                }
+            } catch (err) {
+                console.warn('Failed to load NBA team logos for predictions view', err);
+            }
+        };
+
+        loadLogos();
+
+        return () => {
+            isMounted = false;
+        };
+    }, []);
+
+    useEffect(() => {
+        let isMounted = true;
+
+        const loadStatus = async () => {
+            try {
+                const statusResponse = await getNBAMLStatus();
+                if (!isMounted) {
+                    return;
+                }
+                const trainingData = (statusResponse as NBAMLStatusResponse | null | undefined)?.training_status;
+                setNbaTrainingStatus(trainingData ?? null);
+            } catch {
+                if (isMounted) {
+                    setNbaTrainingStatus(null);
+                }
+            }
+        };
+
+        loadStatus();
+        const intervalId = window.setInterval(loadStatus, 10000);
+
+        return () => {
+            isMounted = false;
+            window.clearInterval(intervalId);
+        };
+    }, []);
+
     const filteredPredictions = activeSport === 'All Sports'
         ? predictions
         : predictions.filter(p => p.sport === activeSport);
 
-    // Debug logging
-    console.log('🎨 Render - Total predictions:', predictions.length);
-    console.log('🎨 Render - Filtered predictions for', activeSport, ':', filteredPredictions.length);
-    console.log('🎨 Render - Loading:', loading, 'Error:', error);
+    const isNBATraining = nbaTrainingStatus?.is_training === true;
+    const trainingStarted = formatTimestamp(nbaTrainingStatus?.started_at);
+    const trainingMessage = nbaTrainingStatus?.last_message ?? 'NBA models are currently retraining.';
 
     return (
-        <div className="overflow-x-auto">
+    <div className="px-3 sm:px-6 lg:px-8">
             <header className="">
                 {/* header code */}
             </header>
-            <main className="">
+            <main className="mx-auto max-w-6xl">
                 <div className="mb-8">
                     <h2 className="text-3xl font-bold text-text-primary mb-4">Predictions</h2>
                     <p className="text-text-primary mb-4">AI-powered predictions for upcoming sports matches.</p>
                 </div>
+                {isNBATraining && (
+                    <div className="mb-6 rounded-md border border-yellow-400 bg-yellow-50 px-4 py-3 text-sm text-yellow-900">
+                        {trainingMessage}
+                        {trainingStarted && (
+                            <span className="mt-1 block text-xs text-yellow-800">
+                                Started: {trainingStarted}
+                            </span>
+                        )}
+                    </div>
+                )}
                 <SportsFilter sports={sports} activeSport={activeSport} setActiveSport={setActiveSport} />
                 <div className="rounded-lg overflow-hidden">
                     {/* Desktop table */}
-                    <div className="hidden sm:block overflow-x-auto">
-                        <table className="min-w-full divide-y divide-secondary">
+                    <div className="hidden sm:block">
+                        <table className="w-full table-auto divide-y divide-secondary">
                             <thead className="bg-secondary-background rounded-xl shadow-sm">
                                 <tr>
-                                    <th className="px-6 py-4 text-sm font-semibold text-text-secondary uppercase tracking-wider text-center">Match</th>
-                                    <th className="px-6 py-4 text-sm font-semibold text-text-secondary uppercase tracking-wider text-center">Date</th>
-                                    <th className="px-6 py-4 text-sm font-semibold text-text-secondary uppercase tracking-wider text-center">Prediction</th>
-                                    <th className="px-6 py-4 text-sm font-semibold text-text-secondary uppercase tracking-wider text-center">Confidence</th>
+                                    <th className="px-4 py-3 text-xs font-semibold text-text-secondary uppercase tracking-wider text-center">Match</th>
+                                    <th className="px-4 py-3 text-xs font-semibold text-text-secondary uppercase tracking-wider text-center">Date</th>
+                                    <th className="px-4 py-3 text-xs font-semibold text-text-secondary uppercase tracking-wider text-center">Prediction</th>
+                                    <th className="px-4 py-3 text-xs font-semibold text-text-secondary uppercase tracking-wider text-center">Confidence</th>
+                                    <th className="px-4 py-3 text-xs font-semibold text-text-secondary uppercase tracking-wider text-center">Decision Factors</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-secondary">
                                 {loading ? (
                                     <tr>
-                                        <td colSpan={4} className="text-center py-10 text-text-primary bg-secondary-background">
+                                        <td colSpan={5} className="text-center py-10 text-text-primary bg-secondary-background">
                                             Loading predictions...
                                         </td>
                                     </tr>
                                 ) : error ? (
                                     <tr>
-                                        <td colSpan={4} className="text-center py-10 text-text-primary bg-secondary-background">
+                                        <td colSpan={5} className="text-center py-10 text-text-primary bg-secondary-background">
                                             {error}
                                         </td>
                                     </tr>
                                 ) : filteredPredictions.length > 0 ? (
                                     filteredPredictions.map((item, idx) => {
-                                        const [awayTeam, homeTeam] = item.match.split(' at ');
                                         return (
                                             <PredictionRow
                                                 key={idx}
                                                 item={item}
-                                                onClick={() => openMatchDialog(homeTeam ?? '', awayTeam ?? '', item.sport)}
+                                                onClick={() => openMatchDialog(item)}
+                                                nbaTeamLogos={nbaTeamLogos}
                                             />
                                         );
                                     })
                                 ) : (
                                     <tr>
-                                        <td colSpan={4} className="text-center py-10 text-text-primary bg-secondary-background">
+                                        <td colSpan={5} className="text-center py-10 text-text-primary bg-secondary-background">
                                             No predictions available for {activeSport}.
                                         </td>
                                     </tr>
@@ -740,7 +1143,7 @@ export default function PredictionsScreen() {
                                     <div
                                         key={idx}
                                         className="bg-secondary-background p-4 rounded-lg cursor-pointer hover:bg-secondary"
-                                        onClick={() => openMatchDialog(homeTeam ?? '', awayTeam ?? '', item.sport)}
+                                        onClick={() => openMatchDialog(item)}
                                     >
                                         <div className="flex justify-between items-start mb-2">
                                             <div className="font-medium text-text-primary">{item.match}</div>
@@ -791,6 +1194,9 @@ export default function PredictionsScreen() {
                 loading={dialogLoading}
                 homeLogo={homeLogo}
                 awayLogo={awayLogo}
+                decisionFactors={selectedPrediction?.meta?.decisionFactors}
+                prediction={selectedPrediction?.prediction}
+                confidence={selectedPrediction?.confidence}
             />
         </div>
     );

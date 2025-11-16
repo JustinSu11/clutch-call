@@ -110,7 +110,7 @@ export const parseNBATeamStats = async (teamName: string) => {
                       Must use full display name 
 
         returns:
-            stats: dict - an object with wins, losses, draws, totalGames
+            stats: dict - an object with wins, losses, ties, totalGames
     */
 
     // makes the local date in YYYY-MM-DD using the local timezone
@@ -122,60 +122,60 @@ export const parseNBATeamStats = async (teamName: string) => {
         return `${yyyy}-${mm}-${dd}`;
     })();
 
-    // await the response from the backend method
-    const responseData = await sports_stats_methods.getHistoricalNFLTeamByName(teamName, {
-        startDate: `${seasonStartDate}`,              
-        endDate: `${todaysDateLocal}`,             
-    });
+    try {
+        // await the response from the backend method
+        const responseData = await sports_stats_methods.getHistoricalNBATeamByName(teamName, {
+            startDate: `${seasonStartDate}`,              
+            endDate: `${todaysDateLocal}`,             
+        });
 
-    // parse major header
-    const events = responseData['data']['events'];
+        console.log('NBA Team Stats Response for', teamName, ':', responseData);
 
-    // vars to hold the stats
+        // Check if we have data - NBA API structure is different from NFL
+        if (!responseData || !responseData.data || !responseData.data.data) {
+            console.warn('No NBA team data available for', teamName);
+            return { wins: 0, losses: 0, ties: 0, totalGames: 0 };
+        }
+
+        // NBA API returns games in data.data array
+        const games = responseData.data.data;
+
+        // vars to hold the stats
     let totalGames = 0;
     let wins = 0;
     let losses = 0;
-    let ties = 0;
+    const ties = 0;
 
-    // for each event, get the game info
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    events.forEach((event: any) => {
-        
-        // get the eventDate and compare to current dat
-        const iso = event['date'];
-        const eventDate = new Date(iso);
+        // for each game, check the W/L status
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        games.forEach((game: any) => {
+            // get the game date and compare to current date
+            const gameDate = new Date(game.game_date);
 
-        // this prevents upcoming games from being counted
-        // by ensuring we only count games that have already passed
-        if(eventDate.getTime() >= Date.now()) {
-            return;
-        }
+            // this prevents upcoming games from being counted
+            // by ensuring we only count games that have already passed
+            if (gameDate.getTime() >= Date.now()) {
+                return;
+            }
 
-        // home team stuff is always ['competitions'][0]['competitors'][0]
-        // away team stuff is always ['competitions'][0]['competitors'][1]
-        const homeTeam = event['competitions'][0]['competitors'][0]['team']['displayName'];
-        const awayTeam = event['competitions'][0]['competitors'][1]['team']['displayName'];
-
-        const homeScore = parseInt(event['competitions'][0]['competitors'][0]['score']);
-        const awayScore = parseInt(event['competitions'][0]['competitors'][1]['score']);
-
-        // determine if the requested team is home or away for this specific game
-        if (homeTeam === teamName) {
+            // NBA API provides direct W/L in the 'wl' field
+            const result = game.wl;
             
-            // if the home team (the requested team) won
-            if (homeScore > awayScore) { wins++;}
-            else if (homeScore < awayScore) { losses++; }
-            else if (homeScore === awayScore) { ties++; } // tie game
-        }
-        else if (awayTeam === teamName) {
-            // if the away team (the requested team) won
-            if (awayScore > homeScore) { wins++; }
-            else if (awayScore < homeScore) { losses++; }
-            else if (awayScore === homeScore) { ties++; } // tie game
-        }
+            if (result === 'W') {
+                wins++;
+            } else if (result === 'L') {
+                losses++;
+            }
+            // NBA doesn't have ties, but keeping the variable for consistency
+            
+            totalGames++;
+        });
 
-        totalGames++;
-    });
-
-    return { wins, losses, ties, totalGames};
+        console.log('NBA Stats parsed:', { wins, losses, ties, totalGames });
+        return { wins, losses, ties, totalGames};
+        
+    } catch (error) {
+        console.error('Error fetching NBA team stats for', teamName, ':', error);
+        return { wins: 0, losses: 0, ties: 0, totalGames: 0 };
+    }
 };

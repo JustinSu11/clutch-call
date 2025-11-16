@@ -77,6 +77,16 @@ export const ROUTES = {
     upcoming_nba_games: `/nba/upcoming`,
     nba_standings: `/nba/standings`,
     
+    // NBA ML Prediction Routes
+    nba_ml_status: `/nba/predictions/status`,
+    nba_ml_games: `/nba/predictions/games`,
+    nba_ml_players: `/nba/predictions/players`,
+    nba_ml_game_detail: (gameId: string) => `/nba/predictions/game/${gameId}`,
+    nba_ml_top_performers: `/nba/predictions/top-performers`,
+    nba_ml_models_info: `/nba/predictions/models/info`,
+    nba_ml_train: `/nba/predictions/train`,
+    nba_ml_delete_models: `/nba/predictions/models`,
+    
     nfl_games: `/nfl/games`,
     specific_nfl_game_details: (gameId: string) => `/nfl/game/${gameId}`,
     specific_nfl_game_boxscore: (gameId: string) => `/nfl/game/${gameId}/boxscore`,
@@ -102,7 +112,7 @@ export const ROUTES = {
 
 // --- UPDATE: makeBackendRequest now prepends BASE_URL ---
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const makeBackendRequest = async (method: 'GET' | 'POST', relativeRoute: string, data?: any) => {
+export const makeBackendRequest = async (method: 'GET' | 'POST' | 'DELETE', relativeRoute: string, data?: any) => {
     // Combine BASE_URL with the relative route
     const fullUrl = `${BASE_URL}${relativeRoute}`; 
     
@@ -117,7 +127,7 @@ export const makeBackendRequest = async (method: 'GET' | 'POST', relativeRoute: 
                 'Content-Type': 'application/json',
                 // Add any other headers needed, like Authorization if you implement login
             },
-            body: method === 'POST' ? JSON.stringify(data) : undefined,
+            body: (method === 'POST' || method === 'DELETE') && data ? JSON.stringify(data) : undefined,
         });
 
         // Check if the response was successful (status code 2xx)
