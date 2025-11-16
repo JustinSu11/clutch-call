@@ -9,7 +9,7 @@
 */
 "use client";
 import React, { useState, useEffect } from 'react';
-import { parseUpcomingNFLGames, parseNFLTeamStats, parseNFLTeamLogo, parseTodayNFLGames, parseNFLGamesFromEvents } from '@/utils/nfl_parser';
+import { parseUpcomingNFLGames, parseNFLTeamStats, parseTodayNFLGames, parseNFLGamesFromEvents } from '@/utils/nfl_parser';
 import { parseUpcomingNBAGames, parseNBATeamStats } from '@/utils/nba_parser';
 import { parseUpcomingEPLGames, getEPLMatchPrediction } from '@/utils/epl_parser';
 import { UpcomingGame } from '@/utils/data_class';

@@ -8,6 +8,7 @@ import os
 import time
 from typing import Dict, List, Optional
 from collections import defaultdict
+from dotenv import load_dotenv
 
 import numpy as np
 import pandas as pd
@@ -384,7 +385,9 @@ class EPLPredictor:
 
 
 def build_model() -> EPLPredictor:
-    api_key = os.getenv("FOOTBALL_DATA_API_KEY", "")
+    load_dotenv()
+    api_key = os.environ.get("FOOTBALL_DATA_API_KEY", "")
+    print(f"API Key: {api_key}")
     predictor = EPLPredictor(api_key=api_key)
     predictor.fetch_all(SEASONS)
     predictor.create_features(MIN_HISTORY_MATCHES)
