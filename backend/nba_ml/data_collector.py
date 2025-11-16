@@ -281,11 +281,13 @@ class NBADataCollector:
             try:
                 self.rate_limit()
                 scoreboard = scoreboardv2.ScoreboardV2(game_date=date_str)
-                games_data = scoreboard.get_data_frames()[0]
+                # Use get_normalized_dict() instead of get_data_frames() to avoid KeyError
+                sb_dict = scoreboard.get_normalized_dict()
+                headers = sb_dict.get("GameHeader", [])
                 
-                if not games_data.empty:
-                    for _, game in games_data.iterrows():
-                        game_id = game['GAME_ID']
+                if headers:
+                    for game in headers:
+                        game_id = game.get('GAME_ID')
                         
                         # Get detailed data for each game
                         detailed_data = self.collect_detailed_game_data(game_id)
@@ -295,6 +297,8 @@ class NBADataCollector:
                 
             except Exception as e:
                 logger.error(f"Error collecting games for {date_str}: {e}")
+                # Continue to next date instead of failing completely
+                pass
             
             current_date += timedelta(days=1)
         
@@ -376,13 +380,15 @@ class NBADataCollector:
             try:
                 self.rate_limit()
                 scoreboard = scoreboardv2.ScoreboardV2(game_date=date_str)
-                games_data = scoreboard.get_data_frames()[0]
+                # Use get_normalized_dict() instead of get_data_frames() to avoid KeyError
+                sb_dict = scoreboard.get_normalized_dict()
+                headers = sb_dict.get("GameHeader", [])
                 
-                logger.info(f"Checking {date_str}: Found {len(games_data)} games")
+                logger.info(f"Checking {date_str}: Found {len(headers)} games")
                 
-                if not games_data.empty:
-                    for _, game in games_data.iterrows():
-                        game_id = game['GAME_ID']
+                if headers:
+                    for game in headers:
+                        game_id = game.get('GAME_ID')
 
                         # Skip preseason games (game_id starts with '001')
                         if str(game_id).startswith('001'):
@@ -405,6 +411,8 @@ class NBADataCollector:
                         
             except Exception as e:
                 logger.error(f"Error getting upcoming games for {date_str}: {e}")
+                # Continue to next date instead of failing completely
+                pass
             
             current_date += timedelta(days=1)
         

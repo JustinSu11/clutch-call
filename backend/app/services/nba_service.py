@@ -275,12 +275,13 @@ def get_live_games():
     try:
         today = datetime.now().strftime("%m/%d/%Y")
         scoreboard = scoreboardv2.ScoreboardV2(game_date=today)
-        data = scoreboard.get_data_frames()[0]
+        # Use get_normalized_dict() instead of get_data_frames() to avoid KeyError
+        sb_dict = scoreboard.get_normalized_dict()
+        headers = sb_dict.get("GameHeader", [])
         
-        if data.empty:
+        if not headers:
             return {"data": []}
         
-        headers = data.to_dict("records")
         live_games = []
         
         for h in headers:
