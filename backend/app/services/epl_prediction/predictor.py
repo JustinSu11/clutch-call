@@ -387,7 +387,6 @@ class EPLPredictor:
 def build_model() -> EPLPredictor:
     load_dotenv()
     api_key = os.environ.get("FOOTBALL_DATA_API_KEY", "")
-    print(f"API Key: {api_key}")
     predictor = EPLPredictor(api_key=api_key)
     predictor.fetch_all(SEASONS)
     predictor.create_features(MIN_HISTORY_MATCHES)

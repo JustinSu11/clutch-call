@@ -823,9 +823,16 @@ const PredictionRow: React.FC<{ item: Prediction; onClick?: () => void; nbaTeamL
                                     style={{ ...getConfidenceStyle(item.confidence), width: `${item.confidence}%` }}
                                 ></div>
                             </div>
-                            <span className="text-md font-medium text-text-primary">{item.confidence.toFixed(0)}%</span>
+                            <span className="text-md font-medium text-text-primary">{item.confidence}%</span>
                         </>
                     )}
+                </div>
+            </td>
+            <td className="px-4 py-4 align-top">
+                <div className="flex justify-center">
+                    <div className="inline-block max-w-[260px] text-left">
+                        {renderDecisionFactors()}
+                    </div>
                 </div>
             </td>
         </tr>
