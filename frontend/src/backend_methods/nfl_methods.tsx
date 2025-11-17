@@ -34,6 +34,7 @@ export const getSpecificNFLGameBoxscore = async (gameId: string) => {
         throw error;
     }
 };
+
 export const getUpcomingNFLGames = async () => {
     try{
         await checkBackendHealth();
@@ -45,3 +46,70 @@ export const getUpcomingNFLGames = async () => {
     }
 };
 
+export const getTodayNFLGames = async () => {
+    try{
+        await checkBackendHealth();
+        return makeBackendRequest('GET', ROUTES.today_nfl_games);
+    }
+    catch (error) {
+        console.error("Error fetching today's NFL games:", error);
+        throw error;
+    }
+};
+
+/**
+ * Gets historical NFL games within a date range.
+ * @param {string} startDate - Start date in YYYY-MM-DD format
+ * @param {string} endDate - End date in YYYY-MM-DD format
+ * @returns {Promise<any>} Historical games data
+ */
+export const getHistoricalNFLGames = async (startDate?: string, endDate?: string) => {
+    try {
+        await checkBackendHealth();
+        
+        // Build query string if dates are provided
+        let route = ROUTES.historical_nfl_games;
+        if (startDate && endDate) {
+            route += `?start_date=${startDate}&end_date=${endDate}`;
+        }
+        
+        return makeBackendRequest('GET', route);
+    } catch (error) {
+        console.error("Error fetching historical NFL games:", error);
+        throw error;
+    }
+};
+
+/**
+ * Gets a prediction for a specific NFL game.
+ * @param {string} gameId The ESPN event ID for the game.
+ * @returns {Promise<any>} The prediction data from the AI model.
+ */
+export const getNFLPrediction = async (gameId: string) => {
+    try {
+        await checkBackendHealth();
+        
+        // --- Use the ROUTES helper for consistency ---
+        const result = await makeBackendRequest('GET', ROUTES.specific_nfl_prediction(gameId));
+        return result;
+        
+    } catch (error: unknown) {
+        // If the error was thrown as a JSON string, try to parse it
+        let errorData: { error: string; details?: unknown } = { error: 'Unknown error' };
+        try {
+            const err = error as Error;
+            if (err?.message && err.message.startsWith('{')) {
+                errorData = JSON.parse(err.message);
+            } else {
+                errorData = { error: err?.message || 'Network error', details: error };
+            }
+        } catch (parseError) {
+            const err = error as Error;
+            errorData = { error: err?.message || 'Unknown error', details: error };
+        }
+        
+        console.error(`Error fetching NFL prediction for gameId ${gameId}:`, errorData);
+        // Return error object instead of throwing, so caller can check aiPrediction.error
+        return errorData;
+    }
+};

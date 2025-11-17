@@ -48,20 +48,6 @@ next-env.d.ts
 *.pyo
 *.pyd
 
-# Python virtual environments
-.venv/
-venv/
-env/
-ENV/
-
-# Python cache files
-__pycache__/
-*.py[cod]
-*$py.class
-*.pyc
-*.pyo
-*.pyd
-
 
 *.log
 

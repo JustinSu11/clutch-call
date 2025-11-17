@@ -35,6 +35,11 @@ def _summary_url(league: str) -> str:
     return f"https://site.api.espn.com/apis/site/v2/sports/{_league_path(league)}/summary"
 
 
+def _standings_url(league: str) -> str:
+    """Construct the standings endpoint URL for a league."""
+    return f"https://site.api.espn.com/apis/v2/sports/{_league_path(league)}/standings"
+
+
 def _get(url: str, params: Optional[Dict[str, Any]] = None):
     """Perform a GET request and return parsed JSON."""
     r = requests.get(url, params=params, timeout=20)
@@ -193,3 +198,74 @@ def get_historical_games(start_date=None, end_date=None, leagues=None, team_id=N
     }
     
     return result
+
+
+def get_standings(league: str = "MLS", season: Optional[str] = None):
+    """Fetch soccer standings from ESPN API for a given league.
+    
+    Args:
+        league: League key ('MLS', 'EPL', 'LaLiga')
+        season: Optional season year (e.g., '2024')
+    
+    Returns:
+        Dictionary containing standings data
+    """
+    try:
+        params = {}
+        if season:
+            params["season"] = season
+            
+        data = _get(_standings_url(league), params)
+        
+        # ESPN standings typically come as an array of entries
+        standings_entries = data.get("children", [])
+        
+        league_standings = []
+        
+        for group in standings_entries:
+            group_name = group.get("name", "")
+            standings = group.get("standings", {}).get("entries", [])
+            
+            for entry in standings:
+                team = entry.get("team", {})
+                stats = entry.get("stats", [])
+                
+                # Parse stats array into a dictionary
+                stats_dict = {}
+                for stat in stats:
+                    stat_name = stat.get("name", "").lower().replace(" ", "_")
+                    stats_dict[stat_name] = stat.get("value")
+                
+                team_data = {
+                    "team_id": team.get("id"),
+                    "team_name": team.get("displayName"),
+                    "team_abbreviation": team.get("abbreviation"),
+                    "team_logo": team.get("logos", [{}])[0].get("href") if team.get("logos") else None,
+                    "group": group_name,
+                    "rank": stats_dict.get("rank", 0),
+                    "wins": stats_dict.get("wins", 0),
+                    "losses": stats_dict.get("losses", 0),
+                    "draws": stats_dict.get("ties", 0),
+                    "points": stats_dict.get("points", 0),
+                    "goals_for": stats_dict.get("pointsfor", 0),
+                    "goals_against": stats_dict.get("pointsagainst", 0),
+                    "goal_differential": stats_dict.get("pointdifferential", 0),
+                    "games_played": stats_dict.get("gamesplayed", 0)
+                }
+                
+                league_standings.append(team_data)
+        
+        # Sort by points descending, then by goal differential
+        league_standings.sort(key=lambda x: (x["points"], x["goal_differential"]), reverse=True)
+        
+        return {
+            "league": league,
+            "season": season if season else str(datetime.utcnow().year),
+            "standings": league_standings
+        }
+    except Exception as e:
+        return {
+            "error": str(e),
+            "league": league,
+            "standings": []
+        }

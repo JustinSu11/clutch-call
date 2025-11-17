@@ -1,0 +1,28 @@
+{
+  "game_features": [
+    "IS_HOME",
+    "TEAM_PPG",
+    "TEAM_FG_PCT",
+    "TEAM_FG3_PCT",
+    "TEAM_FT_PCT",
+    "TEAM_REB_PG",
+    "TEAM_AST_PG",
+    "TEAM_TOV_PG",
+    "TEAM_STL_PG",
+    "TEAM_BLK_PG",
+    "DAYS_REST",
+    "WIN_PCT_LAST_5",
+    "WIN_PCT_LAST_10",
+    "WIN_STREAK",
+    "TEAM_PTS_ROLL_5",
+    "TEAM_WIN_ROLL_5",
+    "TEAM_FG_PCT_ROLL_5",
+    "TEAM_PTS_ROLL_10",
+    "TEAM_WIN_ROLL_10",
+    "TEAM_FG_PCT_ROLL_10",
+    "TEAM_PTS_ROLL_15",
+    "TEAM_WIN_ROLL_15",
+    "TEAM_FG_PCT_ROLL_15"
+  ],
+  "team_features": []
+}

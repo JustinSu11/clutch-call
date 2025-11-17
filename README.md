@@ -24,13 +24,12 @@ venv\Scripts\Activate.ps1
 # Install dependencies
 pip install -r requirements.txt
 
-# Set API key
-# Linux/macOS
-export FOOTBALL_DATA_API_KEY="1411541d70b844749154f102e4d18a99"
-# Windows CMD
-set FOOTBALL_DATA_API_KEY="1411541d70b844749154f102e4d18a99"
-# Windows PowerShell
-$env:FOOTBALL_DATA_API_KEY="1411541d70b844749154f102e4d18a99"
+## Features
 
-# Start server
-python run_server.py
+### Automatic NBA ML Model Training
+The NBA machine learning models are now fully automated:
+- **Automatic Training on Startup**: Models are automatically trained when the server starts if they don't exist
+- **Scheduled Retraining**: Models are automatically retrained every night at 4:00 AM Central Time (CT/CDT/CST)
+- **Zero Configuration**: No manual intervention needed - the system handles everything
+
+See [backend/NBA_ML_AUTO_TRAINING.md](backend/NBA_ML_AUTO_TRAINING.md) for detailed documentation.

@@ -1,8 +1,29 @@
 
-nba_api           # NBA-related data work 
-Flask             # Web framework used for route definitions
-Flask-Cors        # Enables CORS for API consumption from the frontend
-gunicorn          
-requests          # HTTP client used by service modules
-uvicorn           # ASGI server used to run the app via run_server.py
-asgiref           # Provides WSGI-to-ASGI adapter used by asgi.py
+nba_api==1.1.11           # NBA-related data work 
+Flask>=2.2.0             # Web framework used for route definitions
+Flask-Cors>=3.0.0        # Enables CORS for API consumption from the frontend
+gunicorn>=20.1.0          
+requests>=2.28.0          # HTTP client used by service modules
+uvicorn>=0.18.0           # ASGI server used to run the app via run_server.py
+asgiref>=3.5.0           # Provides WSGI-to-ASGI adapter used by asgi.py
+APScheduler>=3.10.0       # Job scheduling for periodic model retraining
+pytz>=2023.3              # Timezone support for scheduler
+
+# NBA ML System Dependencies
+pandas>=1.5.0            # Data manipulation and analysis
+numpy>=1.21.0            # Numerical computing
+scikit-learn==1.7.1      # Machine learning library (pinned for model compatibility)
+joblib>=1.2.0            # Model persistence
+matplotlib>=3.5.0        # Plotting and visualization
+seaborn>=0.11.0          # Statistical data visualization
+
+# FastAPI for future use
+fastapi           # FastAPI framework for building APIs
+
+# --- Added Dependencies for EPL Model (from hvbhanot) ---
+fastapi==0.115.0      #
+uvicorn[standard]==0.32.0 #
+pydantic==2.10.0      #
+
+requests==2.32.3      #
+xgboost==2.1.3        #

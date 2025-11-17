@@ -20,13 +20,21 @@ import {
     getSpecificNBAGameDetails,
     getSpecificNBAGameBoxscore,
     getSpecificNBATeamLastGame,
-    getUpcomingNBAGames
+    getUpcomingNBAGames,
+    getNBAMLStatus,
+    getNBAGamePredictions,
+    getNBAPlayerPredictions,
+    getNBAGamePredictionDetail,
+    getNBATopPerformers,
+    getNBAModelsInfo,
+    trainNBAModels,
+    deleteNBAModels
 } from '@/backend_methods/nba_methods';
 import {
     getSoccerMatches,
     getSpecificSoccerMatchDetails,
     getSpecificSoccerMatchBoxscore,
-    getUpcomingSoccerMatches
+    getEPLUpcomingMatches
 } from '@/backend_methods/soccer_methods';
 import {
     getTodayAllGames,
@@ -50,7 +58,21 @@ import {
     getDashboardData,
     type HistoricalGameFilters,
     type StatisticalTrendsFilters,
-    getStatisticalTrends
+    getStatisticalTrends,
+    // New Historical Methods
+    getHistoricalNBAAllTeams,
+    getHistoricalNFLAllTeams,
+    getHistoricalSoccerAllTeams,
+    getHistoricalNBATeamByName,
+    getHistoricalNFLTeamByName,
+    getHistoricalSoccerTeamByName,
+    getHistoricalNBASeason,
+    getHistoricalNFLSeason,
+    getHistoricalSoccerSeason,
+    getNBATeamStats,
+    getNFLTeamStats,
+    getSoccerTeamStats,
+    getHistoricalDashboardData
 } from '@/backend_methods/sports_stats_methods';
 
 interface TestResult {
@@ -79,7 +101,22 @@ export default function TestingPage() {
         league: '',
         page: '1',
         perPage: '25',
-        betType: 'all'
+        betType: 'all',
+        // NBA ML Prediction inputs
+        mlDaysAhead: '1',
+        mlGameId: '',
+        mlTeamId: '',
+        mlMinPoints: '',
+        mlTopN: '10',
+        mlStat: 'points',
+        mlLimit: '10',
+        mlMinThreshold: '',
+        // New inputs for historical methods
+        nbaTeamName: '',
+        nflTeamName: '',
+        soccerTeamName: '',
+        historicalSeason: '',
+        statType: 'all'
     });
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const addResult = (method: string, success: boolean, data?: any, error?: string) => {
@@ -129,6 +166,211 @@ export default function TestingPage() {
 
     const clearResults = () => {
         setResults([]);
+    };
+
+    // Helper function to render NBA prediction results with confidence and decision factors
+    const renderNBAPredictionResult = (result: TestResult): JSX.Element | null => {
+        // Check if this is an NBA prediction result
+        const isGamePrediction = result.method === 'getNBAGamePredictions' || result.method === 'getNBAGamePredictionDetail';
+        const isPlayerPrediction = result.method === 'getNBAPlayerPredictions' || result.method === 'getNBATopPerformers';
+        
+        if (!isGamePrediction && !isPlayerPrediction) {
+            return null;
+        }
+
+        const data = result.data;
+
+        // Render Game Predictions with Confidence and Decision Factors
+        if (isGamePrediction && data?.games) {
+            return (
+                <div className="mb-4 space-y-4">
+                    <h4 className="font-semibold text-blue-900 text-lg">🎯 Game Predictions with AI Insights</h4>
+                    {data.games.map((game: {
+                        game_id: string;
+                        game_date: string;
+                        confidence?: number;
+                        home_team_id: number;
+                        away_team_id: number;
+                        home_win_probability: number;
+                        away_win_probability: number;
+                        decision_factors?: Array<{
+                            factor: string;
+                            value: number;
+                            importance: number;
+                            contribution: number;
+                        }>;
+                    }, idx: number) => (
+                        <div key={idx} className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                            <div className="grid grid-cols-2 gap-4 mb-3">
+                                <div>
+                                    <p className="text-sm font-medium text-gray-700">Game ID</p>
+                                    <p className="text-lg font-bold text-blue-900">{game.game_id}</p>
+                                </div>
+                                <div>
+                                    <p className="text-sm font-medium text-gray-700">Game Date</p>
+                                    <p className="text-lg font-bold text-blue-900">{game.game_date}</p>
+                                </div>
+                            </div>
+                            
+                            {/* Confidence Score Display */}
+                            {game.confidence !== undefined && (
+                                <div className="bg-white rounded-lg p-3 mb-3">
+                                    <p className="text-sm font-medium text-gray-700 mb-2">Confidence Score</p>
+                                    <div className="flex items-center space-x-3">
+                                        <div className="flex-1 bg-gray-200 rounded-full h-4">
+                                            <div 
+                                                className={`h-4 rounded-full ${
+                                                    game.confidence >= 0.7 ? 'bg-green-500' : 
+                                                    game.confidence >= 0.6 ? 'bg-yellow-500' : 
+                                                    'bg-orange-500'
+                                                }`}
+                                                style={{ width: `${game.confidence * 100}%` }}
+                                            ></div>
+                                        </div>
+                                        <span className="text-lg font-bold text-gray-900">
+                                            {(game.confidence * 100).toFixed(1)}%
+                                        </span>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Win Probabilities */}
+                            <div className="grid grid-cols-2 gap-4 mb-3">
+                                <div className="bg-white rounded-lg p-3">
+                                    <p className="text-sm font-medium text-gray-700">Home Win Probability</p>
+                                    <p className="text-2xl font-bold text-blue-600">
+                                        {(game.home_win_probability * 100).toFixed(1)}%
+                                    </p>
+                                    <p className="text-xs text-gray-500">Team ID: {game.home_team_id}</p>
+                                </div>
+                                <div className="bg-white rounded-lg p-3">
+                                    <p className="text-sm font-medium text-gray-700">Away Win Probability</p>
+                                    <p className="text-2xl font-bold text-purple-600">
+                                        {(game.away_win_probability * 100).toFixed(1)}%
+                                    </p>
+                                    <p className="text-xs text-gray-500">Team ID: {game.away_team_id}</p>
+                                </div>
+                            </div>
+
+                            {/* Decision Factors */}
+                            {game.decision_factors && game.decision_factors.length > 0 && (
+                                <div className="bg-gradient-to-br from-indigo-50 to-blue-50 rounded-lg p-4 border border-indigo-200">
+                                    <h5 className="font-semibold text-indigo-900 mb-3 flex items-center">
+                                        <span className="mr-2">🧠</span>
+                                        Key Decision Factors (AI Reasoning)
+                                    </h5>
+                                    <div className="space-y-2">
+                                        {game.decision_factors.map((factor, factorIdx: number) => (
+                                            <div key={factorIdx} className="bg-white rounded-lg p-3 shadow-sm">
+                                                <div className="flex items-start justify-between mb-2">
+                                                    <div className="flex-1">
+                                                        <p className="font-medium text-gray-900">
+                                                            {factorIdx + 1}. {factor.factor}
+                                                        </p>
+                                                        <p className="text-sm text-gray-600">Value: {factor.value}</p>
+                                                    </div>
+                                                    <span className="text-sm font-semibold text-indigo-600 ml-2">
+                                                        {(factor.contribution * 100).toFixed(1)}%
+                                                    </span>
+                                                </div>
+                                                <div className="grid grid-cols-2 gap-2 text-xs text-gray-500">
+                                                    <div>Importance: {(factor.importance * 100).toFixed(1)}%</div>
+                                                    <div>Contribution: {factor.contribution.toFixed(4)}</div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    ))}
+                </div>
+            );
+        }
+
+        // Render Player Predictions with Decision Factors
+        if (isPlayerPrediction && data?.predictions) {
+            return (
+                <div className="mb-4 space-y-4">
+                    <h4 className="font-semibold text-purple-900 text-lg">🏀 Player Predictions with AI Insights</h4>
+                    {data.predictions.slice(0, 3).map((player: {
+                        player_name: string;
+                        position: string;
+                        team_id: number;
+                        game_date: string;
+                        predicted_points: number;
+                        predicted_assists: number;
+                        predicted_rebounds: number;
+                        decision_factors?: Record<string, Array<{
+                            factor: string;
+                            value: number;
+                            contribution: number;
+                        }>>;
+                    }, idx: number) => (
+                        <div key={idx} className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                            <div className="mb-3">
+                                <h5 className="text-xl font-bold text-purple-900">{player.player_name}</h5>
+                                <p className="text-sm text-gray-600">
+                                    {player.position} | Team ID: {player.team_id} | Game: {player.game_date}
+                                </p>
+                            </div>
+
+                            {/* Predicted Stats */}
+                            <div className="grid grid-cols-3 gap-3 mb-3">
+                                <div className="bg-white rounded-lg p-3 text-center">
+                                    <p className="text-sm font-medium text-gray-700">Points</p>
+                                    <p className="text-3xl font-bold text-orange-600">{player.predicted_points}</p>
+                                </div>
+                                <div className="bg-white rounded-lg p-3 text-center">
+                                    <p className="text-sm font-medium text-gray-700">Assists</p>
+                                    <p className="text-3xl font-bold text-green-600">{player.predicted_assists}</p>
+                                </div>
+                                <div className="bg-white rounded-lg p-3 text-center">
+                                    <p className="text-sm font-medium text-gray-700">Rebounds</p>
+                                    <p className="text-3xl font-bold text-blue-600">{player.predicted_rebounds}</p>
+                                </div>
+                            </div>
+
+                            {/* Decision Factors for Each Stat */}
+                            {player.decision_factors && (
+                                <div className="space-y-3">
+                                    {Object.entries(player.decision_factors).map(([statType, factors]) => (
+                                        <div key={statType} className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-lg p-3 border border-purple-200">
+                                            <h6 className="font-semibold text-purple-900 mb-2 capitalize flex items-center">
+                                                <span className="mr-2">🧠</span>
+                                                {statType} Prediction Factors
+                                            </h6>
+                                            <div className="space-y-2">
+                                                {factors && factors.length > 0 ? factors.map((factor, factorIdx: number) => (
+                                                    <div key={factorIdx} className="bg-white rounded p-2 text-sm">
+                                                        <div className="flex justify-between items-start">
+                                                            <div className="flex-1">
+                                                                <p className="font-medium text-gray-900">{factor.factor}</p>
+                                                                <p className="text-xs text-gray-600">Value: {factor.value}</p>
+                                                            </div>
+                                                            <span className="text-sm font-semibold text-purple-600 ml-2">
+                                                                {(factor.contribution * 100).toFixed(1)}%
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                )) : <p className="text-xs text-gray-500">No factors available</p>}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    ))}
+                    {data.predictions.length > 3 && (
+                        <p className="text-sm text-gray-500 text-center">
+                            Showing 3 of {data.predictions.length} player predictions. See full JSON below for all results.
+                        </p>
+                    )}
+                </div>
+            );
+        }
+
+        return null;
     };
 
     return (
@@ -272,6 +514,223 @@ export default function TestingPage() {
                     </div>
                 </div>
 
+                {/* NBA ML Predictions */}
+                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8">
+                    <h2 className="text-2xl font-bold text-gray-900 mb-6">🏀 NBA AI Predictions</h2>
+                    
+                    {/* System Status and Model Management */}
+                    <div className="mb-6">
+                        <h3 className="text-lg font-semibold text-gray-800 mb-4">System Status & Model Management</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                            <button
+                                onClick={() => handleTest('getNBAMLStatus', getNBAMLStatus)}
+                                disabled={loading === 'getNBAMLStatus'}
+                                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-blue-400 transition-colors"
+                            >
+                                {loading === 'getNBAMLStatus' ? 'Loading...' : 'Check ML Status'}
+                            </button>
+                            <button
+                                onClick={() => handleTest('getNBAModelsInfo', getNBAModelsInfo)}
+                                disabled={loading === 'getNBAModelsInfo'}
+                                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-blue-400 transition-colors"
+                            >
+                                {loading === 'getNBAModelsInfo' ? 'Loading...' : 'Model Info'}
+                            </button>
+                            <button
+                                onClick={() => handleTest('trainNBAModels', () => trainNBAModels(undefined, true))}
+                                disabled={loading === 'trainNBAModels'}
+                                className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:bg-orange-400 transition-colors"
+                            >
+                                {loading === 'trainNBAModels' ? 'Training...' : 'Train Models'}
+                            </button>
+                        </div>
+                        <button
+                            onClick={() => handleTest('deleteNBAModels', deleteNBAModels)}
+                            disabled={loading === 'deleteNBAModels'}
+                            className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:bg-red-400 transition-colors"
+                        >
+                            {loading === 'deleteNBAModels' ? 'Deleting...' : '⚠️ Delete All Models'}
+                        </button>
+                    </div>
+
+                    {/* Prediction Parameters */}
+                    <div className="mb-6">
+                        <h3 className="text-lg font-semibold text-gray-800 mb-4">Prediction Parameters</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Days Ahead
+                                </label>
+                                <select
+                                    value={inputs.mlDaysAhead}
+                                    onChange={(e) => setInputs(prev => ({ ...prev, mlDaysAhead: e.target.value }))}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                >
+                                    <option value="1">1 Day</option>
+                                    <option value="2">2 Days</option>
+                                    <option value="3">3 Days</option>
+                                    <option value="7">7 Days</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Game ID (Optional)
+                                </label>
+                                <input
+                                    type="text"
+                                    value={inputs.mlGameId}
+                                    onChange={(e) => setInputs(prev => ({ ...prev, mlGameId: e.target.value }))}
+                                    placeholder="e.g., 0012500012"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Team ID (Optional)
+                                </label>
+                                <input
+                                    type="number"
+                                    value={inputs.mlTeamId}
+                                    onChange={(e) => setInputs(prev => ({ ...prev, mlTeamId: e.target.value }))}
+                                    placeholder="e.g., 1610612756"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Min Points
+                                </label>
+                                <input
+                                    type="number"
+                                    value={inputs.mlMinPoints}
+                                    onChange={(e) => setInputs(prev => ({ ...prev, mlMinPoints: e.target.value }))}
+                                    placeholder="e.g., 20"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Top N Players
+                                </label>
+                                <input
+                                    type="number"
+                                    value={inputs.mlTopN}
+                                    onChange={(e) => setInputs(prev => ({ ...prev, mlTopN: e.target.value }))}
+                                    placeholder="e.g., 10"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Stat Type
+                                </label>
+                                <select
+                                    value={inputs.mlStat}
+                                    onChange={(e) => setInputs(prev => ({ ...prev, mlStat: e.target.value }))}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                >
+                                    <option value="points">Points</option>
+                                    <option value="assists">Assists</option>
+                                    <option value="rebounds">Rebounds</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Result Limit
+                                </label>
+                                <input
+                                    type="number"
+                                    value={inputs.mlLimit}
+                                    onChange={(e) => setInputs(prev => ({ ...prev, mlLimit: e.target.value }))}
+                                    placeholder="e.g., 10"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Min Threshold
+                                </label>
+                                <input
+                                    type="number"
+                                    value={inputs.mlMinThreshold}
+                                    onChange={(e) => setInputs(prev => ({ ...prev, mlMinThreshold: e.target.value }))}
+                                    placeholder="e.g., 0.5"
+                                    step="0.1"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Game Predictions */}
+                    <div className="mb-6">
+                        <h3 className="text-lg font-semibold text-gray-800 mb-4">Game Outcome Predictions</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <button
+                                onClick={() => handleTest('getNBAGamePredictions', () => getNBAGamePredictions(parseInt(inputs.mlDaysAhead), true))}
+                                disabled={loading === 'getNBAGamePredictions'}
+                                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-green-400 transition-colors"
+                            >
+                                {loading === 'getNBAGamePredictions' ? 'Loading...' : '🎯 Get Game Predictions'}
+                            </button>
+                            <button
+                                onClick={() => handleTestWithParam('getNBAGamePredictionDetail', getNBAGamePredictionDetail, inputs.mlGameId, 'Game ID')}
+                                disabled={loading === 'getNBAGamePredictionDetail'}
+                                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-green-400 transition-colors"
+                            >
+                                {loading === 'getNBAGamePredictionDetail' ? 'Loading...' : '📊 Game Detail Prediction'}
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Player Predictions */}
+                    <div className="mb-6">
+                        <h3 className="text-lg font-semibold text-gray-800 mb-4">Player Performance Predictions</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <button
+                                onClick={() => handleTest('getNBAPlayerPredictions', () => getNBAPlayerPredictions(
+                                    parseInt(inputs.mlDaysAhead),
+                                    inputs.mlGameId || undefined,
+                                    inputs.mlTeamId ? parseInt(inputs.mlTeamId) : undefined,
+                                    inputs.mlMinPoints ? parseFloat(inputs.mlMinPoints) : undefined,
+                                    inputs.mlTopN ? parseInt(inputs.mlTopN) : undefined
+                                ))}
+                                disabled={loading === 'getNBAPlayerPredictions'}
+                                className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:bg-purple-400 transition-colors"
+                            >
+                                {loading === 'getNBAPlayerPredictions' ? 'Loading...' : '🏀 Get Player Predictions'}
+                            </button>
+                            <button
+                                onClick={() => handleTest('getNBATopPerformers', () => getNBATopPerformers(
+                                    parseInt(inputs.mlDaysAhead),
+                                    inputs.mlStat as 'points' | 'assists' | 'rebounds',
+                                    parseInt(inputs.mlTopN),
+                                    inputs.mlMinThreshold ? parseFloat(inputs.mlMinThreshold) : undefined
+                                ))}
+                                disabled={loading === 'getNBATopPerformers'}
+                                className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:bg-purple-400 transition-colors"
+                            >
+                                {loading === 'getNBATopPerformers' ? 'Loading...' : '⭐ Get Top Performers'}
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Usage Tips */}
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <h4 className="text-sm font-semibold text-blue-800 mb-2">💡 Usage Tips:</h4>
+                        <ul className="text-sm text-blue-700 space-y-1">
+                            <li>• Check ML Status first to see if models are trained</li>
+                            <li>• Train models if not available (takes ~5 minutes)</li>
+                            <li>• Game predictions show win probabilities for upcoming games</li>
+                            <li>• Player predictions show expected points, assists, and rebounds</li>
+                            <li>• Use filters to focus on specific games, teams, or performance levels</li>
+                            <li>• Top performers ranking works for points, assists, or rebounds</li>
+                        </ul>
+                    </div>
+                </div>
+
                 {/* Soccer Methods */}
                 <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8">
                     <h2 className="text-2xl font-bold text-gray-900 mb-6">Soccer Methods</h2>
@@ -284,11 +743,11 @@ export default function TestingPage() {
                             {loading === 'getSoccerMatches' ? 'Loading...' : 'Get Soccer Matches'}
                         </button>
                         <button
-                            onClick={() => handleTest('getUpcomingSoccerMatches', getUpcomingSoccerMatches)}
-                            disabled={loading === 'getUpcomingSoccerMatches'}
+                            onClick={() => handleTest('getEPLUpcomingMatches', getEPLUpcomingMatches)}
+                            disabled={loading === 'getEPLUpcomingMatches'}
                             className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:bg-emerald-400 transition-colors"
                         >
-                            {loading === 'getUpcomingSoccerMatches' ? 'Loading...' : 'Get Upcoming Soccer Matches'}
+                            {loading === 'getEPLUpcomingMatches' ? 'Loading...' : 'Get EPL Upcoming Matches'}
                         </button>
                     </div>
 
@@ -653,6 +1112,265 @@ export default function TestingPage() {
                             >
                                 {loading === 'getDashboardData' ? 'Loading...' : 'Dashboard Data'}
                             </button>
+                            <button
+                                onClick={() => handleTest('getHistoricalDashboardData', getHistoricalDashboardData)}
+                                disabled={loading === 'getHistoricalDashboardData'}
+                                className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:bg-purple-400 transition-colors"
+                            >
+                                {loading === 'getHistoricalDashboardData' ? 'Loading...' : 'Historical Dashboard'}
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* New Historical Data Testing Section */}
+                    <div className="mb-8">
+                        <h3 className="text-lg font-semibold text-gray-800 mb-4">Enhanced Historical Data Testing</h3>
+                        
+                        {/* Team Name Inputs */}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">NBA Team Name</label>
+                                <input
+                                    type="text"
+                                    value={inputs.nbaTeamName}
+                                    onChange={(e) => setInputs(prev => ({ ...prev, nbaTeamName: e.target.value }))}
+                                    placeholder="e.g., 'Los Angeles Lakers', 'lakers'"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">NFL Team Name</label>
+                                <input
+                                    type="text"
+                                    value={inputs.nflTeamName}
+                                    onChange={(e) => setInputs(prev => ({ ...prev, nflTeamName: e.target.value }))}
+                                    placeholder="e.g., 'Kansas City Chiefs', 'chiefs'"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Soccer Team Name</label>
+                                <input
+                                    type="text"
+                                    value={inputs.soccerTeamName}
+                                    onChange={(e) => setInputs(prev => ({ ...prev, soccerTeamName: e.target.value }))}
+                                    placeholder="e.g., 'Inter Miami', 'LAFC'"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                />
+                            </div>
+                        </div>
+
+                        {/* Additional Historical Inputs */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Historical Season</label>
+                                <input
+                                    type="text"
+                                    value={inputs.historicalSeason}
+                                    onChange={(e) => setInputs(prev => ({ ...prev, historicalSeason: e.target.value }))}
+                                    placeholder="e.g., '2023-24' for NBA, '2023' for NFL/Soccer"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Team Stats Type</label>
+                                <select
+                                    value={inputs.statType}
+                                    onChange={(e) => setInputs(prev => ({ ...prev, statType: e.target.value }))}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                >
+                                    <option value="all">All Stats</option>
+                                    <option value="wins">Wins</option>
+                                    <option value="losses">Losses</option>
+                                    <option value="scoring">Scoring</option>
+                                    <option value="defensive">Defensive</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        {/* All Teams Historical Data */}
+                        <div className="mb-6">
+                            <h4 className="text-md font-medium text-gray-700 mb-3">All Teams Historical Data</h4>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <button
+                                    onClick={() => handleTest('getHistoricalNBAAllTeams', () => {
+                                        const season = inputs.historicalSeason || undefined;
+                                        return getHistoricalNBAAllTeams(season);
+                                    })}
+                                    disabled={loading === 'getHistoricalNBAAllTeams'}
+                                    className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:bg-indigo-400 transition-colors"
+                                >
+                                    {loading === 'getHistoricalNBAAllTeams' ? 'Loading...' : 'NBA All Teams Historical'}
+                                </button>
+                                <button
+                                    onClick={() => handleTest('getHistoricalNFLAllTeams', () => {
+                                        const season = inputs.historicalSeason || undefined;
+                                        return getHistoricalNFLAllTeams(season);
+                                    })}
+                                    disabled={loading === 'getHistoricalNFLAllTeams'}
+                                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-green-400 transition-colors"
+                                >
+                                    {loading === 'getHistoricalNFLAllTeams' ? 'Loading...' : 'NFL All Teams Historical'}
+                                </button>
+                                <button
+                                    onClick={() => handleTest('getHistoricalSoccerAllTeams', () => {
+                                        const leagues = [inputs.soccerLeague];
+                                        return getHistoricalSoccerAllTeams(leagues);
+                                    })}
+                                    disabled={loading === 'getHistoricalSoccerAllTeams'}
+                                    className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:bg-emerald-400 transition-colors"
+                                >
+                                    {loading === 'getHistoricalSoccerAllTeams' ? 'Loading...' : 'Soccer All Teams Historical'}
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Team by Name Historical Data */}
+                        <div className="mb-6">
+                            <h4 className="text-md font-medium text-gray-700 mb-3">Team by Name Historical Data</h4>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <button
+                                    onClick={() => handleTestWithParam('getHistoricalNBATeamByName', (teamName: string) => {
+                                        const options = {
+                                            season: inputs.historicalSeason || undefined,
+                                            startDate: inputs.startDate || undefined,
+                                            endDate: inputs.endDate || undefined
+                                        };
+                                        return getHistoricalNBATeamByName(teamName, options);
+                                    }, inputs.nbaTeamName, 'NBA Team Name')}
+                                    disabled={loading === 'getHistoricalNBATeamByName'}
+                                    className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:bg-indigo-400 transition-colors"
+                                >
+                                    {loading === 'getHistoricalNBATeamByName' ? 'Loading...' : 'NBA Team by Name'}
+                                </button>
+                                <button
+                                    onClick={() => handleTestWithParam('getHistoricalNFLTeamByName', (teamName: string) => {
+                                        const options = {
+                                            season: inputs.historicalSeason || undefined,
+                                            startDate: inputs.startDate || undefined,
+                                            endDate: inputs.endDate || undefined
+                                        };
+                                        return getHistoricalNFLTeamByName(teamName, options);
+                                    }, inputs.nflTeamName, 'NFL Team Name')}
+                                    disabled={loading === 'getHistoricalNFLTeamByName'}
+                                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-green-400 transition-colors"
+                                >
+                                    {loading === 'getHistoricalNFLTeamByName' ? 'Loading...' : 'NFL Team by Name'}
+                                </button>
+                                <button
+                                    onClick={() => handleTestWithParam('getHistoricalSoccerTeamByName', (teamName: string) => {
+                                        const options = {
+                                            leagues: [inputs.soccerLeague],
+                                            startDate: inputs.startDate || undefined,
+                                            endDate: inputs.endDate || undefined
+                                        };
+                                        return getHistoricalSoccerTeamByName(teamName, options);
+                                    }, inputs.soccerTeamName, 'Soccer Team Name')}
+                                    disabled={loading === 'getHistoricalSoccerTeamByName'}
+                                    className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:bg-emerald-400 transition-colors"
+                                >
+                                    {loading === 'getHistoricalSoccerTeamByName' ? 'Loading...' : 'Soccer Team by Name'}
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Season Historical Data */}
+                        <div className="mb-6">
+                            <h4 className="text-md font-medium text-gray-700 mb-3">Season Historical Data</h4>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <button
+                                    onClick={() => handleTestWithParam('getHistoricalNBASeason', (season: string) => {
+                                        const options = {
+                                            teamName: inputs.nbaTeamName || undefined,
+                                            startDate: inputs.startDate || undefined,
+                                            endDate: inputs.endDate || undefined
+                                        };
+                                        return getHistoricalNBASeason(season, options);
+                                    }, inputs.historicalSeason, 'Historical Season')}
+                                    disabled={loading === 'getHistoricalNBASeason'}
+                                    className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:bg-indigo-400 transition-colors"
+                                >
+                                    {loading === 'getHistoricalNBASeason' ? 'Loading...' : 'NBA Season Data'}
+                                </button>
+                                <button
+                                    onClick={() => handleTestWithParam('getHistoricalNFLSeason', (season: string) => {
+                                        const options = {
+                                            teamName: inputs.nflTeamName || undefined,
+                                            startDate: inputs.startDate || undefined,
+                                            endDate: inputs.endDate || undefined
+                                        };
+                                        return getHistoricalNFLSeason(season, options);
+                                    }, inputs.historicalSeason, 'Historical Season')}
+                                    disabled={loading === 'getHistoricalNFLSeason'}
+                                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-green-400 transition-colors"
+                                >
+                                    {loading === 'getHistoricalNFLSeason' ? 'Loading...' : 'NFL Season Data'}
+                                </button>
+                                <button
+                                    onClick={() => handleTestWithParam('getHistoricalSoccerSeason', (season: string) => {
+                                        const options = {
+                                            teamName: inputs.soccerTeamName || undefined,
+                                            leagues: [inputs.soccerLeague],
+                                            startDate: inputs.startDate || undefined,
+                                            endDate: inputs.endDate || undefined
+                                        };
+                                        return getHistoricalSoccerSeason(season, options);
+                                    }, inputs.historicalSeason, 'Historical Season')}
+                                    disabled={loading === 'getHistoricalSoccerSeason'}
+                                    className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:bg-emerald-400 transition-colors"
+                                >
+                                    {loading === 'getHistoricalSoccerSeason' ? 'Loading...' : 'Soccer Season Data'}
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Team Stats */}
+                        <div className="mb-6">
+                            <h4 className="text-md font-medium text-gray-700 mb-3">Team Performance Stats</h4>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <button
+                                    onClick={() => handleTest('getNBATeamStats', () => {
+                                        const options = {
+                                            teamName: inputs.nbaTeamName || undefined,
+                                            season: inputs.historicalSeason || undefined,
+                                            statType: inputs.statType
+                                        };
+                                        return getNBATeamStats(options);
+                                    })}
+                                    disabled={loading === 'getNBATeamStats'}
+                                    className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:bg-indigo-400 transition-colors"
+                                >
+                                    {loading === 'getNBATeamStats' ? 'Loading...' : 'NBA Team Stats'}
+                                </button>
+                                <button
+                                    onClick={() => handleTest('getNFLTeamStats', () => {
+                                        const options = {
+                                            teamName: inputs.nflTeamName || undefined,
+                                            season: inputs.historicalSeason || undefined,
+                                            statType: inputs.statType
+                                        };
+                                        return getNFLTeamStats(options);
+                                    })}
+                                    disabled={loading === 'getNFLTeamStats'}
+                                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-green-400 transition-colors"
+                                >
+                                    {loading === 'getNFLTeamStats' ? 'Loading...' : 'NFL Team Stats'}
+                                </button>
+                                <button
+                                    onClick={() => handleTest('getSoccerTeamStats', () => {
+                                        const options = {
+                                            teamName: inputs.soccerTeamName || undefined,
+                                            leagues: [inputs.soccerLeague],
+                                            statType: inputs.statType
+                                        };
+                                        return getSoccerTeamStats(options);
+                                    })}
+                                    disabled={loading === 'getSoccerTeamStats'}
+                                    className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:bg-emerald-400 transition-colors"
+                                >
+                                    {loading === 'getSoccerTeamStats' ? 'Loading...' : 'Soccer Team Stats'}
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -687,9 +1405,20 @@ export default function TestingPage() {
                                         {result.timestamp.toLocaleTimeString()}
                                     </p>
                                     {result.success ? (
-                                        <pre className="text-sm bg-gray-100 p-3 rounded overflow-x-auto max-h-48 overflow-y-auto">
-                                            {JSON.stringify(result.data, null, 2)}
-                                        </pre>
+                                        <>
+                                            {/* Display NBA Prediction Results with Confidence and Factors */}
+                                            {renderNBAPredictionResult(result)}
+                                            
+                                            {/* Default JSON display */}
+                                            <details className="mt-3">
+                                                <summary className="cursor-pointer text-sm font-medium text-gray-700 hover:text-gray-900">
+                                                    View Raw JSON Response
+                                                </summary>
+                                                <pre className="text-sm bg-gray-100 p-3 rounded overflow-x-auto max-h-48 overflow-y-auto mt-2">
+                                                    {JSON.stringify(result.data, null, 2)}
+                                                </pre>
+                                            </details>
+                                        </>
                                     ) : (
                                         <p className="text-red-700 font-medium">{result.error}</p>
                                     )}
