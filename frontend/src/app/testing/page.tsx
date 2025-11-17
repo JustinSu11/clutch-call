@@ -8,7 +8,7 @@
     Description: Testing page for all backend methods to retrieve sports statistics and game data
 */
 
-import { useState } from 'react';
+import { JSX, useState } from 'react';
 import {
     getNFLGames,
     getSpecificNFLGameDetails,

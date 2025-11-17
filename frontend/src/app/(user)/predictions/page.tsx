@@ -9,12 +9,9 @@
 */
 "use client";
 import React, { useState, useEffect } from 'react';
-import { parseUpcomingNFLGames, parseNFLTeamStats, parseTodayNFLGames, parseNFLGamesFromEvents } from '@/utils/nfl_parser';
-import { parseUpcomingNBAGames, parseNBATeamStats } from '@/utils/nba_parser';
+import { parseNFLTeamStats, parseTodayNFLGames, parseNFLGamesFromEvents } from '@/utils/nfl_parser';
+import { parseNBATeamStats } from '@/utils/nba_parser';
 import { parseUpcomingEPLGames, getEPLMatchPrediction } from '@/utils/epl_parser';
-import { UpcomingGame } from '@/utils/data_class';
-import { get } from 'http';
-import { urlToHttpOptions } from 'url';
 import MatchDialog, { TeamStats } from '@/components/DashboardComponents/Dialog';
 import { getNBAGamePredictions, getNBAMLStatus } from '@/backend_methods/nba_methods';
 import { getNBAStandings } from '@/backend_methods/standings_methods';
@@ -485,7 +482,7 @@ const EPLProbabilityBar: React.FC<{
     const total = homeWin + draw + awayWin;
     const normalizedHome = total > 0 ? homeWin / total : 0.33;
     const normalizedDraw = total > 0 ? draw / total : 0.33;
-    const normalizedAway = total > 0 ? awayWin / total : 0.34;
+    // const normalizedAway = total > 0 ? awayWin / total : 0.34;
     
     // Calculate percentages that sum to 100%
     const homeWinPercent = Math.round(normalizedHome * 100);
