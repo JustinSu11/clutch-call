@@ -11,6 +11,7 @@ import time
 import os
 import json
 import logging
+import requests
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 # NBA API imports
@@ -21,6 +22,7 @@ from nba_api.stats.endpoints import (
     boxscoreplayertrackv2,
     leaguegamelog,
     playergamelog,
+    scoreboard,
     scoreboardv2,
     leaguestandings,
     teamdashboardbygeneralsplits,
@@ -280,7 +282,8 @@ class NBADataCollector:
             
             try:
                 self.rate_limit()
-                scoreboard = scoreboardv2.ScoreboardV2(game_date=date_str)
+                # Use LeagueGameLog instead of ScoreboardV2 to avoid WinProbability error
+                scoreboard = leaguegamelog.LeagueGameLog(date_from_nullable=date_str, date_to_nullable=date_str)
                 games_data = scoreboard.get_data_frames()[0]
                 
                 if not games_data.empty:
@@ -369,38 +372,68 @@ class NBADataCollector:
         start_date = datetime.now().date()
         end_date = start_date + timedelta(days=days_ahead)
         
+        # NBA Stats API headers
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+            'Accept': 'application/json',
+            'Accept-Language': 'en-US,en;q=0.9',
+            'Referer': 'https://www.nba.com/',
+            'Origin': 'https://www.nba.com'
+        }
+        
         current_date = start_date
         while current_date <= end_date:
             date_str = current_date.strftime("%m/%d/%Y")
             
             try:
                 self.rate_limit()
-                scoreboard = scoreboardv2.ScoreboardV2(game_date=date_str)
-                games_data = scoreboard.get_data_frames()[0]
+                
+                # Direct API call to bypass nba_api parsing issues
+                url = "https://stats.nba.com/stats/scoreboardv2"
+                params = {
+                    'GameDate': date_str,
+                    'LeagueID': '00',
+                    'DayOffset': '0'
+                }
+                
+                response = requests.get(url, headers=headers, params=params, timeout=10)
+                response.raise_for_status()
+                
+                data = response.json()
+                result_sets = data.get('resultSets', [])
+                
+                # Find GameHeader result set
+                games_data = pd.DataFrame()
+                for result_set in result_sets:
+                    if result_set.get('name') == 'GameHeader':
+                        header_cols = result_set.get('headers', [])
+                        rows = result_set.get('rowSet', [])
+                        games_data = pd.DataFrame(rows, columns=header_cols)
+                        break
                 
                 logger.info(f"Checking {date_str}: Found {len(games_data)} games")
                 
                 if not games_data.empty:
                     for _, game in games_data.iterrows():
-                        game_id = game['GAME_ID']
-
+                        game_id = game.get('GAME_ID')
+                        
                         # Skip preseason games (game_id starts with '001')
                         if str(game_id).startswith('001'):
                             logger.info(f"Skipping preseason game {game_id} on {date_str}")
                             continue
                         
-                        game_status_text = game.get('GAME_STATUS_TEXT', '')
-                        # Parse the combined date and time
-                        game_datetime = self._parse_game_datetime(date_str, game_status_text)
+                        # Extract game time from GAME_STATUS_TEXT
+                        game_status = game.get('GAME_STATUS_TEXT', '')
+                        game_datetime = self._parse_game_datetime(date_str, game_status)
                         
                         upcoming_games.append({
                             'game_id': game_id,
-                            'game_date': game_datetime,  # Now includes time
-                            'home_team_id': game.get('HOME_TEAM_ID'),
-                            'away_team_id': game.get('VISITOR_TEAM_ID'),
+                            'game_date': game_datetime,
+                            'home_team_id': int(game.get('HOME_TEAM_ID')),
+                            'away_team_id': int(game.get('VISITOR_TEAM_ID')),
                             'home_team': game.get('HOME_TEAM_NAME', ''),
                             'away_team': game.get('VISITOR_TEAM_NAME', ''),
-                            'game_time': game_status_text
+                            'game_time': game_status
                         })
                         
             except Exception as e:
