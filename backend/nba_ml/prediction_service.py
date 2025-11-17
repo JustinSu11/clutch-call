@@ -55,7 +55,8 @@ class NBAMLPredictor:
                 self.game_model = joblib.load(game_model_path)
                 logger.info("✅ Game outcome model loaded")
             else:
-                logger.warning("❌ Game outcome model not found")
+                logger.warning("❌ Game outcome model not found - initiating model training...")
+                self._train_model_if_not_found()
             
             # Load preprocessors
             try:
@@ -66,6 +67,36 @@ class NBAMLPredictor:
                 
         except Exception as e:
             logger.error(f"Error loading models: {e}")
+    
+    def _train_model_if_not_found(self):
+        """Train the model if it doesn't exist"""
+        try:
+            logger.info("🚀 Starting automatic model training...")
+            from .training_pipeline import NBAMLPipeline
+            
+            # Create and run training pipeline
+            pipeline = NBAMLPipeline(data_dir=self.data_dir, force_retrain=True)
+            results = pipeline.run_full_pipeline(
+                seasons=None,  # Will use default seasons
+                epochs_game=50
+            )
+            
+            # Check if training was successful
+            if results.get('model_training', {}).get('status') == 'success':
+                logger.info("✅ Model training completed successfully")
+                # Reload the newly trained model
+                game_model_path = os.path.join(self.models_dir, 'game_outcome_model.pkl')
+                if os.path.exists(game_model_path):
+                    self.game_model = joblib.load(game_model_path)
+                    logger.info("✅ Newly trained model loaded")
+                else:
+                    logger.error("❌ Model file not found after training")
+            else:
+                logger.error(f"❌ Model training failed: {results}")
+                
+        except Exception as e:
+            logger.error(f"❌ Error during automatic model training: {e}")
+            logger.error("Please run the training pipeline manually to create the model")
     
     def get_upcoming_games(self, days_ahead: int = 7) -> pd.DataFrame:
         """Get upcoming games for prediction"""
