@@ -7,7 +7,7 @@ The project is built using python and react.
 
 # To run locally
 Windows:
-1. Install a virtual environment in the root directory `\ClutchCall`
+1. Install a virtual environment in the root directory
 `py -m venv .venv`
 2. Activate the venv
 `.venv\Scripts\activate`
@@ -17,7 +17,7 @@ Windows:
 `pip install -r requirements.txt`
 5. Create a `.env` file in the root directory and copy the contents of `.env.dist` into your `.env` file
 6. Replace the `FOOTBALL_DATA_API_KEY` with your personal api key if applicable
-7. Ensure your are in the backend directory. If not `cd backend`
+7. Ensure you are in the backend directory. If not `cd backend`
 8. Run `python run_server.py` to start the backend server
 9. Open a new terminal and move to the frontend directory `cd frontend`
 10. Run `npm i` to install all frontend packages
