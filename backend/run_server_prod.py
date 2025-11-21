@@ -4,6 +4,9 @@ import uvicorn
 
 def main():
     """Entry point for starting the Uvicorn server programmatically."""
+    # Import the ASGI app directly for Render compatibility
+    from asgi import app
+    
     # This is the crucial change for Render
     host = os.getenv("HOST", "0.0.0.0")
     
@@ -11,7 +14,8 @@ def main():
     port = int(os.getenv("PORT", "8000"))
     
     # Removed reload=True for production
-    uvicorn.run("asgi:app", host=host, port=port)
+    # Pass the app object directly instead of using string reference
+    uvicorn.run(app, host=host, port=port)
 
 
 if __name__ == "__main__":
