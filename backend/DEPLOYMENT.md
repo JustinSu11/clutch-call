@@ -22,7 +22,7 @@ The production server can be configured via environment variables:
 
 The production server uses Gunicorn as a process manager with Uvicorn workers. This combination provides:
 
-1. **Better Stability**: Avoids `CurrentThreadExecutor` threading issues that can occur with direct Uvicorn usage
+1. **Better Stability**: Avoids threading issues with `asgiref.wsgi.WsgiToAsgi` adapter that can occur under heavy load when using Uvicorn directly (`RuntimeError: CurrentThreadExecutor already quit or is broken`)
 2. **Process Management**: Gunicorn manages multiple worker processes for better resource utilization
 3. **Graceful Restarts**: Allows zero-downtime deployments
 4. **Production-Ready**: Industry standard for serving ASGI applications

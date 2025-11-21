@@ -15,7 +15,6 @@ Environment variables:
 """
 
 import os
-import sys
 from gunicorn.app.base import BaseApplication
 
 
