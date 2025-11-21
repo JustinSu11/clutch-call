@@ -52,6 +52,8 @@ next-env.d.ts
 *.log
 
 # Data files and outputs
+*.db
+nba_ml_data/
 
 !package.json
 !package-lock.json

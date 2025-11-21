@@ -33,13 +33,21 @@ python -m venv .venv
 pip install -r requirements.txt
 ```
 
-2. Start the server (no need to type uvicorn args):
+2. Start the server:
 
+**For Development:**
 ```
 python run_server.py
 ```
 
-By default it listens on http://127.0.0.1:8000. You can change host/port via env vars HOST/PORT.
+**For Production:**
+```
+python run_server_prod.py
+```
+
+By default it listens on http://127.0.0.1:8000 (development) or http://0.0.0.0:8000 (production). You can change host/port via env vars HOST/PORT.
+
+See [DEPLOYMENT.md](DEPLOYMENT.md) for detailed production deployment instructions.
 
 ## Notes
 
