@@ -50,7 +50,7 @@ def create_app() -> Flask:
 
     prefix = app.config["API_PREFIX"]
     # Mount each blueprint under the desired subpath
-    app.register_blueprint(health_bp, url_prefix=prefix)
+    app.register_blueprint(health_bp, url_prefix=f"{prefix}/health")
     app.register_blueprint(nba_bp, url_prefix=f"{prefix}/nba")
     app.register_blueprint(nfl_bp, url_prefix=f"{prefix}/nfl")
     app.register_blueprint(soccer_bp, url_prefix=f"{prefix}/soccer")
