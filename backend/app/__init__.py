@@ -73,30 +73,23 @@ def create_app() -> Flask:
     @app.get("/")
     def _root():
         """Simple root endpoint to enumerate key routes and confirm the app is running."""
+        # Get all registered routes dynamically
+        routes = []
+        for rule in app.url_map.iter_rules():
+            if rule.endpoint != 'static' and not rule.rule.startswith('/static'):
+                routes.append({
+                    "path": rule.rule,
+                    "methods": sorted(list(rule.methods - {'HEAD', 'OPTIONS'}))
+                })
+        
+        # Sort routes by path for better readability
+        routes.sort(key=lambda x: x["path"])
+        
         return {
             "name": "Clutch Call Backend - Sports Statistics",
             "status": "ok",
             "prefix": prefix,
-            "routes": [
-                f"{prefix}/health",
-                f"{prefix}/today",
-                f"{prefix}/weekly",
-                f"{prefix}/live",
-                f"{prefix}/historical",
-                f"{prefix}/nba/games",
-                f"{prefix}/nba/game/<game_id>",
-                f"{prefix}/nba/game/<game_id>/boxscore",
-                f"{prefix}/nba/teams/<team_id>/last",
-                f"{prefix}/nba/upcoming",
-                f"{prefix}/nfl/games",
-                f"{prefix}/nfl/game/<event_id>",
-                f"{prefix}/nfl/game/<event_id>/boxscore",
-                f"{prefix}/nfl/upcoming",
-                f"{prefix}/soccer/games",
-                f"{prefix}/soccer/game/<event_id>",
-                f"{prefix}/soccer/game/<event_id>/boxscore",
-                f"{prefix}/soccer/upcoming",
-            ],
+            "routes": routes,
             "stats_features": [
                 "Daily games with comprehensive statistics",
                 "Weekly upcoming games analysis",
