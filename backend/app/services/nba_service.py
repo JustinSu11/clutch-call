@@ -4,16 +4,15 @@ Author: Maaz Haque
 Purpose: Thin service layer for NBA data using the python package `nba_api` (which
          calls stats.nba.com). Provides helpers to list games, fetch a specific
          game (summary), box score stats, team recent games, and upcoming games.
-         *** UPDATED to include AI prediction logic. ***
+         Includes simplified AI prediction logic matching NFL service structure.
 """
 
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
-import requests
-import requests
 import os          
 import joblib       
 import pandas as pd
+import traceback
 
 from nba_api.stats.endpoints import (
     boxscoretraditionalv2,
@@ -23,87 +22,115 @@ from nba_api.stats.endpoints import (
     scoreboardv2,
 )
 
-# --- Updated Integration ---
-
-# 1. Load the trained model once when the service starts up
-# Use a robust path to ensure the model is found correctly
+# Load the trained model once when the service starts up
 MODEL_PATH = os.path.join(os.path.dirname(__file__), '../../models/saved_models/nba_model.pkl')
 
 try:
     model = joblib.load(MODEL_PATH)
-    print("NBA prediction model loaded successfully.")
-except FileNotFoundError:
-    print(f"Error: Prediction model not found at {MODEL_PATH}")
+    print("✅ NBA model loaded")
+    print(f"   Features: {model.n_features_in_}")
+except Exception as e:
+    print(f"❌ NBA Model load error: {e}")
     model = None
 
-def predict_outcome(home_avg_pts: float, away_avg_pts: float):
-    """
-    Predicts the outcome using the loaded model.
-    This function takes the FINAL features required by the model.
-    """
-    if model is None:
-        return {"error": "Model not available. Please train the model first."}
-
-    # Create a pandas DataFrame from the input, matching the training format
-    feature_data = pd.DataFrame(
-        [[home_avg_pts, away_avg_pts]], 
-        columns=['HomeAvgPts', 'AwayAvgPts']
-    )
-
-    # Use the model to predict the outcome and probabilities
-    prediction = model.predict(feature_data)
-    prediction_proba = model.predict_proba(feature_data)
-
-    # Format the output for the user
-    winner_index = prediction[0]
-    confidence = prediction_proba[0][winner_index]
-    winner = "Home" if winner_index == 1 else "Away"
-    
-    return {
-        "predicted_winner": winner,
-        "confidence": f"{confidence * 100:.2f}%",
-        "model_features": {
-            "home_team_avg_pts_last_5": home_avg_pts,
-            "away_team_avg_pts_last_5": away_avg_pts,
-        }
-    }
 
 def generate_prediction_for_game(game_id: str):
-    """
-    Orchestrator function to generate a prediction for a given game_id.
-    It fetches necessary data, engineers features, and calls the prediction model.
-    """
-    # Wrap the entire logic in a try-except block for robustness
+    """Generate prediction using team recent statistics (matching NFL pattern)."""
+    
+    if model is None:
+        return {"error": "Model not loaded"}
+    
     try:
         # Step 1: Get game details to find the two teams
         game_summary = get_game_by_id(game_id)
         game_header = game_summary.get("GameHeader", [{}])[0]
         home_team_id = game_header.get("HOME_TEAM_ID")
         visitor_team_id = game_header.get("VISITOR_TEAM_ID")
+        home_team_name = game_header.get("HOME_TEAM_NAME", "Unknown")
+        visitor_team_name = game_header.get("VISITOR_TEAM_NAME", "Unknown")
+        game_status = game_header.get("GAME_STATUS_TEXT", "")
 
         if not home_team_id or not visitor_team_id:
-            return {"error": "Could not determine teams for the given game_id."}
+            return {"error": f"Could not determine teams for game {game_id}"}
 
-        # Step 2: Get recent stats for each team using our existing functions
+        # Step 2: Get recent stats for each team (last 5 games)
         home_team_games = get_team_last_games(home_team_id, n=5).get("data", [])
         away_team_games = get_team_last_games(visitor_team_id, n=5).get("data", [])
         
         if not home_team_games or not away_team_games:
-            return {"error": "Could not fetch recent game data for one or both teams."}
+            return {
+                "error": "Insufficient game data",
+                "message": "Could not fetch recent game data for one or both teams"
+            }
 
-        # Step 3: Feature Engineering - Calculate the average points for each team
+        # Step 3: Feature Engineering - Calculate average points
         home_avg_pts = sum(game['pts'] for game in home_team_games) / len(home_team_games)
         away_avg_pts = sum(game['pts'] for game in away_team_games) / len(away_team_games)
+        pts_diff = home_avg_pts - away_avg_pts
 
-        # Step 4: Call our prediction function with the engineered features
-        prediction = predict_outcome(home_avg_pts, away_avg_pts)
-        return prediction
-    
+        # Step 4: Create features and predict
+        features = pd.DataFrame(
+            [[home_avg_pts, away_avg_pts]], 
+            columns=['HomeAvgPts', 'AwayAvgPts']
+        )
+
+        # Predict
+        prediction = model.predict(features)
+        proba = model.predict_proba(features)
+        
+        predicted_class = int(prediction[0])
+        home_prob = float(proba[0][1])
+        away_prob = float(proba[0][0])
+        
+        predicted_winner = "home" if predicted_class == 1 else "away"
+        confidence = home_prob if predicted_class == 1 else away_prob
+
+        # Calculate decision factors using feature importances
+        feature_names = ['HomeAvgPts', 'AwayAvgPts']
+        feature_importances = model.feature_importances_
+        
+        decision_factors = {}
+        for i, feature_name in enumerate(feature_names):
+            importance = float(feature_importances[i])
+            feature_value = float(features.iloc[0][feature_name])
+            
+            # Calculate contribution
+            if feature_name == 'HomeAvgPts':
+                contribution = (home_avg_pts - 110) * importance  # 110 is rough NBA average
+            else:  # AwayAvgPts
+                contribution = -(away_avg_pts - 110) * importance
+            
+            decision_factors[feature_name] = {
+                "importance": round(importance * 100, 2),
+                "value": round(feature_value, 1),
+                "contribution": round(contribution, 2)
+            }
+        
+        return {
+            "prediction": predicted_winner,
+            "predicted_winner": predicted_winner,
+            "confidence": round(confidence * 100, 2),
+            "home_win_probability": round(home_prob * 100, 2),
+            "away_win_probability": round(away_prob * 100, 2),
+            "decision_factors": decision_factors,
+            "model_info": {
+                "type": "RandomForestClassifier",
+                "raw_prediction": predicted_class
+            },
+            "features_used": {
+                "HomeAvgPts": round(home_avg_pts, 1),
+                "AwayAvgPts": round(away_avg_pts, 1),
+                "PtsDiff": round(pts_diff, 1)
+            },
+            "game_status": game_status,
+            "teams": {
+                "home": home_team_name,
+                "away": visitor_team_name
+            }
+        }
+        
     except Exception as e:
-        # If any part of the process fails (e.g., NBA API is down), return a clean error
-        return {"error": "Failed to generate prediction due to an internal error.", "details": str(e)}
-
-# --- Update End integration ---
+        return {"error": str(e), "game_id": game_id, "traceback": traceback.format_exc()}
 
 
 def _season_to_nba_format(season: Optional[str]) -> Optional[str]:
