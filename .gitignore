@@ -59,3 +59,6 @@ next-env.d.ts
 !*.config.json
 !frontend/tsconfig.json
 !components.json
+
+#claude
+CLAUDE.md
