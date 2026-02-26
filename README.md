@@ -2,29 +2,29 @@
 Clutch Call is a student built website that uses AI to determine the best players and teams in their leagues using sports statistics.
 The project is built using python and react.
 
-# Backend Server Setup
+# Requirements
+* Python
 
-## Steps
+# To run locally
+Windows:
+1. Install a virtual environment in the root directory
+`py -m venv .venv`
+2. Activate the venv
+`.venv\Scripts\activate`
+3. Move to backend directory
+`cd backend`
+4. Install requirements
+`pip install -r requirements.txt`
+5. Create a `.env` file in the root directory and copy the contents of `.env.dist` into your `.env` file
+6. Replace the `FOOTBALL_DATA_API_KEY` with your personal api key if applicable
+7. Ensure you are in the backend directory. If not `cd backend`
+8. Run `python run_server.py` to start the backend server
+9. Open a new terminal and move to the frontend directory `cd frontend`
+10. Run `npm i` to install all frontend packages
+11. Run `npm run dev` to start the frontend server
+12. Go to `http://localhost:3000/` to view the app
+13. When finished, remember to shut down both the frontend and backend servers using `Ctrl + C`
 
-```bash
-# Move into backend folder
-cd backend
-
-# Create virtual environment
-python -m venv venv
-
-# Activate environment
-# Linux/macOS
-source venv/bin/activate
-# Windows CMD
-venv\Scripts\activate
-# Windows PowerShell
-venv\Scripts\Activate.ps1
-
-# Install dependencies
-pip install -r requirements.txt
-
-## Features
 
 ### Automatic NBA ML Model Training
 The NBA machine learning models are now fully automated:
